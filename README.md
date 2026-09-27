@@ -61,5 +61,6 @@ Das Skript prüft, dass keine privaten Pfade getrackt sind, führt die Tests aus
 - [docs/scenario.md](docs/scenario.md) beschreibt die Datei.
 - [docs/model.md](docs/model.md) beschreibt die Rechnung.
 - [docs/privacy.md](docs/privacy.md) beschreibt, was das Repository nicht enthält.
+- [deploy/mini-pc.md](deploy/mini-pc.md) beschreibt den Betrieb auf dem Mini-PC (öffentliche Seite).
 - Private Nutzung ist frei. Gewerbliche Nutzung, auch ein Makler mit Kundinnen und Kunden, braucht eine Erlaubnis. Die Lizenz ist [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0) ([LICENSE](LICENSE)).
 - `main` ist der veröffentlichte Zweig. `PLAN.md` und ein echtes Profil liegen nur auf dem lokalen Zweig `private` und nicht auf dem öffentlichen GitHub-Repository. Siehe [docs/privacy.md](docs/privacy.md).
