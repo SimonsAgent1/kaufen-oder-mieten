@@ -102,7 +102,8 @@
   }
 
   function validateHorizon(careAge, horizonAge, youngerBirth, asOf) {
-    if (careAge === "" || horizonAge === "") return "Bitte Pflegealter und Endalter eintragen.";
+    if (careAge === "") return "Alter bei Pflegebeginn: Bitte ein Alter eintragen.";
+    if (horizonAge === "") return "Alter am Ende der Rechnung: Bitte ein Alter eintragen.";
     const care = Number(careAge);
     const end = Number(horizonAge);
     if (!Number.isInteger(care) || care < CARE_MIN || care > CARE_MAX) {

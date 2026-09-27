@@ -397,6 +397,8 @@ function render() {
   if (chat.cursor >= sequence.length) chat.cursor = sequence.length - 1;
   const step = sequence[chat.cursor];
   host().innerHTML = step.render();
+  const formError = host().querySelector(".form-error");
+  if (formError) formError.textContent = "";
   host().querySelectorAll("[data-next]").forEach((button) => {
     button.addEventListener("click", () => {
       chat.clicked = button;
@@ -799,13 +801,13 @@ function renderRent() {
   const rentB = chat.answers.rents.b === undefined ? "" : chat.answers.rents.b;
   const shared = chat.answers.rents.shared === undefined ? "" : chat.answers.rents.shared;
   if (!two) {
-    fields = euroField("rent-0", "Kaltmiete im Monat, in Euro", solo, { required: true });
+    fields = euroField("rent-0", "Kaltmiete im Monat, in Euro", solo);
   } else if (future) {
-    fields = `${euroField("rent-0", "Kaltmiete der ersten Person", rentA, { required: true })}
-      ${euroField("rent-1", "Kaltmiete der zweiten Person", rentB, { required: true })}
-      ${euroField("shared", "Gemeinsame Kaltmiete ab dem Zusammenziehen", shared, { required: true })}`;
+    fields = `${euroField("rent-0", "Kaltmiete der ersten Person", rentA)}
+      ${euroField("rent-1", "Kaltmiete der zweiten Person", rentB)}
+      ${euroField("shared", "Gemeinsame Kaltmiete ab dem Zusammenziehen", shared)}`;
   } else {
-    fields = euroField("shared", "Gemeinsame Kaltmiete", shared, { required: true });
+    fields = euroField("shared", "Gemeinsame Kaltmiete", shared);
   }
   return `<h2>Wie hoch ist die Kaltmiete?</h2>${fields}
     <p class="form-error"></p>
@@ -927,7 +929,6 @@ function readDwelling() {
   if (err) return err;
   err = b?.validateEuro(cash, b.CAPS.cash, "Bargeld", { allowZero: true });
   if (err) return err;
-  if ([price, moveIn, cash].some((value) => value == null)) return "Bitte alle Felder ausfüllen.";
   chat.answers.price = price;
   chat.answers.bundesland = host().querySelector("[name=land]").value;
   chat.answers.cash = cash;
@@ -939,7 +940,7 @@ function renderCash() {
   const cash = chat.answers.cash === null ? "" : chat.answers.cash;
   return `<h2>Bargeld außerhalb des Depots</h2>
     <p>Nicht im ETF, aber für Nebenkosten oder den Kauf.</p>
-    ${euroField("cash", "Betrag in Euro", cash, { required: true })}
+    ${euroField("cash", "Betrag in Euro", cash)}
     <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
 }
@@ -953,7 +954,7 @@ function renderLocation() {
   return `<h2>Bundesland und Bargeld</h2>
     <p>Die Kirchensteuer hängt vom Bundesland ab.</p>
     <label>Bundesland<select name="land">${lands}</select></label>
-    ${euroField("cash", "Bargeld außerhalb des Depots, in Euro", cash, { required: true })}
+    ${euroField("cash", "Bargeld außerhalb des Depots, in Euro", cash)}
     <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
 }
@@ -962,7 +963,6 @@ function readLocation() {
   const cash = readEuroField(host(), "cash");
   const err = bounds()?.validateEuro(cash, bounds().CAPS.cash, "Bargeld", { allowZero: true });
   if (err) return err;
-  if (cash == null) return "Bitte alle Felder ausfüllen.";
   chat.answers.bundesland = host().querySelector("[name=land]").value;
   chat.answers.cash = cash;
   return null;
@@ -970,7 +970,7 @@ function readLocation() {
 
 function readCash() {
   const cash = readEuroField(host(), "cash");
-  const err = bounds()?.validateEuro(cash, bounds().CAPS.cash, "Betrag", { allowZero: true });
+  const err = bounds()?.validateEuro(cash, bounds().CAPS.cash, "Bargeld", { allowZero: true });
   if (err) return err;
   chat.answers.cash = cash;
   return null;
@@ -981,8 +981,8 @@ function renderHorizon() {
   const horizon = chat.answers.horizonAge === null ? "" : chat.answers.horizonAge;
   return `<h2>Wie weit soll die Rechnung gehen?</h2>
     <p>Haus oder Wohnung wird zum Beginn der Pflege verkauft. Das Endalter gilt für die jüngere Person.</p>
-    <label>Alter bei Pflegebeginn<input name="care" type="number" min="60" max="110" value="${care}" required></label>
-    <label>Alter am Ende der Rechnung<input name="horizon" type="number" min="1" max="120" value="${horizon}" required></label>
+    <label>Alter bei Pflegebeginn<input name="care" type="number" min="60" max="110" value="${care}"></label>
+    <label>Alter am Ende der Rechnung<input name="horizon" type="number" min="1" max="120" value="${horizon}"></label>
     <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
 }
@@ -990,7 +990,6 @@ function renderHorizon() {
 function readHorizon() {
   const careRaw = host().querySelector("[name=care]").value;
   const horizonRaw = host().querySelector("[name=horizon]").value;
-  if ([careRaw, horizonRaw].some((value) => value === "")) return "Bitte Pflegealter und Endalter eintragen.";
   const youngerBirth = chat.answers.adults[youngerIndex()].birth;
   const err = bounds()?.validateHorizon(careRaw, horizonRaw, youngerBirth, asOfMonth());
   if (err) return err;
@@ -1077,6 +1076,70 @@ function youngerIndex() {
     if (adult.birth > chat.answers.adults[best].birth) best = index;
   });
   return best;
+}
+
+function compareValidationError() {
+  const b = bounds();
+  if (chat.answers.careAge == null) return "Alter bei Pflegebeginn: Bitte ein Alter eintragen.";
+  if (chat.answers.horizonAge == null) return "Alter am Ende der Rechnung: Bitte ein Alter eintragen.";
+  if (asksRent()) {
+    const two = chat.answers.count === 2;
+    const future = two && chat.answers.together && chat.answers.together > asOfMonth();
+    if (!two) {
+      const err = b?.validateEuro(chat.answers.rents.solo, b.CAPS.rent, "Kaltmiete", { allowZero: true });
+      if (err) return err;
+    } else if (future) {
+      for (const [value, label] of [
+        [chat.answers.rents.a, "Kaltmiete"],
+        [chat.answers.rents.b, "Kaltmiete"],
+        [chat.answers.rents.shared, "Gemeinsame Kaltmiete"],
+      ]) {
+        const err = b?.validateEuro(value, b.CAPS.rent, label, { allowZero: true });
+        if (err) return err;
+      }
+    } else {
+      const err = b?.validateEuro(chat.answers.rents.shared, b.CAPS.rent, "Gemeinsame Kaltmiete", { allowZero: true });
+      if (err) return err;
+    }
+  }
+  if (asksBuy() && !chat.preset && !chat.linkDwelling) {
+    const err = b?.validateEuro(chat.answers.price, b.CAPS.price, "Kaufpreis", { allowZero: false });
+    if (err) return err;
+  }
+  const cashErr = b?.validateEuro(chat.answers.cash, b.CAPS.cash, "Bargeld", { allowZero: true });
+  if (cashErr) return cashErr;
+  return null;
+}
+
+function scenarioBodyForCompare(scenario) {
+  const body = JSON.parse(JSON.stringify(scenario));
+  if (!body.children?.length) delete body.child_rearing_credit_adult_id;
+  if (body.path_scope === "rent" && body.dwelling?.purchase_price == null) {
+    delete body.dwelling.purchase_price;
+  }
+  for (const adult of body.adults) {
+    if (adult.care_age == null) delete adult.care_age;
+  }
+  body.beliefs = {
+    ...body.beliefs,
+    sollzins: body.beliefs.sollzins ?? 0.03,
+    anschlusszins: body.beliefs.anschlusszins ?? 0.03,
+  };
+  return body;
+}
+
+function apiErrorMessage(payload) {
+  const detail = payload?.detail;
+  if (typeof detail === "string" && detail) return detail;
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      const msg = item?.msg;
+      if (typeof msg === "string" && msg) {
+        return msg.startsWith("Value error, ") ? msg.slice("Value error, ".length) : msg;
+      }
+    }
+  }
+  return "Die Eingaben sind unvollständig oder ungültig.";
 }
 
 function buildScenario() {
@@ -1225,23 +1288,21 @@ function renderRecap() {
 }
 
 async function finish() {
+  const note = host().querySelector("#recap-error");
+  const clientErr = compareValidationError();
+  if (clientErr) {
+    if (note) note.textContent = clientErr;
+    return;
+  }
   const scenario = buildScenario();
   const probe = await fetch("/api/compare", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...scenario,
-      beliefs: {
-        ...scenario.beliefs,
-        sollzins: scenario.beliefs.sollzins ?? 0.03,
-        anschlusszins: scenario.beliefs.anschlusszins ?? 0.03,
-      },
-    }),
+    body: JSON.stringify(scenarioBodyForCompare(scenario)),
   });
   if (!probe.ok) {
     const payload = await probe.json().catch(() => ({}));
-    const note = host().querySelector("#recap-error");
-    if (note) note.textContent = payload.detail || "Die Eingaben sind unvollständig oder ungültig.";
+    if (note) note.textContent = apiErrorMessage(payload);
     return;
   }
   window.scenarioStore.persistScenario(scenario);

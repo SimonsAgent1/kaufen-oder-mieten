@@ -285,6 +285,13 @@ def test_rent_path_scope_without_purchase_price_is_200(monkeypatch):
     assert "Der Kaufpreis startet bei" not in "\n".join(response.json()["assumptions"])
 
 
+def test_compare_rejects_explicit_null_care_age():
+    body = _body()
+    body["adults"][0]["care_age"] = None
+    response = client.post("/api/compare", json=body)
+    assert response.status_code == 422
+
+
 def test_buy_path_scope_without_purchase_price_is_422():
     body = _body()
     body["path_scope"] = "buy"
