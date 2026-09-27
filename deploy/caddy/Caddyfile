@@ -1,0 +1,21 @@
+{
+	email simon.muchau@freenet.de
+}
+
+kauf-oder-mieten.de, www.kauf-oder-mieten.de {
+	reverse_proxy https://127.0.0.1:8000 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+
+	tls {
+		dns netcup {
+			customer_number {env.NETCUP_CUSTOMER_NUMBER}
+			api_key {env.NETCUP_API_KEY}
+			api_password {env.NETCUP_API_PASSWORD}
+		}
+		propagation_timeout 900s
+		propagation_delay 300s
+	}
+}
