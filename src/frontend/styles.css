@@ -885,12 +885,27 @@ summary { cursor: pointer; font-weight: 650; }
 .advice .source-link:hover { color: var(--ink); }
 .site-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   margin: 2rem 0 1.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--line);
   font-size: 0.86rem;
+  max-width: 100%;
+}
+.site-tagline {
+  margin: 0;
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.site-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  min-width: 0;
 }
 .site-footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 0.12em; }
 .site-footer a:hover { color: var(--ink); }

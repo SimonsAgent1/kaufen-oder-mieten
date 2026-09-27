@@ -72,6 +72,9 @@ def test_public_tree_has_no_personal_names():
             assert "Keine Empfehlung." in text
             assert 'id="horizon-month"' in text
             assert 'id="horizon-month-year"' in text
+            assert 'href="/favicon.svg"' in text
+            assert "Kostenlos, ohne Werbung, ohne Cookies." in text
+            assert "ohne Tracking" not in text
         if path == impressum:
             text = re.sub(
                 r'<main class="legal-body impressum-notice">.*?</main>',

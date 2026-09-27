@@ -145,6 +145,21 @@ def evaluate(scenario: Scenario) -> dict:
     return payload
 
 
+@app.get("/favicon.svg")
+def favicon() -> FileResponse:
+    return FileResponse(_frontend_dir() / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/robots.txt")
+def robots_txt() -> FileResponse:
+    return FileResponse(_frontend_dir() / "robots.txt", media_type="text/plain; charset=utf-8")
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml() -> FileResponse:
+    return FileResponse(_frontend_dir() / "sitemap.xml", media_type="application/xml")
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(_frontend_dir() / "index.html")

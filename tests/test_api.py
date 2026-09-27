@@ -220,6 +220,33 @@ def test_version_endpoint_matches_installed_package():
     assert response.json()["version"] == version("buy-vs-rent")
 
 
+def test_robots_txt():
+    response = client.get("/robots.txt")
+    assert response.status_code == 200
+    text = response.text
+    assert "Allow: /" in text
+    assert "Allow: /impressum" in text
+    assert "Allow: /regeln" in text
+    assert "Disallow: /api/" in text
+
+
+def test_sitemap_xml():
+    response = client.get("/sitemap.xml")
+    assert response.status_code == 200
+    text = response.text
+    assert "https://kauf-oder-mieten.de/" in text
+    assert "https://kauf-oder-mieten.de/impressum" in text
+    assert "https://kauf-oder-mieten.de/regeln" in text
+    assert "192.168" not in text
+
+
+def test_favicon_is_served():
+    response = client.get("/favicon.svg")
+    assert response.status_code == 200
+    assert "image/svg" in response.headers.get("content-type", "")
+    assert "<svg" in response.text
+
+
 def test_impressum_page_is_served():
     response = client.get("/impressum")
     assert response.status_code == 200

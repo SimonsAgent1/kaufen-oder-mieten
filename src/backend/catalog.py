@@ -447,6 +447,7 @@ def render_rules_html() -> str:
     )
     return (
         "<!DOCTYPE html><html lang=\"de\"><head><meta charset=\"utf-8\">"
+        "<link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">"
         "<title>Rechenregeln</title></head><body><pre>"
         f"{body}</pre></body></html>"
     )
