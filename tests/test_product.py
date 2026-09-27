@@ -67,6 +67,9 @@ def test_public_tree_has_no_personal_names():
         if path.name == "index.html":
             assert 'href="/impressum">Impressum</a>' in text
             assert "privacy-notice" not in text
+            assert "<title>Kaufen oder mieten – Vergleich für einen Haushalt</title>" in text
+            assert 'name="description"' in text
+            assert "Keine Empfehlung." in text
         if path == impressum:
             text = re.sub(
                 r'<main class="legal-body impressum-notice">.*?</main>',
