@@ -7,14 +7,14 @@
   --card: #ffffff;
   --teal: #0f766e;
   --clay: #c2410c;
-  --buy: #0c8f62;
-  --buy-etf: #0e9f6e;
-  --buy-accent: rgba(12, 143, 98, 0.38);
-  --buy-wash: rgba(12, 143, 98, 0.1);
-  --rent: #2a62b5;
-  --rent-etf: #3d7cc9;
-  --rent-accent: rgba(42, 98, 181, 0.38);
-  --rent-wash: rgba(42, 98, 181, 0.1);
+  --buy: #b8860b;
+  --buy-etf: #d4a84a;
+  --buy-accent: rgba(184, 134, 11, 0.38);
+  --buy-wash: rgba(184, 134, 11, 0.1);
+  --rent: #1a365d;
+  --rent-etf: #3d5f8a;
+  --rent-accent: rgba(26, 54, 93, 0.38);
+  --rent-wash: rgba(26, 54, 93, 0.1);
   --warn: #9a3412;
   --accent: var(--teal);
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px rgba(16, 24, 40, 0.06);
@@ -460,11 +460,11 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   min-width: 0;
 }
 .horizon-month-col:first-child {
-  background: linear-gradient(180deg, var(--buy-wash), rgba(12, 143, 98, 0.03));
+  background: linear-gradient(180deg, var(--buy-wash), rgba(184, 134, 11, 0.03));
   border: 1px solid var(--buy-accent);
 }
 .horizon-month-col:last-child {
-  background: linear-gradient(180deg, var(--rent-wash), rgba(42, 98, 181, 0.03));
+  background: linear-gradient(180deg, var(--rent-wash), rgba(26, 54, 93, 0.03));
   border: 1px solid var(--rent-accent);
 }
 .horizon-month-col:first-child h3 { color: var(--buy); }
@@ -475,7 +475,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .horizon-month-ubrig.flow-ubrig-warn { color: var(--warn); }
 .horizon-month-ubrig-note { margin: 0.55rem 0 0; color: var(--warn); }
 .flow-ubrig-warn { fill: var(--warn); }
-.flow-ubrig-line { fill: none; stroke: #94a3b8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.flow-ubrig-fill { fill: #94a3b8; fill-opacity: 0.88; }
 .flow-ubrig-warn-line { fill: none; stroke: var(--warn); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .horizon-month-heading {
   display: flex;
@@ -584,7 +584,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .care-label {
   margin: 0;
   text-align: center;
-  color: var(--buy);
+  color: var(--ink);
   font-size: 0.82rem;
   font-weight: 650;
   letter-spacing: 0.01em;
@@ -603,7 +603,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   margin-left: 0.45rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--teal);
+  color: var(--ink);
   text-decoration: none;
 }
 .rules-inline:hover { text-decoration: underline; }
@@ -757,11 +757,11 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .result-actions button:hover,
 .result-actions .file-button:hover { background: #e9eef3; }
 .result-actions-accent {
-  color: var(--teal);
-  background: rgba(15, 118, 110, 0.08);
+  color: var(--ink);
+  background: rgba(21, 32, 43, 0.06);
   box-shadow: none;
 }
-.result-actions-accent:hover { background: rgba(15, 118, 110, 0.14); }
+.result-actions-accent:hover { background: rgba(21, 32, 43, 0.1); }
 .result-real {
   margin-left: auto;
   max-width: 100%;
@@ -773,11 +773,11 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   border: 1px solid transparent;
 }
 .hero.buy {
-  background: linear-gradient(180deg, var(--buy-wash), rgba(12, 143, 98, 0.03));
+  background: linear-gradient(180deg, var(--buy-wash), rgba(184, 134, 11, 0.03));
   border-color: var(--buy-accent);
 }
 .hero.rent {
-  background: linear-gradient(180deg, var(--rent-wash), rgba(42, 98, 181, 0.03));
+  background: linear-gradient(180deg, var(--rent-wash), rgba(26, 54, 93, 0.03));
   border-color: var(--rent-accent);
 }
 .hero.buy span { display: block; color: var(--buy); font-size: 0.78rem; font-weight: 650; }

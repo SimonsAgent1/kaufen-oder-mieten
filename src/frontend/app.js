@@ -10,8 +10,10 @@ let touchedSnapshot = null;
 let captureResultSnapshot = false;
 let horizonMonthYear = null;
 let horizonMonthYearBound = false;
-const BUY_ETF_COLOR = "#0e9f6e";
-const RENT_ETF_COLOR = "#3d7cc9";
+const BUY_COLOR = "#b8860b";
+const RENT_COLOR = "#1a365d";
+const BUY_ETF_COLOR = "#d4a84a";
+const RENT_ETF_COLOR = "#3d5f8a";
 const FLOW_LEFT_KEYS = new Set(["buy_left", "rent_left"]);
 const FLOW_WARN_COLOR = "#9a3412";
 const UBRIG_GREY = "#94a3b8";
@@ -943,14 +945,14 @@ function drawLoan(series, markers) {
 }
 
 const RENT_FLOW = [
-  ["rent_housing", "Miete", "#2a62b5"],
+  ["rent_housing", "Miete", RENT_COLOR],
   ["rent_etf", "ETF", RENT_ETF_COLOR],
   ["rent_left", "Übrig", "#94a3b8"],
 ];
 const BUY_FLOW = [
-  ["buy_rent", "Miete", "#2a62b5"],
+  ["buy_rent", "Miete", RENT_COLOR],
   ["buy_interest", "Zinsen", "#c2410c"],
-  ["buy_principal", "Tilgung", "#0c8f62"],
+  ["buy_principal", "Tilgung", BUY_COLOR],
   ["buy_owner", "Eigentümerkosten", "#d97706"],
   ["buy_etf", "ETF", BUY_ETF_COLOR],
   ["buy_left", "Übrig", "#94a3b8"],
@@ -1093,19 +1095,26 @@ function stackLayerValue(layerKey, value) {
   return Math.max(0, value);
 }
 
-function ubrigLineMarkup(points, leftKey, real, x, y) {
-  const grey = [];
-  let segment = [];
+function ubrigAreaMarkup(points, leftKey, real, x, y, totals) {
+  const fills = [];
+  let upper = [];
+  let lower = [];
   const warn = [];
+  const flushFill = () => {
+    if (!upper.length) return;
+    fills.push(
+      `<path class="flow-ubrig-fill" d="M${upper.join(" L")} L${[...lower].reverse().join(" L")} Z" />`,
+    );
+    upper = [];
+    lower = [];
+  };
   for (let index = 0; index < points.length; index += 1) {
     const value = flowAmount(points[index], leftKey, real);
+    const total = totals[index] || 0;
     const px = x(index).toFixed(1);
-    const py = y(value).toFixed(1);
     if (value < -1) {
-      if (segment.length) {
-        grey.push(segment.join(" "));
-        segment = [];
-      }
+      flushFill();
+      const py = y(value).toFixed(1);
       const prev = index > 0 ? flowAmount(points[index - 1], leftKey, real) : value;
       const next = index < points.length - 1 ? flowAmount(points[index + 1], leftKey, real) : value;
       if (prev >= -1) warn.push(`M${px},${y(0).toFixed(1)} L${px},${py}`);
@@ -1113,13 +1122,12 @@ function ubrigLineMarkup(points, leftKey, real, x, y) {
       if (next >= -1) warn.push(`L${px},${y(0).toFixed(1)}`);
       continue;
     }
-    segment.push(`${segment.length ? "L" : "M"}${px},${py}`);
+    const top = total + Math.max(0, value);
+    upper.push(`${px},${y(top).toFixed(1)}`);
+    lower.push(`${px},${y(total).toFixed(1)}`);
   }
-  if (segment.length) grey.push(segment.join(" "));
-  return [
-    ...grey.map((path) => `<path class="flow-ubrig-line" d="${path}" />`),
-    ...warn.map((path) => `<path class="flow-ubrig-warn-line" d="${path}" />`),
-  ].join("");
+  flushFill();
+  return [...fills, ...warn.map((path) => `<path class="flow-ubrig-warn-line" d="${path}" />`)].join("");
 }
 
 function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKey) {
@@ -1207,7 +1215,7 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
       <circle class="marker-dot" style="fill:${marker.color}" cx="${lineX.toFixed(1)}" cy="${y(stackTop)}" r="3.2" />
       <text class="marker-label" style="fill:${marker.color}" x="${labelX.toFixed(1)}" y="${labelY}" text-anchor="middle">${marker.label}</text>`;
   }).join("");
-  const ubrigOverlay = leftLayerKey ? ubrigLineMarkup(points, leftLayerKey, real, x, y) : "";
+  const ubrigOverlay = leftLayerKey ? ubrigAreaMarkup(points, leftLayerKey, real, x, y, totals) : "";
   svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ubrigOverlay}${ticks}${marks}
     <line class="hover-guide" visibility="hidden" />
     <rect class="hover-catch" x="${padX}" y="${band}" width="${width - padX * 2}" height="${plotHeight}" fill="transparent" />`;
@@ -1491,13 +1499,13 @@ function paintChart(svg, series, specs, values, plotHeight, prefix, markers) {
   const height = band + plotHeight + padBottom;
   const y = (value) => band + plotHeight - ((value - scale.axisMin) / (scale.axisMax - scale.axisMin)) * plotHeight;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  const colors = { buy: "#0c8f62", rent: "#2a62b5", loan: "#0c8f62", etf: BUY_ETF_COLOR };
+  const colors = { buy: BUY_COLOR, rent: RENT_COLOR, loan: BUY_COLOR, etf: BUY_ETF_COLOR };
   const lineLabels = { buy: "Kaufen", rent: "Mieten", loan: "Restschuld", etf: "ETF im Kauf" };
   const paths = specs.map(([key, klass]) => {
     const points = series.map((point, index) => `${x(index).toFixed(1)},${y(point[key]).toFixed(1)}`);
     const line = points.map((point, index) => `${index ? "L" : "M"}${point}`).join(" ");
     const area = `${line} L${x(series.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
-    const color = colors[klass] || "#2a62b5";
+    const color = colors[klass] || RENT_COLOR;
     const fill = klass === "etf" ? "" : `<path fill="${color}" fill-opacity="0.14" d="${area}" />`;
     return `${fill}<path class="${klass}-line" fill="none" d="${line}" />`;
   }).join("");
