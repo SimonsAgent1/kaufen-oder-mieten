@@ -100,6 +100,21 @@ function wireEnter(root) {
 }
 
 const STAY_ON_STEP = "__stay__";
+/** Internal placeholders for the hidden path when only one side was asked (not shown in recap). */
+const HIDDEN_RENT_KALT = 700;
+const HIDDEN_PURCHASE = 500_000;
+
+function pathScope() {
+  return chat.answers.pathScope || "both";
+}
+
+function asksRent() {
+  return pathScope() !== "buy";
+}
+
+function asksBuy() {
+  return pathScope() !== "rent";
+}
 
 function bounds() {
   return window.scenarioBounds;
@@ -124,6 +139,7 @@ const chat = {
 
 function blankAnswers() {
   return {
+    pathScope: null,
     adults: [],
     children: [],
     together: null,
@@ -142,7 +158,12 @@ function blankAnswers() {
 }
 
 function steps() {
-  const list = [{ id: "count", render: renderCount, read: readCount }];
+  const list = [];
+  if (!chat.answers.pathScope) {
+    list.push({ id: "path", render: renderPath, read: readPath });
+    return list;
+  }
+  list.push({ id: "count", render: renderCount, read: readCount });
   const count = chat.answers.count || 1;
   for (let index = 0; index < count; index += 1) {
     list.push({ id: `person-${index}`, render: () => renderPerson(index), read: () => readPerson(index) });
@@ -164,12 +185,17 @@ function steps() {
       list.push({ id: `retire-${index}`, render: () => renderRetireAge(index), read: () => readRetireAge(index) });
     }
   }
-  list.push({ id: "rent", render: renderRent, read: readRent });
-  if (childrenOverlap(chat.answers.children || [])) {
+  const skipRentForLink = chat.preset || chat.linkDwelling;
+  if (asksRent() && !skipRentForLink) list.push({ id: "rent", render: renderRent, read: readRent });
+  if (asksRent() && childrenOverlap(chat.answers.children || [])) {
     list.push({ id: "extra", render: renderExtra, read: readExtra });
   }
-  if (!chat.preset && !chat.linkDwelling) list.push({ id: "dwelling", render: renderDwelling, read: readDwelling });
-  else list.push({ id: "cash", render: renderCash, read: readCash });
+  if (asksBuy()) {
+    if (!chat.preset && !chat.linkDwelling) list.push({ id: "dwelling", render: renderDwelling, read: readDwelling });
+    else list.push({ id: "cash", render: renderCash, read: readCash });
+  } else if (!chat.preset && !chat.linkDwelling) {
+    list.push({ id: "location", render: renderLocation, read: readLocation });
+  }
   list.push({ id: "horizon", render: renderHorizon, read: readHorizon });
   list.push({ id: "church", render: renderChurch, read: readChurch });
   list.push({ id: "etf", render: renderEtf, read: readEtf });
@@ -273,6 +299,30 @@ function clearStep(id) {
     delete chat.answers.count;
     chat.answers.adults = [];
   }
+  if (id === "path") chat.answers.pathScope = null;
+  if (id === "location") {
+    chat.answers.bundesland = "Bayern";
+    chat.answers.cash = null;
+  }
+}
+
+function renderPath() {
+  return `<h2>Welchen Weg willst du zuerst durchrechnen?</h2>
+    <div class="choices">
+      <button type="button" class="primary" data-next data-path="both">Beide</button>
+      <button type="button" data-next data-path="buy">nur Kaufen</button>
+      <button type="button" data-next data-path="rent">nur Mieten</button>
+    </div>
+    <p class="note">Du kannst den anderen Weg später ergänzen.</p>
+    <p class="form-error"></p>
+    <div class="chat-nav"><button type="button" data-back>Zurück</button></div>`;
+}
+
+function readPath() {
+  const choice = chat.clicked?.dataset?.path;
+  if (!choice) return "Bitte einen Weg wählen.";
+  chat.answers.pathScope = choice;
+  return null;
 }
 
 function abandonStepsFrom(index) {
@@ -770,6 +820,30 @@ function renderCash() {
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
 }
 
+function renderLocation() {
+  const lands = (chat.laender || ["Bayern"]).map((name) => {
+    const selected = name === (chat.answers.bundesland || "Bayern") ? " selected" : "";
+    return `<option${selected}>${name}</option>`;
+  }).join("");
+  const cash = chat.answers.cash === null ? "" : chat.answers.cash;
+  return `<h2>Bundesland und Bargeld</h2>
+    <p>Die Kirchensteuer hängt vom Bundesland ab.</p>
+    <label>Bundesland<select name="land">${lands}</select></label>
+    ${euroField("cash", "Bargeld außerhalb des Depots, in Euro", cash, { required: true })}
+    <p class="form-error"></p>
+    <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
+}
+
+function readLocation() {
+  const cash = readEuroField(host(), "cash");
+  const err = bounds()?.validateEuro(cash, bounds().CAPS.cash, "Bargeld", { allowZero: true });
+  if (err) return err;
+  if (cash == null) return "Bitte alle Felder ausfüllen.";
+  chat.answers.bundesland = host().querySelector("[name=land]").value;
+  chat.answers.cash = cash;
+  return null;
+}
+
 function readCash() {
   const cash = readEuroField(host(), "cash");
   const err = bounds()?.validateEuro(cash, bounds().CAPS.cash, "Betrag", { allowZero: true });
@@ -891,6 +965,7 @@ function buildScenario() {
       kaltmiete = index === 0 ? chat.answers.rents.a || 0 : chat.answers.rents.b || 0;
     }
     else kaltmiete = (chat.answers.rents.shared || 0) / chat.answers.count;
+    if (!asksRent()) kaltmiete = HIDDEN_RENT_KALT;
     return {
       id,
       label: adult.label || "",
@@ -928,25 +1003,36 @@ function buildScenario() {
     };
   }
   const dwellingPreset = chat.preset || chat.linkDwelling;
-  const dwelling = dwellingPreset
-    ? {
-        purchase_price: dwellingPreset.purchase_price,
-        bundesland: dwellingPreset.bundesland,
-        notary_rate: dwellingPreset.notary_rate ?? 0.02,
-        broker_rate: dwellingPreset.broker_rate ?? 0.0357,
-        owner_costs: dwellingPreset.owner_costs ?? 250,
-        move_in_cost_2026: 0,
-        min_equity: true,
-      }
-    : {
-        purchase_price: chat.answers.price,
-        bundesland: chat.answers.bundesland,
-        move_in_cost_2026: chat.answers.moveIn || 0,
-        min_equity: true,
-      };
+  let dwelling;
+  if (dwellingPreset) {
+    dwelling = {
+      purchase_price: dwellingPreset.purchase_price,
+      bundesland: dwellingPreset.bundesland,
+      notary_rate: dwellingPreset.notary_rate ?? 0.02,
+      broker_rate: dwellingPreset.broker_rate ?? 0.0357,
+      owner_costs: dwellingPreset.owner_costs ?? 250,
+      move_in_cost_2026: 0,
+      min_equity: true,
+    };
+  } else if (asksBuy()) {
+    dwelling = {
+      purchase_price: chat.answers.price,
+      bundesland: chat.answers.bundesland,
+      move_in_cost_2026: chat.answers.moveIn || 0,
+      min_equity: true,
+    };
+  } else {
+    dwelling = {
+      purchase_price: HIDDEN_PURCHASE,
+      bundesland: chat.answers.bundesland || "Bayern",
+      move_in_cost_2026: 0,
+      min_equity: true,
+    };
+  }
   const younger = adults[youngerIndex()];
   return {
     version: 1,
+    path_scope: pathScope(),
     as_of: asOfMonth(),
     adults,
     together_from: adults.length === 2 ? chat.answers.together : null,
@@ -984,13 +1070,17 @@ function renderRecap() {
   const childCount = scenario.children.length;
   const childLine = childCount === 0 ? "Keine Kinder" : childCount === 1 ? "Ein Kind" : `${childCount} Kinder`;
   lines.push(["children", childLine]);
-  const moveIn = scenario.dwelling.move_in_cost_2026
-    ? `, Einzug ${Math.round(scenario.dwelling.move_in_cost_2026).toLocaleString("de-DE")} €`
-    : "";
-  lines.push([
-    "dwelling",
-    `Haus oder Wohnung ${Math.round(scenario.dwelling.purchase_price).toLocaleString("de-DE")} €, ${scenario.dwelling.bundesland}${moveIn}`,
-  ]);
+  if (asksBuy()) {
+    const moveIn = scenario.dwelling.move_in_cost_2026
+      ? `, Einzug ${Math.round(scenario.dwelling.move_in_cost_2026).toLocaleString("de-DE")} €`
+      : "";
+    lines.push([
+      "dwelling",
+      `Haus oder Wohnung ${Math.round(scenario.dwelling.purchase_price).toLocaleString("de-DE")} €, ${scenario.dwelling.bundesland}${moveIn}`,
+    ]);
+  } else {
+    lines.push(["location", `Bundesland ${scenario.dwelling.bundesland}`]);
+  }
   lines.push(["horizon", `Ende mit ${scenario.horizon.age}, Pflege ab ${chat.answers.careAge}.`]);
   const churchOn = scenario.adults.filter((adult) => adult.church_tax).map((adult) => adult.label || "Person");
   lines.push(["church", churchOn.length ? `Kirchensteuer: ${churchOn.join(", ")}` : "Kirchensteuer aus"]);
@@ -1046,6 +1136,7 @@ function startChatFromGate() {
   chat.answers = blankAnswers();
   if (chat.fromWohnungLink && chat.linkDwelling) {
     chat.preset = chat.linkDwelling;
+    chat.answers.pathScope = "buy";
   }
   chat.cursor = 0;
   window.scenarioStore.beginNewRow();
@@ -1129,14 +1220,86 @@ async function bootChat() {
       chat.linkDwelling = await response.json();
       chat.fromWohnungLink = true;
       chat.preset = chat.linkDwelling;
+      chat.answers.pathScope = "buy";
     }
   }
   wireGate();
   showGate();
 }
 
+function openPathCompletion(side, current) {
+  if (!current) return;
+  chat.answers = blankAnswers();
+  chat.answers.pathScope = "both";
+  if (chat.fromWohnungLink) {
+    chat.preset = dwellingPresetFromScenario(current.dwelling);
+  } else {
+    chat.preset = null;
+  }
+  chat.answers.count = current.adults.length;
+  chat.answers.adults = current.adults.map((adult) => ({
+    label: adult.label,
+    birth: adult.birth,
+    gross: adult.gross_salary,
+    work: adult.work_start,
+    depot: adult.depot,
+    sparrate: adult.sparrate,
+    retire_age: adult.retire_age,
+    church_tax: Boolean(adult.church_tax),
+    church_tax_consent: Boolean(adult.church_tax_consent),
+  }));
+  chat.answers.together = current.together_from;
+  chat.answers.sharing = current.together_from
+    ? current.together_from > asOfMonth()
+      ? "no"
+      : "yes"
+    : null;
+  chat.answers.married = current.married_from;
+  chat.answers.marriedChoice = !current.married_from
+    ? "no"
+    : current.married_from > asOfMonth()
+      ? "future"
+      : "yes";
+  if (current.path_scope === "both") {
+    chat.answers.rents = {
+      solo: current.adults[0]?.kaltmiete || 0,
+      a: current.adults[0]?.kaltmiete || 0,
+      b: current.adults[1]?.kaltmiete || 0,
+      shared: current.shared_kaltmiete || 0,
+    };
+  }
+  chat.answers.children = (current.children || []).map((child) => ({
+    birth: child.birth,
+    leave: current.adults.map(
+      (adult) => child.leave?.find((item) => item.adult_id === adult.id)?.months || 0,
+    ),
+  }));
+  chat.answers.extraChoice = current.extra_rent ? "yes" : "no";
+  chat.answers.extra = current.extra_rent
+    ? { yes: true, amount: current.extra_rent.amount_2026, age: 20 }
+    : null;
+  const consume = current.beliefs?.etf_consume ?? 0;
+  chat.answers.etfMode = consume >= 1 ? "draw" : "hold";
+  chat.answers.etfReserve = current.beliefs?.etf_reserve ?? 0;
+  chat.answers.bundesland = current.dwelling.bundesland;
+  chat.answers.cash = current.equity_cash ?? 0;
+  if (current.path_scope !== "rent") {
+    chat.answers.price = current.dwelling.purchase_price;
+    chat.answers.moveIn = current.dwelling.move_in_cost_2026 || 0;
+  }
+  chat.answers.careAge = current.adults[0]?.care_age ?? null;
+  chat.answers.horizonAge = current.horizon?.age ?? null;
+  const target = side === "rent" ? "rent" : "dwelling";
+  chat.cursor = Math.max(0, steps().findIndex((step) => step.id === target));
+  showChat();
+  render();
+}
+
+window.openPathCompletion = openPathCompletion;
+
 window.reopenChat = (scenario) => {
   chat.answers = blankAnswers();
+  chat.answers.pathScope = scenario.path_scope || "both";
   if (chat.fromWohnungLink) {
     chat.preset = dwellingPresetFromScenario(scenario.dwelling);
   } else {
@@ -1166,12 +1329,14 @@ window.reopenChat = (scenario) => {
   } else {
     chat.answers.marriedChoice = scenario.married_from > asOfMonth() ? "future" : "yes";
   }
-  chat.answers.rents = {
-    solo: scenario.adults[0]?.kaltmiete || 0,
-    a: scenario.adults[0]?.kaltmiete || 0,
-    b: scenario.adults[1]?.kaltmiete || 0,
-    shared: scenario.shared_kaltmiete || 0,
-  };
+  if (scenario.path_scope !== "buy") {
+    chat.answers.rents = {
+      solo: scenario.adults[0]?.kaltmiete || 0,
+      a: scenario.adults[0]?.kaltmiete || 0,
+      b: scenario.adults[1]?.kaltmiete || 0,
+      shared: scenario.shared_kaltmiete || 0,
+    };
+  }
   chat.answers.children = (scenario.children || []).map((child) => ({
     birth: child.birth,
     leave: scenario.adults.map((adult) => child.leave?.find((item) => item.adult_id === adult.id)?.months || 0),
@@ -1186,10 +1351,12 @@ window.reopenChat = (scenario) => {
       if (adult.church_tax_consent) adult.church_tax = true;
     });
   }
-  chat.answers.price = scenario.dwelling.purchase_price;
   chat.answers.bundesland = scenario.dwelling.bundesland;
-  chat.answers.moveIn = scenario.dwelling.move_in_cost_2026 || 0;
   chat.answers.cash = scenario.equity_cash ?? 0;
+  if (scenario.path_scope !== "rent") {
+    chat.answers.price = scenario.dwelling.purchase_price;
+    chat.answers.moveIn = scenario.dwelling.move_in_cost_2026 || 0;
+  }
   chat.answers.careAge = scenario.adults[0]?.care_age ?? null;
   chat.answers.horizonAge = scenario.horizon?.age ?? null;
   chat.cursor = steps().findIndex((step) => step.id === "recap");

@@ -11,6 +11,16 @@ let captureResultSnapshot = false;
 let horizonMonthYear = null;
 let horizonMonthYearBound = false;
 let pathView = "both";
+
+function pathViewFromScope(scope) {
+  if (scope === "buy") return "buy";
+  if (scope === "rent") return "rent";
+  return "both";
+}
+
+function applyPathScopeFromScenario(body) {
+  pathView = pathViewFromScope(body?.path_scope || "both");
+}
 const BUY_COLOR = "#0c8f62";
 const RENT_COLOR = "#2a62b5";
 const BUY_ETF_COLOR = "#0e9f6e";
@@ -760,6 +770,8 @@ async function loadBundeslaender() {
 
 async function showScenario(next, demo) {
   scenario = next;
+  if (!scenario.path_scope) scenario.path_scope = "both";
+  applyPathScopeFromScenario(scenario);
   if (scenario.dwelling.move_in_cost_2026 == null) scenario.dwelling.move_in_cost_2026 = 0;
   if (!scenario.beliefs) scenario.beliefs = {};
   touched.sollzins = scenario.beliefs.sollzins != null;
@@ -814,9 +826,11 @@ document.getElementById("real")?.addEventListener("change", () => latest && rend
 function syncPathViewUi() {
   const results = document.getElementById("results");
   if (results) results.dataset.pathView = pathView;
-  document.querySelectorAll(".path-view-btn").forEach((btn) => {
-    btn.setAttribute("aria-pressed", btn.dataset.path === pathView ? "true" : "false");
-  });
+  const completeRent = document.getElementById("complete-rent");
+  const completeBuy = document.getElementById("complete-buy");
+  const scope = scenario?.path_scope || "both";
+  if (completeRent) completeRent.hidden = scope !== "buy";
+  if (completeBuy) completeBuy.hidden = scope !== "rent";
   const legend = document.getElementById("wealth-legend");
   if (legend) {
     if (pathView === "buy") {
@@ -831,20 +845,8 @@ function syncPathViewUi() {
   }
 }
 
-function setPathView(mode) {
-  if (mode !== "both" && mode !== "buy" && mode !== "rent") return;
-  pathView = mode;
-  syncPathViewUi();
-  if (!latest) return;
-  const real = document.getElementById("real")?.checked ?? true;
-  drawWealth(latest.series, real, latest.markers);
-  drawLoan(latest.series, latest.markers);
-  drawFlows(latest.cashflow || [], real, latest.markers);
-}
-
-document.querySelectorAll(".path-view-btn").forEach((btn) => {
-  btn.addEventListener("click", () => setPathView(btn.dataset.path));
-});
+document.getElementById("complete-rent")?.addEventListener("click", () => window.openPathCompletion("rent", scenario));
+document.getElementById("complete-buy")?.addEventListener("click", () => window.openPathCompletion("buy", scenario));
 function gapTone(buy, rent) {
   const gap = buy - rent;
   if (Math.abs(gap) < 1) return "tie";

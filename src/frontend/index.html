@@ -19,7 +19,7 @@
 
   <section id="gate" class="gate chat" hidden>
     <h2>Welcher Haushalt?</h2>
-    <p class="lead">Wähle einen gespeicherten Haushalt oder starte neu. Nichts wird geöffnet, bis du eine Zeile wählst.</p>
+    <p class="lead">Wähle einen gespeicherten Haushalt oder starte neu.</p>
     <div id="gate-rows" class="gate-list"></div>
     <div class="gate-actions">
       <button type="button" class="gate-btn gate-btn-primary" id="gate-new">Neu anfangen</button>
@@ -40,11 +40,8 @@
         <label class="file-button">Import<input id="import" type="file" accept=".json,.yaml,.yml,application/json,text/yaml"></label>
       </div>
       <p id="export-note" class="export-hint">Export: Einkommen und Geburtsdaten, nur auf diesem Gerät.</p>
-      <div class="path-view" role="group" aria-label="Ansicht">
-        <button type="button" class="path-view-btn" data-path="both" aria-pressed="true">Beide</button>
-        <button type="button" class="path-view-btn" data-path="buy" aria-pressed="false">nur Kaufen</button>
-        <button type="button" class="path-view-btn" data-path="rent" aria-pressed="false">nur Mieten</button>
-      </div>
+      <button type="button" id="complete-rent" class="path-complete" hidden>Mieten ergänzen</button>
+      <button type="button" id="complete-buy" class="path-complete" hidden>Kaufen ergänzen</button>
       <label class="switch result-real"><input type="checkbox" id="real" checked><span class="track"></span> Euro von heute</label>
     </div>
     <div class="summary-block">

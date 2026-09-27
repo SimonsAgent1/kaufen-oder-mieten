@@ -2,6 +2,8 @@
 
 Version 1. Unbekannte Felder werden abgelehnt. Die Datei ist YAML oder JSON.
 
+`path_scope` ist `both`, `buy` oder `rent`. Es speichert, welche Seite im Chat schon mit echten Angaben durchlaufen wurde. Fehlt das Feld, gilt `both`. Die Rechnung läuft immer für beide Wege; interne Platzhalter ersetzen nur fehlende Eingaben.
+
 `as_of` ist der erste Tag eines Monats. Die Rechnung beginnt dort. Die Steuerfiguren bleiben die Näherung für 2026.
 
 ## Personen

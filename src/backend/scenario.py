@@ -7,6 +7,8 @@ from datetime import date
 from pathlib import Path
 
 import yaml
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 LINK_FIELDS = ("purchase_price", "bundesland", "notary_rate", "broker_rate", "owner_costs")
@@ -125,6 +127,7 @@ class Scenario(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int = Field(default=1)
+    path_scope: Literal["both", "buy", "rent"] = "both"
     as_of: date
     adults: list[Adult] = Field(min_length=1, max_length=2)
     together_from: date | None = None
