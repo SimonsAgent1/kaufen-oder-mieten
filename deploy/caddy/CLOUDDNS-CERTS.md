@@ -61,12 +61,12 @@ chmod 600 ~/.config/buy-vs-rent/clouddns.env
 ./scripts/netcup-clouddns-ddns.sh
 ```
 
-Optional: Fritz custom DynDNS with `scripts/fritz-netcup-ddns.py` (reads the same `clouddns.env` plus `fritz.env`). Use either a cron/timer on the script **or** Fritz, not both unless you want redundancy.
+**Fritz (on IP change):** from the laptop on the home LAN, `scripts/fritz-netcup-ddns.py` with `fritz.env` and `clouddns.env`. Set `NETCUP_CUSTOMER_NUMBER` in `fritz.env`. Fritz updates the **apex** when the WAN address changes; provider password for Netcup stays empty (`NETCUP_DDNS_PASSWORD` only if Netcup asks for one).
 
-Example cron on the mini (repo checkout path as needed):
+**Cron (apex + www):** on the mini, every five minutes:
 
 ```cron
-*/30 * * * * /home/privat/coding/buy-vs-rent/scripts/netcup-clouddns-ddns.sh >> ~/.local/state/netcup-ddns.log 2>&1
+*/5 * * * * /home/simon-mini/kaufen-oder-mieten/scripts/netcup-clouddns-ddns.sh >> ~/.local/state/netcup-ddns.log 2>&1
 ```
 
-Keep **both** `kauf-oder-mieten.de` and `www.kauf-oder-mieten.de` A records updated; the script updates both.
+Running **both** is fine: Fritz is fast on reconnect; cron keeps **www** in sync and catches missed Fritz updates.

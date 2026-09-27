@@ -28,19 +28,23 @@ def main() -> None:
     if not token:
         print(f"Missing NETCUP_CLOUDDNS_TOKEN in {CLOUD_ENV}", file=sys.stderr)
         sys.exit(1)
-    customer = os.environ.get("NETCUP_CUSTOMER_NUMBER") or os.environ.get("FRITZBOX_CUSTOMER_NUMBER", "")
-    password = os.environ.get("FRITZBOX_PASSWORD", "")
+    customer = os.environ.get("NETCUP_CUSTOMER_NUMBER") or os.environ.get(
+        "FRITZBOX_CUSTOMER_NUMBER", ""
+    )
+    fritz_password = os.environ.get("FRITZBOX_PASSWORD", "")
     user = os.environ.get("FRITZBOX_USER", "")
-    if not password:
+    if not fritz_password:
         print("Missing FRITZBOX_PASSWORD in fritz.env", file=sys.stderr)
         sys.exit(1)
+    # Netcup wsDynDns uses token= in the URL; Fritz provider fields are customer + empty password.
+    ddns_password = os.environ.get("NETCUP_DDNS_PASSWORD", "")
 
     from fritzconnection import FritzConnection
 
     fc = FritzConnection(
         address=os.environ.get("FRITZBOX_ADDRESS", "192.168.178.1"),
         user=user,
-        password=password,
+        password=fritz_password,
     )
     # Fritz replaces <ipaddr> with the current WAN IPv4.
     update_url = (
@@ -56,7 +60,7 @@ def main() -> None:
             "NewUpdateURL": update_url,
             "NewDomain": "kauf-oder-mieten.de",
             "NewUsername": customer,
-            "NewPassword": password,
+            "NewPassword": ddns_password,
             "NewMode": "ddns_v4",
             "NewServerIPv4": "",
             "NewServerIPv6": "",
