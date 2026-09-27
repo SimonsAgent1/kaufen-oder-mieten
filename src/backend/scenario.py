@@ -13,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 LINK_FIELDS = ("purchase_price", "bundesland", "notary_rate", "broker_rate", "owner_costs")
 MAX_CHILDREN = 8
+"""Internal buy-path price when path_scope is rent and no purchase was asked."""
+ENGINE_RENT_DWELLING_PRICE = 500_000.0
 
 
 def first_of_month(value: date) -> date:
@@ -91,7 +93,7 @@ class Horizon(BaseModel):
 class Dwelling(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    purchase_price: float = Field(gt=0, le=5_000_000)
+    purchase_price: float | None = Field(default=None, gt=0, le=5_000_000)
     bundesland: str
     transfer_tax: float | None = Field(default=None, ge=0, le=0.15)
     notary_rate: float = Field(default=0.02, ge=0, le=0.1)
@@ -196,10 +198,30 @@ class Scenario(BaseModel):
             for adult in self.adults:
                 if adult.church_tax_consent:
                     adult.church_tax = True
+        if self.path_scope in ("both", "buy") and self.dwelling.purchase_price is None:
+            raise ValueError("Für Kaufen oder beide Wege braucht das Szenario einen Kaufpreis.")
         from buy_vs_rent.bounds import validate_scenario
 
         validate_scenario(self)
         return self
+
+
+def scenario_for_engine(scenario: Scenario) -> Scenario:
+    """Fill the hidden buy path for rent-only scenarios that omit the purchase."""
+    if scenario.path_scope != "rent":
+        return scenario
+    if scenario.dwelling.purchase_price is not None:
+        return scenario
+    return scenario.model_copy(
+        update={
+            "dwelling": scenario.dwelling.model_copy(
+                update={
+                    "purchase_price": ENGINE_RENT_DWELLING_PRICE,
+                    "min_equity": False,
+                }
+            )
+        }
+    )
 
 
 def label_for(adult: Adult, index: int) -> str:

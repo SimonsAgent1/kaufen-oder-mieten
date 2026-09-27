@@ -270,6 +270,30 @@ def test_impressum_page_is_served():
     assert "löscht diese Kopie" not in response.text
 
 
+def test_rent_path_scope_without_purchase_price_is_200(monkeypatch):
+    monkeypatch.setattr(
+        "buy_vs_rent.api.fetch_market_rate",
+        lambda years: MarketRate(0.03, "2026-08", "series", "bundesbank"),
+    )
+    body = _body()
+    body["path_scope"] = "rent"
+    body["adults"][0]["kaltmiete"] = 900
+    body["horizon"] = {"adult_id": "ada", "age": 80}
+    body["dwelling"] = {"bundesland": "Hessen", "min_equity": True}
+    response = client.post("/api/compare", json=body)
+    assert response.status_code == 200
+    assert "Der Kaufpreis startet bei" not in "\n".join(response.json()["assumptions"])
+
+
+def test_buy_path_scope_without_purchase_price_is_422():
+    body = _body()
+    body["path_scope"] = "buy"
+    body["dwelling"] = {"bundesland": "Hessen", "min_equity": True}
+    response = client.post("/api/compare", json=body)
+    assert response.status_code == 422
+    assert "Kaufpreis" in response.json()["detail"]
+
+
 def test_church_tax_without_consent_is_422():
     body = _body()
     body["adults"][0]["church_tax"] = True

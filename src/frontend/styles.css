@@ -747,6 +747,31 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 #results[data-path-view="rent"] .path-both-only {
   display: none !important;
 }
+#results[data-path-view="buy"] .hero-grid,
+#results[data-path-view="rent"] .hero-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+#results[data-path-view="buy"] .hero.buy,
+#results[data-path-view="rent"] .hero.rent {
+  grid-column: 1;
+  width: 100%;
+}
+#results[data-path-view="buy"] .horizon-month {
+  border-left: 3px solid var(--buy-accent);
+  border-right: 1px solid var(--line);
+}
+#results[data-path-view="rent"] .horizon-month {
+  border-left: 1px solid var(--line);
+  border-right: 3px solid var(--rent-accent);
+}
+#results[data-path-view="buy"] .horizon-month-grid,
+#results[data-path-view="rent"] .horizon-month-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+#results[data-path-view="buy"] .horizon-month-col:first-child,
+#results[data-path-view="rent"] .horizon-month-col:last-child {
+  max-width: 100%;
+}
 .result-actions {
   display: flex;
   flex-wrap: wrap;

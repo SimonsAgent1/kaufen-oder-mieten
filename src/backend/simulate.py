@@ -277,7 +277,9 @@ class _Mortgage:
     switched: bool = False
 
 
-def compare(scenario: Scenario) -> Result:
+def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
+    if display is None:
+        display = scenario
     beliefs = scenario.beliefs
     dwelling = scenario.dwelling
     calendar = build_calendar(scenario)
@@ -800,7 +802,9 @@ def compare(scenario: Scenario) -> Result:
     if depot_empty:
         warnings.append("Ein Depot ist vor dem Horizont leer, auch in der Pflege. Danach ist das keine Ersparnis mehr.")
 
-    factor = price_to_rent(dwelling.purchase_price, scenario)
+    factor = None
+    if display.path_scope != "rent":
+        factor = price_to_rent(dwelling.purchase_price, scenario)
     if factor is not None:
         price_to_rent_value = factor
         price_band = price_to_rent_band(factor)
@@ -822,6 +826,7 @@ def compare(scenario: Scenario) -> Result:
 
     assumptions = _assumptions(
         scenario,
+        display,
         names,
         end,
         planned_care,
@@ -888,6 +893,7 @@ def compare(scenario: Scenario) -> Result:
 
 def _assumptions(
     scenario: Scenario,
+    display: Scenario,
     names: dict[str, str],
     end: date,
     planned_care: date,
@@ -902,19 +908,7 @@ def _assumptions(
     who = " und ".join(names[adult.id] for adult in scenario.adults)
     depots = ", ".join(f"{names[adult.id]} {euro_de(adult.depot)} €" for adult in scenario.adults)
     pension_bits = ", ".join(f"{names[adult.id]} {euro_de(pensions[adult.id])} €" for adult in scenario.adults)
-    if dwelling.owner_costs_rate is not None:
-        rate_text = f"{dwelling.owner_costs_rate * 100:.2f}".replace(".", ",")
-        owner_euro = (
-            f"Eigentümerkosten sind {rate_text} % des Kaufpreises im Jahr, "
-            f"also {euro_de(dwelling.owner_costs)} € im Monat."
-        )
-    else:
-        rate_yearly = (dwelling.owner_costs * 12 / dwelling.purchase_price) if dwelling.purchase_price else 0.0
-        rate_text = f"{rate_yearly * 100:.2f}".replace(".", ",")
-        owner_euro = (
-            f"Eigentümerkosten starten bei {euro_de(dwelling.owner_costs)} € im Monat "
-            f"({rate_text} % des Kaufpreises im Jahr)."
-        )
+    rent_only = display.path_scope == "rent"
     land_share = "Ein niedrigerer Anteil ist im Modell der Weg, den Grund und Boden auszuklammern."
     lines = [
         f"Start ist der {_de_date(scenario.as_of)}. Die Rechnung läuft bis zum {_de_date(end)}. "
@@ -928,31 +922,45 @@ def _assumptions(
         "Kindererziehungszeiten sind nicht enthalten.",
         f"Die Mietsteigerung liegt bei {beliefs.rent_growth * 100:.1f} % pro Jahr.",
         f"Die Inflation liegt bei {beliefs.inflation * 100:.1f} % pro Jahr.",
-        f"Die Wertsteigerung von Haus oder Wohnung liegt bei {dwelling.appreciation * 100:.1f} % pro Jahr. "
-        f"Der Kaufpreis startet bei {euro_de(dwelling.purchase_price)} € und steigt bis zum Kauf mit.",
-        (
-            f"Grunderwerbsteuer in {dwelling.bundesland}: {transfer * 100:.2f} % des Kaufpreises."
-        ),
-        (
-            f"Notar und Grundbuch: {dwelling.notary_rate * 100:.1f} % des Kaufpreises."
-        ),
-        (
-            f"Makler, Käuferanteil: {dwelling.broker_rate * 100:.2f} % des Kaufpreises."
-        ),
-        owner_euro,
-        land_share,
     ]
-    if dwelling.min_equity:
-        lines.append(
-            "Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital die Nebenkosten plus 15 Prozent des Kaufpreises decken."
+    if not rent_only:
+        if dwelling.owner_costs_rate is not None:
+            rate_text = f"{dwelling.owner_costs_rate * 100:.2f}".replace(".", ",")
+            owner_euro = (
+                f"Eigentümerkosten sind {rate_text} % des Kaufpreises im Jahr, "
+                f"also {euro_de(dwelling.owner_costs)} € im Monat."
+            )
+        else:
+            rate_yearly = (dwelling.owner_costs * 12 / dwelling.purchase_price) if dwelling.purchase_price else 0.0
+            rate_text = f"{rate_yearly * 100:.2f}".replace(".", ",")
+            owner_euro = (
+                f"Eigentümerkosten starten bei {euro_de(dwelling.owner_costs)} € im Monat "
+                f"({rate_text} % des Kaufpreises im Jahr)."
+            )
+        lines.extend(
+            [
+                f"Die Wertsteigerung von Haus oder Wohnung liegt bei {dwelling.appreciation * 100:.1f} % pro Jahr. "
+                f"Der Kaufpreis startet bei {euro_de(dwelling.purchase_price)} € und steigt bis zum Kauf mit.",
+                f"Grunderwerbsteuer in {dwelling.bundesland}: {transfer * 100:.2f} % des Kaufpreises.",
+                f"Notar und Grundbuch: {dwelling.notary_rate * 100:.1f} % des Kaufpreises.",
+                f"Makler, Käuferanteil: {dwelling.broker_rate * 100:.2f} % des Kaufpreises.",
+                owner_euro,
+                land_share,
+            ]
         )
+        if dwelling.min_equity:
+            lines.append(
+                "Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital die Nebenkosten plus 15 Prozent des Kaufpreises decken."
+            )
+        else:
+            lines.append("Gekauft wird, sobald Depot und zusätzliches Eigenkapital die Nebenkosten decken.")
+        if dwelling.move_in_cost_2026 > 0:
+            lines.append(
+                f"Einmalige Einzugskosten in Euro von 2026: {euro_de(dwelling.move_in_cost_2026)}. "
+                "Sie werden zum Kaufmonat mit der Inflation angehoben, bar mit den Nebenkosten gezahlt und nicht finanziert."
+            )
     else:
-        lines.append("Gekauft wird, sobald Depot und zusätzliches Eigenkapital die Nebenkosten decken.")
-    if dwelling.move_in_cost_2026 > 0:
-        lines.append(
-            f"Einmalige Einzugskosten in Euro von 2026: {euro_de(dwelling.move_in_cost_2026)}. "
-            "Sie werden zum Kaufmonat mit der Inflation angehoben, bar mit den Nebenkosten gezahlt und nicht finanziert."
-        )
+        lines.append(f"Bundesland für die Kirchensteuer: {dwelling.bundesland}.")
     if scenario.extra_rent is not None:
         lines.append(
             f"Solange ein Weg noch mietet, kommen von {_de_date(scenario.extra_rent.start)} bis {_de_date(scenario.extra_rent.until)} "

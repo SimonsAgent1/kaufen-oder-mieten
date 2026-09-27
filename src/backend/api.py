@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from buy_vs_rent.catalog import render_rules_html
 from buy_vs_rent.profile import load_profile
 from buy_vs_rent.rates import beleihung_spread, fetch_market_rate, household_spread
-from buy_vs_rent.scenario import Scenario, load_scenario, parse_property_link
+from buy_vs_rent.scenario import Scenario, load_scenario, parse_property_link, scenario_for_engine
 from buy_vs_rent.request_counts import (
     record_compare_ok,
     record_compare_reject,
@@ -95,6 +95,8 @@ def _de_number(value: float, signed: bool = False) -> str:
 
 def evaluate(scenario: Scenario) -> dict:
     """Fill an untouched mortgage rate from the Bundesbank series, then compare."""
+    user = scenario
+    scenario = scenario_for_engine(scenario)
     market = fetch_market_rate(scenario.beliefs.zinsbindung_years)
     user_soll = scenario.beliefs.sollzins
     user_anschluss = scenario.beliefs.anschlusszins
@@ -140,11 +142,10 @@ def evaluate(scenario: Scenario) -> dict:
     soll = user_soll if user_soll is not None else suggested
     anschluss = user_anschluss if user_anschluss is not None else soll
     steps.append(f"Sollzins {_de_number(soll * 100)} %, Anschlusszins {_de_number(anschluss * 100)} %.")
-    result = compare(
-        scenario.model_copy(
-            update={"beliefs": scenario.beliefs.model_copy(update={"sollzins": soll, "anschlusszins": anschluss})}
-        )
+    run = scenario.model_copy(
+        update={"beliefs": scenario.beliefs.model_copy(update={"sollzins": soll, "anschlusszins": anschluss})}
     )
+    result = compare(run, display=user)
     payload = result.as_dict()
     payload["sollzins_used"] = soll
     payload["anschlusszins_used"] = anschluss

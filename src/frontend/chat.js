@@ -103,23 +103,32 @@ function wireEnter(root) {
   });
 }
 
-/** Kirchensteuer has only checkboxes; Enter should advance, not toggle. */
-function wireChurchEnter(root) {
-  root.addEventListener(
-    "keydown",
-    (event) => {
-      if (event.key !== "Enter" || event.isComposing) return;
-      event.preventDefault();
-      clickChatAdvance(root);
-    },
-    true,
-  );
+let documentEnterCleanup = null;
+
+function clearDocumentEnter() {
+  if (documentEnterCleanup) {
+    documentEnterCleanup();
+    documentEnterCleanup = null;
+  }
+}
+
+/** Kinder and Kirchensteuer: Enter advances even when focus left the chat. */
+function wireStepDocumentEnter(stepId) {
+  clearDocumentEnter();
+  if (stepId !== "church" && stepId !== "children") return;
+  const onKey = (event) => {
+    if (event.key !== "Enter" || event.isComposing) return;
+    if (host().hidden) return;
+    event.preventDefault();
+    clickChatAdvance(host());
+  };
+  document.addEventListener("keydown", onKey, true);
+  documentEnterCleanup = () => document.removeEventListener("keydown", onKey, true);
 }
 
 const STAY_ON_STEP = "__stay__";
 /** Internal placeholders for the hidden path when only one side was asked (not shown in recap). */
 const HIDDEN_RENT_KALT = 700;
-const HIDDEN_PURCHASE = 500_000;
 
 function pathScope() {
   return chat.answers.pathScope || "both";
@@ -243,6 +252,7 @@ function showChat() {
 }
 
 function showGate() {
+  clearDocumentEnter();
   document.getElementById("gate").hidden = false;
   host().hidden = true;
   document.getElementById("results").hidden = true;
@@ -386,7 +396,7 @@ function render() {
     });
   });
   wireEuroFields(host());
-  if (step.id === "church") wireChurchEnter(host());
+  if (step.id === "church" || step.id === "children") wireStepDocumentEnter(step.id);
   else wireEnter(host());
   wireChurchConsent(host());
 }
@@ -1041,7 +1051,6 @@ function buildScenario() {
     };
   } else {
     dwelling = {
-      purchase_price: HIDDEN_PURCHASE,
       bundesland: chat.answers.bundesland || "Bayern",
       move_in_cost_2026: 0,
       min_equity: true,
@@ -1135,6 +1144,7 @@ async function finish() {
     return;
   }
   window.scenarioStore.persistScenario(scenario);
+  clearDocumentEnter();
   host().hidden = true;
   window.showScenario(scenario, false);
 }
