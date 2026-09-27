@@ -6,6 +6,7 @@ import base64
 import binascii
 import json
 import logging
+from importlib.metadata import version
 from importlib.resources import files
 from pathlib import Path
 
@@ -159,6 +160,15 @@ def rules_page() -> str:
     return render_rules_html()
 
 
+def app_version() -> str:
+    return version("buy-vs-rent")
+
+
+@app.get("/api/version")
+def api_version() -> dict[str, str]:
+    return {"version": app_version()}
+
+
 @app.get("/api/defaults")
 def defaults() -> dict:
     return {
@@ -166,6 +176,7 @@ def defaults() -> dict:
         "kindergeld": 259,
         "basiszins": 0.032,
         "law": "de-2026",
+        "app_version": app_version(),
     }
 
 

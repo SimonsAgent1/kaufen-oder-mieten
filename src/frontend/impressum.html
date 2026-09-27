@@ -19,6 +19,7 @@
     <p>Die Seite wird über HTTPS ausgeliefert. Wer das Netz mithört, sieht die Verbindung und den Seitennamen, nicht das Formular. Mini-PC und Fritz!Box sehen die Verbindung, insbesondere die IP-Adresse. Dieselbe lit. f trägt das Bereitstellen. Eine Frist, falls die IP nach dem Ende im Log bleibt, steht hier nicht, weil keine festgelegt ist. Eine Anfrage an die genannte Adresse gilt diesem Log, falls es eines gibt, und dem Löschen der Kopie im Browser.</p>
   </main>
   <footer class="site-footer">
+    <span id="app-version" class="app-version"></span>
     <a href="/">Zur Rechnung</a>
     <a class="github-mark" href="https://github.com/SimonsAgent1/kaufen-oder-mieten" target="_blank" rel="noopener noreferrer" aria-label="Quelltext">
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -26,5 +27,7 @@
       </svg>
     </a>
   </footer>
+  <script src="/static/scenario.js"></script>
+  <script>mountAppVersion();</script>
 </body>
 </html>

@@ -18,6 +18,17 @@ window.applyChurchTaxConsent = function applyChurchTaxConsent(adult) {
   if (!adult.church_tax_consent) adult.church_tax = false;
 };
 
+window.mountAppVersion = function mountAppVersion() {
+  const el = document.getElementById("app-version");
+  if (!el) return;
+  fetch("/api/version")
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (data?.version) el.textContent = `Version ${data.version}`;
+    })
+    .catch(() => {});
+};
+
 let activeRowId = null;
 let pendingNew = false;
 

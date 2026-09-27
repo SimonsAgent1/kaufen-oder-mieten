@@ -770,6 +770,7 @@ summary { cursor: pointer; font-weight: 650; }
   text-decoration: none;
 }
 .site-footer .github-mark:hover { color: var(--ink); }
+.app-version { color: var(--muted); font-size: 0.82rem; }
 .legal-page { max-width: 40rem; margin: 0 auto; padding: 1rem 1.1rem 2rem; }
 .legal-header h1 { margin-bottom: 0.35rem; }
 .legal-body { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }

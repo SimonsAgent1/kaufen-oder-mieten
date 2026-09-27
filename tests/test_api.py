@@ -212,6 +212,14 @@ dwelling:
     assert date.fromisoformat(response.json()["as_of"])
 
 
+def test_version_endpoint_matches_installed_package():
+    from importlib.metadata import version
+
+    response = client.get("/api/version")
+    assert response.status_code == 200
+    assert response.json()["version"] == version("buy-vs-rent")
+
+
 def test_impressum_page_is_served():
     response = client.get("/impressum")
     assert response.status_code == 200
