@@ -112,6 +112,33 @@ function syncOwnerRateFromEuros() {
   return rate;
 }
 
+function closeAllInfoTips() {
+  document.querySelectorAll(".info-tip").forEach((node) => {
+    node.hidden = true;
+    node.style.position = "";
+    node.style.left = "";
+    node.style.top = "";
+    node.style.width = "";
+    node.style.maxWidth = "";
+  });
+}
+
+function positionInfoTip(wrap, tip) {
+  const margin = 10;
+  const maxW = Math.min(288, window.innerWidth - margin * 2);
+  const rect = wrap.getBoundingClientRect();
+  let left = rect.left;
+  if (left + maxW > window.innerWidth - margin) {
+    left = window.innerWidth - margin - maxW;
+  }
+  left = Math.max(margin, left);
+  tip.style.position = "fixed";
+  tip.style.left = `${left}px`;
+  tip.style.top = `${rect.bottom + 6}px`;
+  tip.style.width = `${maxW}px`;
+  tip.style.maxWidth = `${maxW}px`;
+}
+
 function infoButton(text) {
   const button = document.createElement("button");
   button.type = "button";
@@ -124,17 +151,21 @@ function infoButton(text) {
   tip.textContent = text;
   button.addEventListener("click", (event) => {
     event.stopPropagation();
-    const open = !tip.hidden;
-    document.querySelectorAll(".info-tip").forEach((node) => {
-      node.hidden = true;
-    });
-    tip.hidden = open;
+    const wasOpen = !tip.hidden;
+    closeAllInfoTips();
+    if (!wasOpen) {
+      tip.hidden = false;
+      positionInfoTip(wrap, tip);
+    }
   });
   const wrap = document.createElement("span");
   wrap.className = "info-wrap";
   wrap.append(button, tip);
   return wrap;
 }
+
+window.addEventListener("resize", closeAllInfoTips);
+document.addEventListener("scroll", closeAllInfoTips, true);
 
 function assumptionLine(match) {
   const lines = latest?.assumptions || [];

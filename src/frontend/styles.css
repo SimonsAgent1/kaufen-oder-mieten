@@ -515,12 +515,9 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .info-btn:hover { color: var(--ink); border-color: #c5ced6; }
 .info-tip {
-  position: absolute;
-  z-index: 4;
-  left: 1.35rem;
-  top: -0.15rem;
-  min-width: 12rem;
-  max-width: min(18rem, calc(100vw - 2.5rem));
+  z-index: 20;
+  min-width: 0;
+  max-width: min(18rem, calc(100vw - 1.25rem));
   padding: 0.4rem 0.55rem;
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -531,6 +528,13 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   font-weight: 500;
   line-height: 1.35;
   text-align: left;
+  overflow-wrap: anywhere;
+}
+.beliefs-panel,
+.summary-block,
+.control-label {
+  min-width: 0;
+  max-width: 100%;
 }
 .beliefs-panel .etf-choices { margin-top: 0.15rem; }
 .beliefs-panel .control-label { display: inline-flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
