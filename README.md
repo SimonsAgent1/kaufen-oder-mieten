@@ -2,6 +2,8 @@
 
 Seite: https://kauf-oder-mieten.de
 
+Lizenz: [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0) ([LICENSE](LICENSE)).
+
 Eine Rechnung für ein selbst genutztes Zuhause in Deutschland: kaufen und abbezahlen, oder weiter mieten und denselben Spielraum in einem Aktien-ETF lassen.
 
 Das Ergebnis ist keine Finanz-, Steuer- oder Kreditempfehlung. Der Sollzins startet beim Bundesbank-Durchschnitt und ist kein Angebot. Die Lohnsteuer ist eine Näherung für 2026.
@@ -50,7 +52,7 @@ Von einem sauberen `main` aus:
 ./scripts/publish.sh
 ```
 
-Das Skript prüft, dass keine privaten Pfade getrackt sind, führt die Tests aus und schiebt `main` nur auf das Remote `github` (GitHub). Die Projektpfade stehen in [docs/privacy.md](docs/privacy.md). Ein privates Backup läuft nur über `scripts/backup.sh` auf das Remote `backup` (privates GitLab).
+Das Skript prüft, dass keine privaten Pfade getrackt sind, führt die Tests aus und schiebt `main` nur auf das Remote `github` (GitHub). Die Projektpfade stehen in [docs/privacy.md](docs/privacy.md). Ein privates Backup läuft nur über `scripts/backup.sh` auf das Remote `backup`.
 
 ## Weiterlesen
 

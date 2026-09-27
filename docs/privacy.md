@@ -2,11 +2,11 @@
 
 Auf `main` liegt der öffentliche Code. Der Zweig `private` bleibt lokal: dort dürfen `PLAN.md` und `private/profile.yaml` liegen. `private` wird nicht nach `main` gemergt und nicht auf das öffentliche Remote geschoben.
 
-Veröffentlicht wird nur über `scripts/publish.sh` (Prüfung, Tests, Patch-Version in `pyproject.toml` als Commit `chore: release`, dann `git push github main`). Schlägt der Push fehl und `HEAD` ist schon der Release-Commit, wird beim erneuten Lauf nicht noch einmal hochgezählt. Das öffentliche Git-Remote ist GitHub: `SimonsAgent1/kaufen-oder-mieten` (`github`). Das Repository kann in den GitHub-Einstellungen noch auf privat stehen, bis die Sichtbarkeit umgestellt wird. Der Zweig `private` wird nie auf dieses Remote geschoben. Das frühere öffentliche GitLab-Projekt `meine-group4/kaufen-oder-mieten` wird nicht mehr beschrieben und nicht mehr per Skript bedient.
+Veröffentlicht wird nur über `scripts/publish.sh` (Prüfung, Tests, Patch-Version in `pyproject.toml` als Commit `chore: release`, dann `git push github main`). Schlägt der Push fehl und `HEAD` ist schon der Release-Commit, wird beim erneuten Lauf nicht noch einmal hochgezählt. Das öffentliche Git-Remote ist GitHub: `SimonsAgent1/kaufen-oder-mieten` (`github`). Der Zweig `private` wird nie auf dieses Remote geschoben.
 
 Auf `main` läuft die Prüfung in GitHub Actions: `pytest` und dieselbe Leak-Prüfung wie lokal, ohne `BUY_VS_RENT_PROFILE` und ohne den Zweig `private`.
 
-Das Backup-Remote `backup` (z. B. `BododB/buy-vs-rent` auf GitLab) bleibt privat und nimmt nur `scripts/backup.sh` (`main` und `private`). Dieselbe URL wie `github` oder das retired öffentliche GitLab lehnt das Skript ab.
+Das private Backup-Remote `backup` nimmt nur `scripts/backup.sh` (`main` und `private`). Dieselbe URL wie `github` lehnt das Skript ab.
 
 Eingecheckt wird nur `private/profile.example.yaml`. Das ist die Demodatei für die Seite, das Terminal und die README.
 
