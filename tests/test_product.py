@@ -54,6 +54,7 @@ def test_public_tree_has_no_personal_names():
         ROOT / "README.md",
         ROOT / "src" / "backend" / "simulate.py",
         ROOT / "src" / "frontend" / "index.html",
+        ROOT / "src" / "frontend" / "app.js",
         EXAMPLE,
     ]
     impressum = ROOT / "src" / "frontend" / "impressum.html"
@@ -82,10 +83,13 @@ def test_public_tree_has_no_personal_names():
             assert 'class="start-limit"' in text
             assert 'href="/regeln">Rechenregeln</a>' in text
             assert 'href="/modell">Modell</a>' in text
+            assert "ausschließlicher Eigennutzung bis dahin" in text
             assert "nicht jede deutsche Vorschrift" in text
             assert "Welcher Haushalt" not in text
             assert "Wähle einen gespeicherten" not in text
             assert "günstiger" not in text.lower()
+        if path.name == "app.js":
+            assert "Die Zahlen gelten für diesen Haushalt" in text
         if path == impressum:
             text = re.sub(
                 r'<main class="legal-body impressum-notice">.*?</main>',

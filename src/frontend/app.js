@@ -938,7 +938,7 @@ function renderResult(result) {
       ${gapLineHtml(buy, rent)}
       <article class="hero rent path-rent-only"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
     </div>
-    <p class="figures-advice note">Vergleich der Modellergebnisse, keine Empfehlung, kein Angebot.</p>
+    <p class="figures-advice note">Die Zahlen gelten für diesen Haushalt und diese Annahmen. Sie sind keine Beratung.</p>
   `;
   const gapSide = document.querySelector("#figures .hero-gap-side-end");
   if (gapSide && gapInfo) gapSide.append(infoButton(gapInfo));

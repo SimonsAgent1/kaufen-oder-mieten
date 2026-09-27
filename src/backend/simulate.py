@@ -1029,8 +1029,7 @@ def _assumptions(
     if exempt:
         if scenario.exclusive_own_use_until_sale:
             lines.append(
-                "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €. Auf dem Kaufweg wohnt das Modell bis zum Verkauf selbst "
-                "oder die Haltedauer liegt über zehn Jahre. "
+                "Die Verkaufssteuer ist 0 € nur bei ausschließlicher Eigennutzung bis zum Verkauf. "
                 f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
             )
         else:
