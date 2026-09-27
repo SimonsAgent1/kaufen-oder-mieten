@@ -487,8 +487,6 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .horizon-month-title-text {
   color: var(--ink);
   font-weight: 650;
-  padding-left: 0.55rem;
-  border-left: 3px solid var(--buy-accent);
 }
 .horizon-month-year {
   font: inherit;
