@@ -226,6 +226,9 @@ def test_impressum_page_is_served():
     assert "Impressum" in response.text
     assert "HTTPS" in response.text
     assert "[Name]" not in response.text
+    assert "Zurücksetzen" in response.text
+    assert "letzten „Rechnen“" in response.text
+    assert "löscht diese Kopie" not in response.text
 
 
 def test_church_tax_without_consent_is_422():
