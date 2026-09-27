@@ -83,20 +83,37 @@ function wireEuroFields(root) {
   });
 }
 
+function clickChatAdvance(root) {
+  const run = root.querySelector("#run");
+  if (run) {
+    run.click();
+    return;
+  }
+  const weiter = root.querySelector("[data-next].primary, .chat-nav button.primary[data-next]");
+  (weiter || root.querySelector("[data-next]"))?.click();
+}
+
 function wireEnter(root) {
   root.querySelectorAll("input, select").forEach((field) => {
     field.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      const run = root.querySelector("#run");
-      if (run) {
-        run.click();
-        return;
-      }
-      const weiter = root.querySelector("[data-next].primary, .chat-nav button.primary[data-next]");
-      (weiter || root.querySelector("[data-next]"))?.click();
+      clickChatAdvance(root);
     });
   });
+}
+
+/** Kirchensteuer has only checkboxes; Enter should advance, not toggle. */
+function wireChurchEnter(root) {
+  root.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key !== "Enter" || event.isComposing) return;
+      event.preventDefault();
+      clickChatAdvance(root);
+    },
+    true,
+  );
 }
 
 const STAY_ON_STEP = "__stay__";
@@ -369,7 +386,8 @@ function render() {
     });
   });
   wireEuroFields(host());
-  wireEnter(host());
+  if (step.id === "church") wireChurchEnter(host());
+  else wireEnter(host());
   wireChurchConsent(host());
 }
 
