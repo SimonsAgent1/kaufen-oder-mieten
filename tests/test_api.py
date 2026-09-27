@@ -244,7 +244,12 @@ def test_favicon_is_served():
     response = client.get("/favicon.svg")
     assert response.status_code == 200
     assert "image/svg" in response.headers.get("content-type", "")
-    assert "<svg" in response.text
+    text = response.text
+    assert "<svg" in text
+    assert "#0c8f62" in text
+    assert "#2a62b5" in text
+    assert "#94ceba" in text
+    assert "#d0dcef" in text
 
 
 def test_impressum_page_is_served():
