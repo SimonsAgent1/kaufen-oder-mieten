@@ -78,9 +78,12 @@ def test_public_tree_has_no_personal_names():
             assert 'id="complete-rent"' in text
             assert 'id="complete-buy"' in text
             assert 'class="path-view"' not in text
-            assert 'class="gate-intro"' in text
+            assert "start-surface" in text
+            assert 'class="start-limit"' in text
             assert 'href="/regeln">Rechenregeln</a>' in text
             assert "nicht jede deutsche Vorschrift" in text
+            assert "Welcher Haushalt" not in text
+            assert "Wähle einen gespeicherten" not in text
             assert "günstiger" not in text.lower()
         if path == impressum:
             text = re.sub(

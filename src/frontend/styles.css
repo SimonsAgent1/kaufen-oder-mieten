@@ -1115,26 +1115,44 @@ summary { cursor: pointer; font-weight: 650; }
 .file-button input { display: none; }
 .flow-note { color: var(--muted); font-size: 0.86rem; }
 
-.gate-intro {
-  margin: 0 0 0.85rem;
+body.start-screen > header { display: none; }
+.start-surface {
+  margin-top: 0;
   max-width: 100%;
   min-width: 0;
 }
-.gate-intro p {
+.start-surface .start-title {
   margin: 0 0 0.55rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.start-was,
+.start-scope,
+.start-limit {
+  margin: 0 0 0.55rem;
+  max-width: 100%;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.45;
 }
-.gate-intro p:last-child { margin-bottom: 0; }
-.gate-intro a { color: var(--teal); text-decoration: underline; text-underline-offset: 0.12em; }
-.gate-pick {
-  margin: 0.75rem 0 0.65rem;
-  max-width: 100%;
-  color: var(--muted);
-  font-size: 0.92rem;
+.start-limit {
+  margin-bottom: 1rem;
+  font-size: 0.84rem;
+  color: #5c6b7a;
 }
-.gate-list { display: grid; gap: 0.35rem; margin: 0.75rem 0 1rem; }
+.start-limit a { color: var(--teal); text-decoration: underline; text-underline-offset: 0.12em; }
+.gate-saved-label {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.gate-list { display: grid; gap: 0.35rem; margin: 0 0 1rem; }
+.gate-list:empty { margin: 0; }
 .gate-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

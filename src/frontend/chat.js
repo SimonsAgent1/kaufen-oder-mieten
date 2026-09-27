@@ -245,10 +245,17 @@ function host() {
   return document.getElementById("chat");
 }
 
+function syncStartScreen() {
+  const onStart =
+    !document.getElementById("gate").hidden && host().hidden && document.getElementById("results").hidden;
+  document.body.classList.toggle("start-screen", onStart);
+}
+
 function showChat() {
   document.getElementById("gate").hidden = true;
   host().hidden = false;
   document.getElementById("results").hidden = true;
+  syncStartScreen();
 }
 
 function showGate() {
@@ -257,6 +264,7 @@ function showGate() {
   host().hidden = true;
   document.getElementById("results").hidden = true;
   document.getElementById("banner").hidden = true;
+  syncStartScreen();
   renderGate();
 }
 
@@ -1184,6 +1192,8 @@ async function renderGate() {
     )
     .join("");
   rowsHost.innerHTML = rowButtons;
+  const savedLabel = document.getElementById("gate-saved-label");
+  if (savedLabel) savedLabel.hidden = rows.length === 0;
   gate.querySelector(".gate-open")?.focus();
   rowsHost.querySelectorAll(".gate-open").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1402,5 +1412,6 @@ window.resetChat = () => {
 };
 
 window.showGate = showGate;
+window.syncStartScreen = syncStartScreen;
 
 document.addEventListener("DOMContentLoaded", bootChat);

@@ -781,6 +781,7 @@ async function showScenario(next, demo) {
   document.getElementById("gate").hidden = true;
   document.getElementById("chat").hidden = true;
   document.getElementById("results").hidden = false;
+  window.syncStartScreen?.();
   await loadBundeslaender();
   captureResultSnapshot = true;
   horizonMonthYear = null;
