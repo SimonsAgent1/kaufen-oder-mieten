@@ -70,6 +70,7 @@ def test_public_tree_has_no_personal_names():
             assert "<title>Kaufen oder mieten – Vergleich für einen Haushalt</title>" in text
             assert 'name="description"' in text
             assert "Keine Empfehlung." in text
+            assert 'id="horizon-month"' in text
         if path == impressum:
             text = re.sub(
                 r'<main class="legal-body impressum-notice">.*?</main>',

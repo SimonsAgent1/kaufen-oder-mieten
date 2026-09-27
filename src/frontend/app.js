@@ -905,6 +905,7 @@ function renderResult(result) {
   const factorInterest = document.getElementById("factor-interest");
   if (factorInterest) factorInterest.replaceChildren();
   syncPurchasePriceInfo();
+  renderHorizonMonth(result, real);
   document.getElementById("warnings").innerHTML = result.warnings.map((item) => `<li>${item}</li>`).join("");
   drawWealth(result.series, real, result.markers);
   drawLoan(result.series, result.markers);
@@ -941,6 +942,59 @@ const BUY_FLOW = [
   ["buy_etf", "ETF", "#6d28d9"],
   ["buy_left", "Übrig", "#94a3b8"],
 ];
+const HORIZON_MONTH_BUY = [
+  ["buy_interest", "Zinsen"],
+  ["buy_principal", "Tilgung"],
+  ["buy_owner", "Eigentümerkosten"],
+  ["buy_etf", "ETF"],
+];
+const HORIZON_MONTH_RENT = [
+  ["rent_housing", "Miete"],
+  ["rent_etf", "ETF"],
+  ["rent_left", "Übrig"],
+];
+
+function horizonMonthPoint(cashflow, purchaseDate) {
+  if (!cashflow?.length) return null;
+  const anchor = purchaseDate || cashflow[0].date;
+  return cashflow.find((point) => point.date >= anchor) ?? cashflow.at(-1);
+}
+
+function horizonMonthRows(point, layers, real) {
+  const rows = layers
+    .map(([key, label]) => {
+      const value = flowAmount(point, key, real);
+      if (value <= 1) return "";
+      return `<li><span class="horizon-month-label">${label}</span><strong>${euro.format(value)}</strong></li>`;
+    })
+    .filter(Boolean);
+  const drawKey = layers === HORIZON_MONTH_BUY ? "buy_draw" : "rent_draw";
+  const draw = flowAmount(point, drawKey, real);
+  if (draw > 150) {
+    rows.push(
+      `<li><span class="horizon-month-label">ETF-Entnahme</span><strong>${euro.format(draw)}</strong></li>`,
+    );
+  }
+  return rows.join("");
+}
+
+function renderHorizonMonth(result, real) {
+  const section = document.getElementById("horizon-month");
+  const buyList = document.getElementById("horizon-month-buy");
+  const rentList = document.getElementById("horizon-month-rent");
+  const title = document.getElementById("horizon-month-title");
+  if (!section || !buyList || !rentList || !title) return;
+  const point = horizonMonthPoint(result.cashflow, result.purchase_date);
+  if (!point) {
+    section.hidden = true;
+    return;
+  }
+  const year = point.date.slice(0, 4);
+  title.textContent = `Monat im Jahr ${year}`;
+  buyList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_BUY, real);
+  rentList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_RENT, real);
+  section.hidden = !buyList.innerHTML && !rentList.innerHTML;
+}
 
 function drawFlows(points, real, markers) {
   const wealthMarks = (markers || []).filter((marker) => marker.chart === "wealth");

@@ -436,6 +436,52 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .beliefs-panel .beliefs-bundesland { margin-bottom: 0.05rem; }
 .beliefs-bundesland span { color: var(--muted); font-size: 0.86rem; }
+.horizon-month {
+  margin-top: 0.75rem;
+  padding: 0.85rem 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow);
+  min-width: 0;
+  max-width: 100%;
+}
+.horizon-month-heading { margin-bottom: 0.15rem; }
+.horizon-month-note { margin: 0 0 0.65rem; }
+.horizon-month-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+}
+.horizon-month-col { min-width: 0; }
+.horizon-month-col h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+.horizon-month-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.28rem;
+}
+.horizon-month-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  min-width: 0;
+}
+.horizon-month-label { color: var(--muted); }
+.horizon-month-rows strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: right;
+}
 .summary-block {
   display: flex;
   flex-direction: column;
@@ -1035,5 +1081,7 @@ summary { cursor: pointer; font-weight: 650; }
     font-size: 0.86rem;
   }
   .summary-block { padding: 0.75rem 0.65rem; }
+  .horizon-month { padding: 0.75rem 0.65rem; }
+  .horizon-month-grid { grid-template-columns: 1fr; }
   .beliefs-panel { padding-left: 0.65rem; padding-right: 0.65rem; }
 }

@@ -9,12 +9,16 @@ The product plan is `PLAN.md` at the repo root. Commit it, and `private/profile.
 
 Sections above `## Addons` are the work already underway. Finish that work as written there.
 
-Anything new — a lesson from another calculator, a feature idea, a change of scope — goes under `## Addons` in `PLAN.md`. Start the item with `Addon:`. Do not build an addon unless the user asks for that addon.
+Anything new — a feature idea, or a change of scope — goes under `## Addons` in `PLAN.md`. Start the item with `Addon:`. Do not build an addon unless the user asks for that addon.
+
+Do not name another website, calculator, or design shot in code, tests, docs, the README, or a commit message.
+
+The result may show one named year of monthly averages from cashflow after purchase (Kaufen and Mieten columns). No verdict, savings headline, or stay-years slider.
 
 ```markdown
 ### Addon: short name
 
-What to add, and what not to copy.
+What to add, and what to leave out.
 ```
 
 When a change makes this rule stale, update the rule in the same change.
