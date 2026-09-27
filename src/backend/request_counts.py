@@ -95,6 +95,40 @@ def recent_days(last: int = 30, anchor: date | None = None) -> list[tuple[str, D
 PUBLIC_HOST_SUFFIXES = (".kauf-oder-mieten.de",)
 PUBLIC_HOSTS = frozenset({"kauf-oder-mieten.de", "www.kauf-oder-mieten.de"})
 
+PUBLIC_SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    ),
+}
+
+
+def _effective_host(host_header: str | None, forwarded_host: str | None = None) -> str:
+    effective = forwarded_host or host_header
+    if not effective:
+        return ""
+    return effective.split(",")[0].split(":")[0].strip().lower().rstrip(".")
+
+
+def public_site_host(host_header: str | None, forwarded_host: str | None = None) -> bool:
+    """True for kauf-oder-mieten.de and www on the public internet, not the home LAN host."""
+    host = _effective_host(host_header, forwarded_host)
+    if not host:
+        return False
+    if host in PUBLIC_HOSTS:
+        return True
+    return any(host.endswith(suffix) for suffix in PUBLIC_HOST_SUFFIXES)
+
 
 def render_zahlen_html(frontend_dir: Path) -> str:
     rows = []
@@ -113,11 +147,7 @@ def render_zahlen_html(frontend_dir: Path) -> str:
 
 def zahlen_allowed(host_header: str | None, forwarded_host: str | None = None) -> bool:
     """True only for the home/LAN host name the browser asked for, not the public site."""
-    # Prefer the name the browser used (Caddy sets X-Forwarded-Host; upstream Host may be 127.0.0.1).
-    effective = forwarded_host or host_header
-    if not effective:
-        return False
-    host = effective.split(",")[0].split(":")[0].strip().lower().rstrip(".")
+    host = _effective_host(host_header, forwarded_host)
     if not host:
         return False
     if host in PUBLIC_HOSTS:

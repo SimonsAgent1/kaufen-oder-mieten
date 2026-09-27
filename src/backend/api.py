@@ -16,10 +16,14 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from buy_vs_rent.catalog import render_rules_html
+from buy_vs_rent.compare_limit import allow_compare
+from buy_vs_rent.model_page import render_model_html
 from buy_vs_rent.profile import load_profile
 from buy_vs_rent.rates import beleihung_spread, fetch_market_rate, household_spread
 from buy_vs_rent.scenario import Scenario, load_scenario, parse_property_link, scenario_for_engine
 from buy_vs_rent.request_counts import (
+    PUBLIC_SECURITY_HEADERS,
+    public_site_host,
     record_compare_ok,
     record_compare_reject,
     record_page_load,
@@ -58,6 +62,8 @@ def _demo_path() -> Path:
 app = FastAPI(title="Kaufen oder mieten")
 app.mount("/static", StaticFiles(directory=_frontend_dir()), name="static")
 
+COMPARE_RATE_DETAIL = "Zu viele Rechnungen in kurzer Zeit. Bitte einen Moment warten."
+
 
 @app.middleware("http")
 async def log_compare_without_body(request: Request, call_next):
@@ -65,10 +71,33 @@ async def log_compare_without_body(request: Request, call_next):
     if request.method == "POST" and request.url.path == "/api/compare":
         if response.status_code == 200:
             record_compare_ok()
-        else:
+        elif response.status_code != 429:
             record_compare_reject()
         logger.info("compare status=%s", response.status_code)
     return response
+
+
+@app.middleware("http")
+async def public_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    if public_site_host(
+        request.headers.get("host"),
+        request.headers.get("x-forwarded-host"),
+    ):
+        for key, value in PUBLIC_SECURITY_HEADERS.items():
+            response.headers[key] = value
+    return response
+
+
+@app.middleware("http")
+async def compare_burst_limit(request: Request, call_next):
+    if request.method == "POST" and request.url.path == "/api/compare":
+        if not allow_compare():
+            return JSONResponse(
+                status_code=429,
+                content={"detail": COMPARE_RATE_DETAIL},
+            )
+    return await call_next(request)
 
 
 def _validation_message(exc: RequestValidationError) -> str:
@@ -195,6 +224,11 @@ def impressum_page() -> FileResponse:
 @app.get("/regeln", response_class=HTMLResponse)
 def rules_page() -> str:
     return render_rules_html()
+
+
+@app.get("/modell", response_class=HTMLResponse)
+def model_page() -> str:
+    return render_model_html()
 
 
 def app_version() -> str:

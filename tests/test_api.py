@@ -227,6 +227,7 @@ def test_robots_txt():
     assert "Allow: /" in text
     assert "Allow: /impressum" in text
     assert "Allow: /regeln" in text
+    assert "Allow: /modell" in text
     assert "Disallow: /api/" in text
 
 
@@ -237,6 +238,7 @@ def test_sitemap_xml():
     assert "https://kauf-oder-mieten.de/" in text
     assert "https://kauf-oder-mieten.de/impressum" in text
     assert "https://kauf-oder-mieten.de/regeln" in text
+    assert "https://kauf-oder-mieten.de/modell" in text
     assert "192.168" not in text
 
 
@@ -330,3 +332,59 @@ def test_compare_log_line_omits_scenario_body(monkeypatch, caplog):
     assert "65000" not in message
     assert "gross_salary" not in message
     assert json.dumps(body) not in message
+
+
+def test_public_host_gets_security_headers():
+    response = client.get("/", headers={"Host": "kauf-oder-mieten.de"})
+    assert response.status_code == 200
+    hsts = response.headers.get("strict-transport-security", "")
+    assert "max-age=31536000" in hsts
+    assert "preload" not in hsts.lower()
+    assert response.headers.get("x-content-type-options") == "nosniff"
+    assert response.headers.get("referrer-policy") == "no-referrer"
+    assert response.headers.get("x-frame-options") == "DENY"
+    assert "default-src 'self'" in response.headers.get("content-security-policy", "")
+
+
+def test_lan_host_has_no_security_headers():
+    response = client.get("/", headers={"Host": "192.168.178.10:8000"})
+    assert response.status_code == 200
+    assert "strict-transport-security" not in response.headers
+
+
+def test_modell_page_from_docs():
+    response = client.get("/modell")
+    assert response.status_code == 200
+    text = response.text
+    assert "<h1>Rechnung</h1>" in text
+    assert 'href="/regeln">Rechenregeln</a>' in text
+    assert "Kindergeld" in text
+    assert "günstiger" not in text.lower()
+    assert "lohnt sich" not in text.lower()
+
+
+def test_compare_burst_limit_returns_german_429(monkeypatch, tmp_path):
+    from buy_vs_rent.compare_limit import reset_compare_limit_for_tests
+
+    monkeypatch.setenv("BUY_VS_RENT_COUNTS_FILE", str(tmp_path / "counts.json"))
+    monkeypatch.setattr(
+        "buy_vs_rent.api.fetch_market_rate",
+        lambda years: MarketRate(0.03, "2026-08", "series", "bundesbank"),
+    )
+    monkeypatch.setattr("buy_vs_rent.compare_limit._MAX_CALLS", 2)
+    reset_compare_limit_for_tests()
+    body = _body()
+    assert client.post("/api/compare", json=body).status_code == 200
+    assert client.post("/api/compare", json=body).status_code == 200
+    blocked = client.post("/api/compare", json=body)
+    assert blocked.status_code == 429
+    assert "Moment warten" in blocked.json()["detail"]
+    from buy_vs_rent.request_counts import recent_days
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    Berlin = ZoneInfo("Europe/Berlin")
+    when = datetime(2026, 9, 27, 12, 0, tzinfo=Berlin)
+    rows = recent_days(last=1, anchor=when.date())
+    assert rows[0][1]["compare_ok"] == 2
+    assert rows[0][1]["compare_reject"] == 0

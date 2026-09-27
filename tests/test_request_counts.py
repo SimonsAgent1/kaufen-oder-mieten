@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from buy_vs_rent.api import app
 from buy_vs_rent.request_counts import (
     counts_path,
+    public_site_host,
     recent_days,
     record_compare_ok,
     record_page_load,
@@ -32,6 +33,13 @@ def test_daily_totals_accumulate(tmp_path, monkeypatch):
     assert rows[0][1]["page"] == 2
     assert rows[0][1]["compare_ok"] == 1
     assert rows[0][1]["compare_reject"] == 0
+
+
+def test_public_site_host_gate():
+    assert public_site_host("kauf-oder-mieten.de")
+    assert public_site_host("www.kauf-oder-mieten.de:443")
+    assert not public_site_host("192.168.178.10:8000")
+    assert not public_site_host("127.0.0.1:8000")
 
 
 def test_zahlen_host_gate():

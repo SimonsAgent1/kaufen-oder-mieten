@@ -81,6 +81,7 @@ def test_public_tree_has_no_personal_names():
             assert "start-surface" in text
             assert 'class="start-limit"' in text
             assert 'href="/regeln">Rechenregeln</a>' in text
+            assert 'href="/modell">Modell</a>' in text
             assert "nicht jede deutsche Vorschrift" in text
             assert "Welcher Haushalt" not in text
             assert "Wähle einen gespeicherten" not in text

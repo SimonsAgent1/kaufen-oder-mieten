@@ -2,4 +2,5 @@ User-agent: *
 Allow: /
 Allow: /impressum
 Allow: /regeln
+Allow: /modell
 Disallow: /api/
