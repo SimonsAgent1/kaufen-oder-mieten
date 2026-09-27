@@ -127,6 +127,8 @@ function wireStepDocumentEnter(stepId) {
 }
 
 const STAY_ON_STEP = "__stay__";
+/** Blocks a second forward in the same click (Weiter under the cursor on the new step). */
+let advanceLock = false;
 /** Internal placeholders for the hidden path when only one side was asked (not shown in recap). */
 const HIDDEN_RENT_KALT = 700;
 
@@ -434,7 +436,10 @@ function render() {
   });
   wireEuroFields(host());
   if (step.id === "church" || step.id === "children") wireStepDocumentEnter(step.id);
-  else wireEnter(host());
+  else {
+    clearDocumentEnter();
+    wireEnter(host());
+  }
   wireChurchConsent(host());
 }
 
@@ -451,6 +456,7 @@ function wireChurchConsent(root) {
 }
 
 function forward(step) {
+  if (advanceLock) return;
   const error = step.read();
   const note = host().querySelector(".form-error");
   if (error === STAY_ON_STEP) {
@@ -472,7 +478,11 @@ function forward(step) {
   if (sequence[chat.cursor].id === "recap" && chat.cursor === sequence.length - 1 && host().querySelector("[data-run]")) {
     return;
   }
-  render();
+  advanceLock = true;
+  requestAnimationFrame(() => {
+    render();
+    advanceLock = false;
+  });
 }
 
 function back() {

@@ -1032,6 +1032,7 @@ summary { cursor: pointer; font-weight: 650; }
 .chat label { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.55rem 0; font-size: 0.86rem; color: var(--muted); }
 .chat label.switch { flex-direction: row; align-items: center; }
 .chat .form-error { color: var(--warn); font-weight: 700; min-height: 1.1rem; }
+.chat .form-error:empty { color: transparent; }
 .child-row button.quiet.pill,
 .child-remove button.quiet.pill,
 .choices button.quiet.pill {
