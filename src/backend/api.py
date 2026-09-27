@@ -190,6 +190,14 @@ def favicon() -> FileResponse:
     return FileResponse(_frontend_dir() / "favicon.svg", media_type="image/svg+xml")
 
 
+@app.get("/google6dbb73976a1b738c.html")
+def google_site_verification() -> FileResponse:
+    return FileResponse(
+        _frontend_dir() / "google6dbb73976a1b738c.html",
+        media_type="text/html; charset=utf-8",
+    )
+
+
 @app.get("/robots.txt")
 def robots_txt() -> FileResponse:
     return FileResponse(_frontend_dir() / "robots.txt", media_type="text/plain; charset=utf-8")

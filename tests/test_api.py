@@ -220,6 +220,12 @@ def test_version_endpoint_matches_installed_package():
     assert response.json()["version"] == version("buy-vs-rent")
 
 
+def test_google_site_verification():
+    response = client.get("/google6dbb73976a1b738c.html")
+    assert response.status_code == 200
+    assert response.text.strip() == "google-site-verification: google6dbb73976a1b738c.html"
+
+
 def test_robots_txt():
     response = client.get("/robots.txt")
     assert response.status_code == 200
