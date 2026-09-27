@@ -448,6 +448,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   border-radius: 14px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--buy-accent);
+  border-right: 3px solid var(--rent-accent);
   background: #fff;
   box-shadow: var(--shadow);
   min-width: 0;
@@ -468,12 +469,14 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .horizon-month-col:first-child h3 { color: var(--buy); }
 .horizon-month-col:last-child h3 { color: var(--rent); }
-#horizon-month-buy strong { color: var(--buy); }
-#horizon-month-rent strong { color: var(--rent); }
-#horizon-month-buy strong.flow-ubrig-warn,
-#horizon-month-rent strong.flow-ubrig-warn { color: var(--warn); }
+#horizon-month-buy strong:not(.horizon-month-ubrig) { color: var(--buy); }
+#horizon-month-rent strong:not(.horizon-month-ubrig) { color: var(--rent); }
+.horizon-month-ubrig { color: #94a3b8; }
+.horizon-month-ubrig.flow-ubrig-warn { color: var(--warn); }
 .horizon-month-ubrig-note { margin: 0.55rem 0 0; color: var(--warn); }
 .flow-ubrig-warn { fill: var(--warn); }
+.flow-ubrig-line { fill: none; stroke: #94a3b8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.flow-ubrig-warn-line { fill: none; stroke: var(--warn); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .horizon-month-heading {
   display: flex;
   flex-wrap: wrap;

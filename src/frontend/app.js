@@ -14,6 +14,8 @@ const BUY_ETF_COLOR = "#0e9f6e";
 const RENT_ETF_COLOR = "#3d7cc9";
 const FLOW_LEFT_KEYS = new Set(["buy_left", "rent_left"]);
 const FLOW_WARN_COLOR = "#9a3412";
+const UBRIG_GREY = "#94a3b8";
+const YEAR_TICK_MIN_GAP = 46;
 const touched = { sollzins: false, anschlusszins: false, pensions: {} };
 
 function percentDisplayDecimals(step) {
@@ -1004,8 +1006,10 @@ function horizonMonthRows(point, layers, real) {
       const value = flowAmount(point, key, real);
       if (!FLOW_LEFT_KEYS.has(key) && value <= 1) return "";
       const warn = FLOW_LEFT_KEYS.has(key) && value < -1;
-      const warnAttr = warn ? ' class="flow-ubrig-warn"' : "";
-      return `<li><span class="horizon-month-label">${label}</span><strong${warnAttr}>${euro.format(value)}</strong></li>`;
+      const ubrigClass = FLOW_LEFT_KEYS.has(key) ? "horizon-month-ubrig" : "";
+      const warnClass = warn ? " flow-ubrig-warn" : "";
+      const classAttr = ubrigClass || warnClass ? ` class="${ubrigClass}${warnClass}"` : "";
+      return `<li><span class="horizon-month-label">${label}</span><strong${classAttr}>${euro.format(value)}</strong></li>`;
     })
     .filter(Boolean);
   const drawKey = layers === HORIZON_MONTH_BUY ? "buy_draw" : "rent_draw";
@@ -1089,6 +1093,35 @@ function stackLayerValue(layerKey, value) {
   return Math.max(0, value);
 }
 
+function ubrigLineMarkup(points, leftKey, real, x, y) {
+  const grey = [];
+  let segment = [];
+  const warn = [];
+  for (let index = 0; index < points.length; index += 1) {
+    const value = flowAmount(points[index], leftKey, real);
+    const px = x(index).toFixed(1);
+    const py = y(value).toFixed(1);
+    if (value < -1) {
+      if (segment.length) {
+        grey.push(segment.join(" "));
+        segment = [];
+      }
+      const prev = index > 0 ? flowAmount(points[index - 1], leftKey, real) : value;
+      const next = index < points.length - 1 ? flowAmount(points[index + 1], leftKey, real) : value;
+      if (prev >= -1) warn.push(`M${px},${y(0).toFixed(1)} L${px},${py}`);
+      else warn.push(`M${px},${py}`);
+      if (next >= -1) warn.push(`L${px},${y(0).toFixed(1)}`);
+      continue;
+    }
+    segment.push(`${segment.length ? "L" : "M"}${px},${py}`);
+  }
+  if (segment.length) grey.push(segment.join(" "));
+  return [
+    ...grey.map((path) => `<path class="flow-ubrig-line" d="${path}" />`),
+    ...warn.map((path) => `<path class="flow-ubrig-warn-line" d="${path}" />`),
+  ].join("");
+}
+
 function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKey) {
   if (!svg) return;
   const shown = layers.filter((layer) => flowLayerVisible(layer[0], points, real));
@@ -1109,7 +1142,12 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   );
   const totals = rows.map((row) => row.reduce((sum, value) => sum + value, 0));
   const draws = points.map((point) => Math.max(0, flowAmount(point, drawKey, real)));
-  const scale = valueScale(0, Math.max(1, ...totals, ...draws));
+  const leftLayerKey = shown.find((layer) => FLOW_LEFT_KEYS.has(layer[0]))?.[0];
+  const leftValues = leftLayerKey ? points.map((point) => flowAmount(point, leftLayerKey, real)) : [];
+  const scale = valueScale(
+    leftValues.length ? Math.min(0, ...leftValues) : 0,
+    Math.max(1, ...totals, ...draws, ...(leftValues.length ? leftValues : [0])),
+  );
   if (!points.length) {
     svg.innerHTML = "";
     return;
@@ -1169,19 +1207,8 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
       <circle class="marker-dot" style="fill:${marker.color}" cx="${lineX.toFixed(1)}" cy="${y(stackTop)}" r="3.2" />
       <text class="marker-label" style="fill:${marker.color}" x="${labelX.toFixed(1)}" y="${labelY}" text-anchor="middle">${marker.label}</text>`;
   }).join("");
-  const leftLayer = shown.find((layer) => FLOW_LEFT_KEYS.has(layer[0]));
-  const ubrigWarn = leftLayer
-    ? points
-        .map((point, index) => {
-          const value = flowAmount(point, leftLayer[0], real);
-          if (value >= -1) return "";
-          const bar = Math.min(18, Math.abs(value) / 80);
-          const y0 = y(0);
-          return `<rect class="flow-ubrig-warn" x="${(x(index) - 4).toFixed(1)}" y="${(y0 - bar).toFixed(1)}" width="8" height="${bar.toFixed(1)}" rx="2" />`;
-        })
-        .join("")
-    : "";
-  svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ubrigWarn}${ticks}${marks}
+  const ubrigOverlay = leftLayerKey ? ubrigLineMarkup(points, leftLayerKey, real, x, y) : "";
+  svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ubrigOverlay}${ticks}${marks}
     <line class="hover-guide" visibility="hidden" />
     <rect class="hover-catch" x="${padX}" y="${band}" width="${width - padX * 2}" height="${plotHeight}" fill="transparent" />`;
   bindPlotHover(svg, { points, series, x, band, plotHeight });
@@ -1273,7 +1300,11 @@ function showPlotTip(svg, event, { pin = false } = {}) {
     .map((item) => {
       const value = item.values[index];
       const color =
-        item.label === "Übrig" && value < -1 ? FLOW_WARN_COLOR : tipColor(item.color);
+        item.label === "Übrig" && value < -1
+          ? FLOW_WARN_COLOR
+          : item.label === "Übrig"
+            ? UBRIG_GREY
+            : tipColor(item.color);
       return `<div class="tip-row" style="color:${color}">${item.label} ${euro.format(value)}</div>`;
     })
     .join("");
@@ -1408,7 +1439,15 @@ function layoutMarkers(svg, series, markers, chart, xOf, width) {
   for (const marker of items) {
     const left = Math.min(Math.max(4, marker.x - marker.w / 2), width - 4 - marker.w);
     let row = 0;
-    while (hits(left, left + marker.w, row)) row += 1;
+    while (
+      hits(left, left + marker.w, row) ||
+      placed.some(
+        (other) =>
+          other.row === row && Math.abs(other.x - marker.x) < (other.w + marker.w) / 2 + gap,
+      )
+    ) {
+      row += 1;
+    }
     occupied.push({ row, left, right: left + marker.w });
     placed.push({ ...marker, left, row });
   }
@@ -1522,13 +1561,16 @@ function yearTicks(series, xOf) {
     { year: endYear, x: xOf(series.length - 1) },
   ];
   for (const bound of bounds) {
-    if (!ticks.some((tick) => Math.abs(tick.x - bound.x) < 36)) ticks.push(bound);
+    if (!ticks.some((tick) => Math.abs(tick.x - bound.x) < YEAR_TICK_MIN_GAP)) ticks.push(bound);
   }
   ticks.sort((a, b) => a.x - b.x);
   const kept = [];
   for (const tick of ticks) {
-    if (!kept.length || tick.x - kept.at(-1).x >= 36) kept.push(tick);
-    else if (tick.year === endYear) kept[kept.length - 1] = tick;
+    if (!kept.length || tick.x - kept.at(-1).x >= YEAR_TICK_MIN_GAP) {
+      kept.push(tick);
+      continue;
+    }
+    if (tick.year === endYear) kept[kept.length - 1] = tick;
   }
   return kept;
 }
