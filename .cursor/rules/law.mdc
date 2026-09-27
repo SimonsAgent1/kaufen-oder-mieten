@@ -1,0 +1,10 @@
+---
+description: Law pack and the formula catalog
+alwaysApply: true
+---
+
+# Law and formulas
+
+Tax, Elterngeld, Kindergeld, transfer tax, pension anchors, care copays, and church-tax rates live in `buy_vs_rent.law.de_2026`. The Elterngeld income limit is not inflated. Church tax is 8 % of income tax in Bayern and Baden-Württemberg and 9 % elsewhere, and only when the switch is on.
+
+Every public function in that pack, `mortgage.py`, `etf.py`, and `house.py` has one entry in `catalog.py`. `docs/rules.md` is rendered from the catalog. Assumption sentences on the result come from those entries.

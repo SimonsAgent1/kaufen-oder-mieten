@@ -1,0 +1,18 @@
+---
+description: Law and math formulas stay reviewable outside the month loop
+alwaysApply: true
+---
+
+# Reviewable rules
+
+A law rule or a math formula that changes the result lives in a named function, not only inside the month loop.
+
+With that function, in the same change:
+
+- Write the formula in plain language, with named constants.
+- Cite the source: a statute, a published figure and its date, or the words "model choice". Mark approximations as approximations.
+- Add a test with one hand-worked number.
+
+`docs/rules.md` is the list a reviewer reads. When that file exists, update it from the catalog in the same change. Do not give the result page a second wording of the same rule.
+
+Household timing stays in `docs/model.md`. It is not copied into the formula list.

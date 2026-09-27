@@ -1,0 +1,10 @@
+---
+description: Run pytest and add tests for new behavior
+alwaysApply: true
+---
+
+# Tests
+
+After code changes, run `.venv/bin/pytest tests` and read the result.
+
+New behavior needs a test. The formula catalog test fails when a public function in the law pack, `mortgage.py`, `etf.py`, or `house.py` has no entry.

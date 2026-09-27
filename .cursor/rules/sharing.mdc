@@ -1,0 +1,10 @@
+---
+description: What a shared link and the profile may carry
+alwaysApply: true
+---
+
+# Sharing
+
+A `?wohnung=` link may carry only purchase price, state, notary, broker, and owner costs. The server drops every other field.
+
+`/api/profile` reads a file only when `BUY_VS_RENT_PROFILE` is set. Otherwise it is 404. Tests never read `private/profile.yaml`.

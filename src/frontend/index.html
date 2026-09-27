@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaufen oder mieten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Kaufen oder mieten</h1>
+      <p class="lead">Zwei Wege: ein Haus oder eine Wohnung kaufen oder weiter mieten und das Geld im Aktien-ETF lassen.</p>
+      <p class="advice">Keine Finanz-, Steuer- oder Kreditempfehlung. Der Zinssatz ist ein Bundesbank-Durchschnitt, kein Angebot. <a class="source-link" href="https://github.com/SimonsAgent1/kaufen-oder-mieten" rel="noopener noreferrer">Quelltext</a></p>
+      <p class="privacy-notice">Datenschutz. Diese Seite ist privat und nicht geschäftlich. Angaben zu Haushalt und Wohnung bleiben im Browser (localStorage). Der Server speichert sie nicht. Beim Aufruf sehen der Mini-PC und die Fritz!Box die Verbindung, insbesondere die IP-Adresse, und nur solange die Verbindung besteht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO, das technische Bereitstellen der Seite. Verantwortlicher: Simon Muchau. Eine Anfrage zu diesen Daten richtet sich an <a href="mailto:simon.muchau@freenet.de">simon.muchau@freenet.de</a>. Es gibt kein Impressum, weil die Seite nicht geschäftsmäßig angeboten wird.</p>
+    </div>
+  </header>
+
+  <section id="gate" class="gate chat" hidden>
+    <h2>Welcher Haushalt?</h2>
+    <p class="lead">Wähle einen gespeicherten Haushalt oder starte neu. Nichts wird geöffnet, bis du eine Zeile wählst.</p>
+    <div id="gate-rows" class="gate-list"></div>
+    <div class="gate-actions">
+      <button type="button" class="gate-btn gate-btn-primary" id="gate-new">Neu anfangen</button>
+      <button type="button" class="gate-btn gate-btn-secondary" id="gate-demo">Beispiel ansehen</button>
+      <label class="file-button gate-btn gate-btn-secondary">Import<input id="gate-import" type="file" accept=".json,.yaml,.yml,application/json,text/yaml" hidden></label>
+    </div>
+  </section>
+  <section id="chat" class="chat"></section>
+  <p id="banner" class="banner" hidden>Das sind Beispielzahlen, nicht deine Angaben.</p>
+
+  <section class="results" id="results" hidden>
+    <div class="result-toolbar">
+      <div class="result-actions">
+        <button type="button" id="edit">Angaben ändern</button>
+        <button type="button" id="gate-choice">Zur Auswahl</button>
+        <button type="button" id="reset">Zurücksetzen</button>
+        <button type="button" id="export">Export</button>
+        <label class="file-button">Import<input id="import" type="file" accept=".json,.yaml,.yml,application/json,text/yaml"></label>
+      </div>
+      <p id="export-note" class="export-hint">Export: Einkommen und Geburtsdaten, nur auf diesem Gerät.</p>
+      <label class="switch result-real"><input type="checkbox" id="real" checked><span class="track"></span> Euro von heute</label>
+    </div>
+    <div class="summary-block">
+      <p class="horizon-label">Am Horizont</p>
+      <div class="figures" id="figures"></div>
+      <div id="life-gaps" class="life-gaps"></div>
+      <p id="life-sentence" class="life-sentence note"></p>
+      <p id="factor-interest" class="result-meta note"></p>
+      <p id="compare-error" class="note compare-error"></p>
+    </div>
+    <section class="beliefs-panel" aria-labelledby="beliefs-heading">
+      <h2 id="beliefs-heading" class="card-title">Annahmen ändern <a class="rules-inline" href="/regeln">Rechenregeln</a></h2>
+      <div id="beliefs"></div>
+    </section>
+    <ul id="warnings"></ul>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h2>Vermögen</h2>
+        <p class="legend-inline"><span class="swatch buy"></span>Kaufen <span class="swatch etf"></span>ETF im Kauf <span class="swatch rent"></span>Mieten</p>
+      </div>
+      <div class="plot">
+        <svg id="wealth" viewBox="0 0 800 280" role="img" aria-label="Vermögen beider Wege"></svg>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h2>Restschuld</h2>
+      <div class="plot">
+        <svg id="loan" viewBox="0 0 800 180" role="img" aria-label="Restschuld"></svg>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h2>Monatlich beim Mieten</h2>
+        <p class="legend-inline" id="legend-rent-flow"></p>
+      </div>
+      <p class="flow-note">Euro im Monat. Übrig ist das Netto nach dem Wohnen und dem ETF. Eingezahlt wird, bis jede Person in Rente ist. Entnommen wird, wenn alle in Rente sind. Ab der Pflege ist die Miete der Eigenanteil im Heim.</p>
+      <div class="plot">
+        <svg id="rent-flow" viewBox="0 0 800 220" role="img" aria-label="Monatliche Verwendung beim Mieten"></svg>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h2>Monatlich beim Kaufen</h2>
+        <p class="legend-inline" id="legend-buy-flow"></p>
+      </div>
+      <p class="flow-note">Zinsen und Eigentümerkosten sind Wohnen. Die Tilgung ist Vermögensaufbau, genau wie der ETF. Ab der Pflege wird Haus oder Wohnung verkauft.</p>
+      <div class="plot">
+        <svg id="buy-flow" viewBox="0 0 800 220" role="img" aria-label="Monatliche Verwendung beim Kaufen"></svg>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/scenario.js"></script>
+  <script src="/static/bounds.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+---
+description: No household facts in the public tree
+alwaysApply: true
+---
+
+# Privacy
+
+`main` has no real household. Do not put names, birth dates, salaries, employers, or depots from a real household into `src`, tests, the frontend, the README, `docs`, or examples.
+
+`PLAN.md` and `private/profile.yaml` stay on the local branch `private`. Do not commit them on `main`, do not merge `private` into `main`, and do not push `private`.
+
+The checked-in profile is `private/profile.example.yaml`, the fictional demo for the page and the terminal.

@@ -1,0 +1,10 @@
+---
+description: The scenario file is the only input
+alwaysApply: true
+---
+
+# Scenario
+
+`compare` takes one Pydantic scenario, version 1, unknown fields rejected. One or two adults, at most eight children. Together and marriage are different dates.
+
+`owner_costs_rate`, when set, fills the monthly owner cost as purchase price times the rate divided by 12. `church_tax` defaults off.

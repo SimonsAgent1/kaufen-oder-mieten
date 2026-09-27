@@ -1,0 +1,8 @@
+---
+description: Update a Cursor rule in the same change that makes it stale
+alwaysApply: true
+---
+
+# Keep rules current
+
+When a change makes a rule in `.cursor/rules/` wrong, update that rule in the same change. Rules describe the repo as it is.

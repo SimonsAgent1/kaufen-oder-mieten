@@ -1,0 +1,20 @@
+---
+description: Keep the product plan in gitignored PLAN.md and mark new ideas as addons
+alwaysApply: true
+---
+
+# Plan and addons
+
+The product plan is `PLAN.md` at the repo root. Commit it, and `private/profile.yaml`, only on the local branch `private`. Never commit them on `main`. Never merge `private` into `main`. Never push `private` to the public remote. Do not paste household facts from the plan into code, tests, or the README.
+
+Sections above `## Addons` are the work already underway. Finish that work as written there.
+
+Anything new — a lesson from another calculator, a feature idea, a change of scope — goes under `## Addons` in `PLAN.md`. Start the item with `Addon:`. Do not build an addon unless the user asks for that addon.
+
+```markdown
+### Addon: short name
+
+What to add, and what not to copy.
+```
+
+When a change makes this rule stale, update the rule in the same change.

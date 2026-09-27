@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+*.egg-info/
+.mypy_cache/
+private/profile.yaml
+private/*.local.yaml
+PLAN.md
+BOARD.md
+.cursor/board/
+.cursor/rules/agent-board.mdc
+src/backend/profile.example.yaml

@@ -1,0 +1,10 @@
+---
+description: How to install and run buy-vs-rent
+alwaysApply: true
+---
+
+# Commands
+
+Install with `python3 -m venv .venv` and `.venv/bin/pip install -e ".[dev]"`.
+
+Run `.venv/bin/buy-vs-rent serve` and `.venv/bin/buy-vs-rent run <file>`. Tests are `.venv/bin/pytest tests`. Do not set `PYTHONPATH` for these.
