@@ -46,7 +46,7 @@ certbot renew --manual --preferred-challenges dns \
 
 Repeat TXT steps in CloudDNS, then copy `fullchain.pem` / `privkey.pem` again and `systemctl --user restart caddy.service`.
 
-When Netcup documents a CloudDNS API for arbitrary TXT records, we can automate this again.
+As of 2026-09-27, `scripts/netcup-txt-probe.py` on the mini could not log in to the legacy JSON API (4013) with legacy or CloudDNS API keys, so automated TXT for renewal is not available yet. Renewal stays manual TXT in the UI before expiry. Re-run the probe after Netcup or credential changes; do not use fake IPs against `wsDynDns.php`.
 
 ## DynDNS (A records when the home IP changes)
 

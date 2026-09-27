@@ -40,6 +40,11 @@
         <label class="file-button">Import<input id="import" type="file" accept=".json,.yaml,.yml,application/json,text/yaml"></label>
       </div>
       <p id="export-note" class="export-hint">Export: Einkommen und Geburtsdaten, nur auf diesem Gerät.</p>
+      <div class="path-view" role="group" aria-label="Ansicht">
+        <button type="button" class="path-view-btn" data-path="both" aria-pressed="true">Beide</button>
+        <button type="button" class="path-view-btn" data-path="buy" aria-pressed="false">nur Kaufen</button>
+        <button type="button" class="path-view-btn" data-path="rent" aria-pressed="false">nur Mieten</button>
+      </div>
       <label class="switch result-real"><input type="checkbox" id="real" checked><span class="track"></span> Euro von heute</label>
     </div>
     <div class="summary-block">
@@ -57,11 +62,11 @@
       </h2>
       <p class="horizon-month-note note">Durchschnitt je Monat in diesem Jahr. Gleiche Euro-Basis wie „Euro von heute“.</p>
       <div class="horizon-month-grid">
-        <div class="horizon-month-col">
+        <div class="horizon-month-col path-buy-only">
           <h3>Kaufen</h3>
           <ul id="horizon-month-buy" class="horizon-month-rows"></ul>
         </div>
-        <div class="horizon-month-col">
+        <div class="horizon-month-col path-rent-only">
           <h3>Mieten</h3>
           <ul id="horizon-month-rent" class="horizon-month-rows"></ul>
         </div>
@@ -76,19 +81,19 @@
     <div class="chart-card">
       <div class="chart-head">
         <h2>Vermögen</h2>
-        <p class="legend-inline"><span class="swatch buy"></span>Kaufen <span class="swatch etf"></span>ETF im Kauf <span class="swatch rent"></span>Mieten</p>
+        <p class="legend-inline" id="wealth-legend"><span class="swatch buy"></span>Kaufen <span class="swatch etf"></span>ETF im Kauf <span class="swatch rent"></span>Mieten</p>
       </div>
       <div class="plot">
         <svg id="wealth" viewBox="0 0 800 280" role="img" aria-label="Vermögen beider Wege"></svg>
       </div>
     </div>
-    <div class="chart-card">
+    <div class="chart-card path-buy-only">
       <h2>Restschuld</h2>
       <div class="plot">
         <svg id="loan" viewBox="0 0 800 180" role="img" aria-label="Restschuld"></svg>
       </div>
     </div>
-    <div class="chart-card">
+    <div class="chart-card path-rent-only">
       <div class="chart-head">
         <h2>Monatlich beim Mieten</h2>
         <p class="legend-inline" id="legend-rent-flow"></p>
@@ -98,7 +103,7 @@
         <svg id="rent-flow" viewBox="0 0 800 220" role="img" aria-label="Monatliche Verwendung beim Mieten"></svg>
       </div>
     </div>
-    <div class="chart-card">
+    <div class="chart-card path-buy-only">
       <div class="chart-head">
         <h2>Monatlich beim Kaufen</h2>
         <p class="legend-inline" id="legend-buy-flow"></p>

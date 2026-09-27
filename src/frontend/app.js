@@ -10,6 +10,7 @@ let touchedSnapshot = null;
 let captureResultSnapshot = false;
 let horizonMonthYear = null;
 let horizonMonthYearBound = false;
+let pathView = "both";
 const BUY_COLOR = "#0c8f62";
 const RENT_COLOR = "#2a62b5";
 const BUY_ETF_COLOR = "#0e9f6e";
@@ -809,6 +810,41 @@ document.getElementById("import")?.addEventListener("change", async (event) => {
   window.showGate();
 });
 document.getElementById("real")?.addEventListener("change", () => latest && renderResult(latest));
+
+function syncPathViewUi() {
+  const results = document.getElementById("results");
+  if (results) results.dataset.pathView = pathView;
+  document.querySelectorAll(".path-view-btn").forEach((btn) => {
+    btn.setAttribute("aria-pressed", btn.dataset.path === pathView ? "true" : "false");
+  });
+  const legend = document.getElementById("wealth-legend");
+  if (legend) {
+    if (pathView === "buy") {
+      legend.innerHTML =
+        '<span class="swatch buy"></span>Kaufen <span class="swatch etf"></span>ETF im Kauf';
+    } else if (pathView === "rent") {
+      legend.innerHTML = '<span class="swatch rent"></span>Mieten';
+    } else {
+      legend.innerHTML =
+        '<span class="swatch buy"></span>Kaufen <span class="swatch etf"></span>ETF im Kauf <span class="swatch rent"></span>Mieten';
+    }
+  }
+}
+
+function setPathView(mode) {
+  if (mode !== "both" && mode !== "buy" && mode !== "rent") return;
+  pathView = mode;
+  syncPathViewUi();
+  if (!latest) return;
+  const real = document.getElementById("real")?.checked ?? true;
+  drawWealth(latest.series, real, latest.markers);
+  drawLoan(latest.series, latest.markers);
+  drawFlows(latest.cashflow || [], real, latest.markers);
+}
+
+document.querySelectorAll(".path-view-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setPathView(btn.dataset.path));
+});
 function gapTone(buy, rent) {
   const gap = buy - rent;
   if (Math.abs(gap) < 1) return "tie";
@@ -870,7 +906,7 @@ function gapText(buy, rent) {
 }
 
 function gapLineHtml(buy, rent) {
-  return `<p class="hero-gap delta ${gapTone(buy, rent)}"><span class="hero-gap-side" aria-hidden="true"></span><span class="hero-gap-text">${gapText(buy, rent)}</span><span class="hero-gap-side hero-gap-side-end" aria-hidden="true"></span></p>`;
+  return `<p class="hero-gap path-both-only delta ${gapTone(buy, rent)}"><span class="hero-gap-side" aria-hidden="true"></span><span class="hero-gap-text">${gapText(buy, rent)}</span><span class="hero-gap-side hero-gap-side-end" aria-hidden="true"></span></p>`;
 }
 
 function renderResult(result) {
@@ -895,9 +931,9 @@ function renderResult(result) {
   const gapInfo = gapLimitInfo();
   document.getElementById("figures").innerHTML = `
     <div class="hero-grid">
-      <article class="hero buy"><span>Kaufen</span><strong>${summaryAmount(buy)}</strong></article>
+      <article class="hero buy path-buy-only"><span>Kaufen</span><strong>${summaryAmount(buy)}</strong></article>
       ${gapLineHtml(buy, rent)}
-      <article class="hero rent"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
+      <article class="hero rent path-rent-only"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
     </div>
     <p class="figures-advice note">Vergleich der Modellergebnisse, keine Empfehlung, kein Angebot.</p>
   `;
@@ -908,9 +944,9 @@ function renderResult(result) {
     gaps.innerHTML = `
       <p class="care-label totals-accent-label">Bei Pflegebeginn</p>
       <div class="hero-grid care-compact">
-        <article class="hero buy"><span>Kaufen</span><strong>${summaryAmount(careBuy)}</strong></article>
+        <article class="hero buy path-buy-only"><span>Kaufen</span><strong>${summaryAmount(careBuy)}</strong></article>
         ${gapLineHtml(careBuy, careRent)}
-        <article class="hero rent"><span>Mieten</span><strong>${summaryAmount(careRent)}</strong></article>
+        <article class="hero rent path-rent-only"><span>Mieten</span><strong>${summaryAmount(careRent)}</strong></article>
       </div>`;
   } else {
     gaps.innerHTML = "";
@@ -921,6 +957,7 @@ function renderResult(result) {
   if (factorInterest) factorInterest.replaceChildren();
   syncPurchasePriceInfo();
   renderHorizonMonth(result, real);
+  syncPathViewUi();
   document.getElementById("warnings").innerHTML = result.warnings.map((item) => `<li>${item}</li>`).join("");
   drawWealth(result.series, real, result.markers);
   drawLoan(result.series, result.markers);
@@ -931,12 +968,15 @@ function drawWealth(series, real, markers) {
   const buyKey = real ? "buy_real" : "buy_nominal";
   const rentKey = real ? "rent_real" : "rent_nominal";
   const etfKey = real ? "buy_etf_real" : "buy_etf_nominal";
-  const values = series.flatMap((point) => [point[buyKey], point[rentKey], point[etfKey]]);
-  paintChart(document.getElementById("wealth"), series, [
+  let specs = [
     [buyKey, "buy"],
     [rentKey, "rent"],
     [etfKey, "etf"],
-  ], values, 210, "wealth", markers);
+  ];
+  if (pathView === "buy") specs = [[buyKey, "buy"], [etfKey, "etf"]];
+  if (pathView === "rent") specs = [[rentKey, "rent"]];
+  const values = series.flatMap((point) => specs.map(([key]) => point[key]));
+  paintChart(document.getElementById("wealth"), series, specs, values, 210, "wealth", markers);
 }
 
 function drawLoan(series, markers) {
