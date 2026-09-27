@@ -10,7 +10,11 @@
   --buy: #0c8f62;
   --buy-etf: #0e9f6e;
   --buy-accent: rgba(12, 143, 98, 0.38);
+  --buy-wash: rgba(12, 143, 98, 0.1);
   --rent: #2a62b5;
+  --rent-etf: #3d7cc9;
+  --rent-accent: rgba(42, 98, 181, 0.38);
+  --rent-wash: rgba(42, 98, 181, 0.1);
   --warn: #9a3412;
   --accent: var(--teal);
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px rgba(16, 24, 40, 0.06);
@@ -449,8 +453,23 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   min-width: 0;
   max-width: 100%;
 }
+.horizon-month-col {
+  border-radius: 12px;
+  padding: 0.45rem 0.55rem 0.55rem;
+  min-width: 0;
+}
+.horizon-month-col:first-child {
+  background: linear-gradient(180deg, var(--buy-wash), rgba(12, 143, 98, 0.03));
+  border: 1px solid var(--buy-accent);
+}
+.horizon-month-col:last-child {
+  background: linear-gradient(180deg, var(--rent-wash), rgba(42, 98, 181, 0.03));
+  border: 1px solid var(--rent-accent);
+}
 .horizon-month-col:first-child h3 { color: var(--buy); }
 .horizon-month-col:last-child h3 { color: var(--rent); }
+#horizon-month-buy strong { color: var(--buy); }
+#horizon-month-rent strong { color: var(--rent); }
 .horizon-month-heading {
   display: flex;
   flex-wrap: wrap;
@@ -460,9 +479,9 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .horizon-month-year {
   font: inherit;
-  font-weight: 650;
-  color: var(--buy);
-  border: 1px solid var(--buy-accent);
+  font-weight: 600;
+  color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.12rem 0.45rem;
   background: #fff;
@@ -479,7 +498,6 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   gap: 0.75rem 1rem;
   min-width: 0;
 }
-.horizon-month-col { min-width: 0; }
 .horizon-month-col h3 {
   margin: 0 0 0.35rem;
   font-size: 0.92rem;
@@ -516,6 +534,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   background: linear-gradient(180deg, #f8fafb, #ffffff);
   border: 1px solid rgba(20, 32, 43, 0.06);
   border-left: 3px solid var(--buy-accent);
+  border-right: 3px solid var(--rent-accent);
 }
 .figures { display: flex; flex-direction: column; gap: 0.65rem; }
 .hero-gap {
@@ -551,8 +570,11 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .life-gaps {
   border-left: 3px solid var(--buy-accent);
+  border-right: 3px solid var(--rent-accent);
   padding-left: 0.55rem;
+  padding-right: 0.55rem;
   margin-left: 0.15rem;
+  margin-right: 0.15rem;
 }
 .care-label { margin-top: 0.55rem; }
 .care-compact { margin-top: 0.2rem; }
@@ -726,9 +748,16 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   padding: 0.85rem 1rem 0.75rem;
   border: 1px solid transparent;
 }
-.hero.buy,
-.hero.rent { background: linear-gradient(180deg, #f4f6f8, #fafbfc); border-color: rgba(20, 32, 43, 0.08); }
-.hero span { display: block; color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+.hero.buy {
+  background: linear-gradient(180deg, var(--buy-wash), rgba(12, 143, 98, 0.03));
+  border-color: var(--buy-accent);
+}
+.hero.rent {
+  background: linear-gradient(180deg, var(--rent-wash), rgba(42, 98, 181, 0.03));
+  border-color: var(--rent-accent);
+}
+.hero.buy span { display: block; color: var(--buy); font-size: 0.78rem; font-weight: 650; }
+.hero.rent span { display: block; color: var(--rent); font-size: 0.78rem; font-weight: 650; }
 .hero strong {
   display: block;
   margin-top: 0.15rem;
@@ -738,8 +767,8 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
-.hero.buy strong,
-.hero.rent strong { color: var(--ink); }
+.hero.buy strong { color: var(--buy); }
+.hero.rent strong { color: var(--rent); }
 .delta {
   margin: 0;
   max-width: 100%;

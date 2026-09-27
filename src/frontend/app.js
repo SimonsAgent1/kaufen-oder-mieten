@@ -11,6 +11,7 @@ let captureResultSnapshot = false;
 let horizonMonthYear = null;
 let horizonMonthYearBound = false;
 const BUY_ETF_COLOR = "#0e9f6e";
+const RENT_ETF_COLOR = "#3d7cc9";
 const touched = { sollzins: false, anschlusszins: false, pensions: {} };
 
 function percentDisplayDecimals(step) {
@@ -935,7 +936,7 @@ function drawLoan(series, markers) {
 
 const RENT_FLOW = [
   ["rent_housing", "Miete", "#2a62b5"],
-  ["rent_etf", "ETF", "#6d28d9"],
+  ["rent_etf", "ETF", RENT_ETF_COLOR],
   ["rent_left", "Übrig", "#94a3b8"],
 ];
 const BUY_FLOW = [
