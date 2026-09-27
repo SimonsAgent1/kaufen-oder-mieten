@@ -246,10 +246,10 @@ def test_favicon_is_served():
     assert "image/svg" in response.headers.get("content-type", "")
     text = response.text
     assert "<svg" in text
-    assert "#b8860b" in text
-    assert "#1a365d" in text
-    assert "#e0ca93" in text
-    assert "#ccd3db" in text
+    assert "#0c8f62" in text
+    assert "#2a62b5" in text
+    assert "#94ceba" in text
+    assert "#d0dcef" in text
 
 
 def test_impressum_page_is_served():
