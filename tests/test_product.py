@@ -56,6 +56,7 @@ def test_public_tree_has_no_personal_names():
         ROOT / "src" / "frontend" / "index.html",
         EXAMPLE,
     ]
+    impressum = ROOT / "src" / "frontend" / "impressum.html"
     name_checks = (
         (re.compile(r"\bSimon\b"), "Simon"),
         (re.compile(r"\bNatalie\b"), "Natalie"),
@@ -64,8 +65,11 @@ def test_public_tree_has_no_personal_names():
     for path in paths:
         text = path.read_text(encoding="utf-8")
         if path.name == "index.html":
+            assert 'href="/impressum">Impressum</a>' in text
+            assert "privacy-notice" not in text
+        if path == impressum:
             text = re.sub(
-                r'<div class="privacy-notice">.*?</div>',
+                r'<main class="legal-body impressum-notice">.*?</main>',
                 "",
                 text,
                 count=1,

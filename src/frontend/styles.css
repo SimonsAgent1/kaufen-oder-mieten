@@ -752,11 +752,28 @@ summary { cursor: pointer; font-weight: 650; }
 .advice { margin: 0.35rem 0 0; max-width: 40rem; color: var(--muted); font-size: 0.86rem; }
 .advice .source-link { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
 .advice .source-link:hover { color: var(--ink); }
-.privacy-notice { margin: 0.5rem 0 0; max-width: 40rem; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
-.privacy-notice p { margin: 0.45rem 0 0; }
-.privacy-notice p:first-child { margin-top: 0; }
-.privacy-notice a { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
-.privacy-notice a:hover { color: var(--ink); }
+.site-footer {
+  margin: 2rem 0 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.86rem;
+}
+.site-footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 0.12em; }
+.site-footer a:hover { color: var(--ink); }
+.advice .github-mark {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.35rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.advice .github-mark:hover { color: var(--ink); }
+.legal-page { max-width: 40rem; margin: 0 auto; padding: 1rem 1.1rem 2rem; }
+.legal-header h1 { margin-bottom: 0.35rem; }
+.legal-body { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+.legal-body p { margin: 0.65rem 0 0; }
+.legal-body a { color: inherit; text-decoration: underline; }
+.impressum-notice p:first-child { margin-top: 0; }
 .banner {
   margin: 0.8rem 0;
   padding: 0.55rem 0.75rem;

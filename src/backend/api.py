@@ -149,6 +149,11 @@ def index() -> FileResponse:
     return FileResponse(_frontend_dir() / "index.html")
 
 
+@app.get("/impressum")
+def impressum_page() -> FileResponse:
+    return FileResponse(_frontend_dir() / "impressum.html")
+
+
 @app.get("/regeln", response_class=HTMLResponse)
 def rules_page() -> str:
     return render_rules_html()

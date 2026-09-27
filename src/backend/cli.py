@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from buy_vs_rent.api import evaluate
@@ -52,6 +53,8 @@ def main(argv: list[str] | None = None) -> None:
     serve = commands.add_parser("serve", help="Seite im Browser öffnen")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--ssl-certfile", default=os.environ.get("BUY_VS_RENT_SSL_CERT"))
+    serve.add_argument("--ssl-keyfile", default=os.environ.get("BUY_VS_RENT_SSL_KEY"))
     run = commands.add_parser("run", help="Eine Szenario-Datei rechnen")
     run.add_argument("file")
     run.add_argument("--json", action="store_true")
@@ -59,7 +62,17 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "serve":
         import uvicorn
 
-        uvicorn.run("buy_vs_rent.api:app", host=args.host, port=args.port)
+        ssl_cert = args.ssl_certfile
+        ssl_key = args.ssl_keyfile
+        if (ssl_cert or ssl_key) and not (ssl_cert and ssl_key):
+            raise SystemExit("serve: set both --ssl-certfile and --ssl-keyfile (or BUY_VS_RENT_SSL_CERT and BUY_VS_RENT_SSL_KEY).")
+        uvicorn.run(
+            "buy_vs_rent.api:app",
+            host=args.host,
+            port=args.port,
+            ssl_certfile=ssl_cert,
+            ssl_keyfile=ssl_key,
+        )
         return
     scenario = load_scenario(Path(args.file))
     payload = evaluate(scenario)

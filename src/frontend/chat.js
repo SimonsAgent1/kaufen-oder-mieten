@@ -807,7 +807,7 @@ function renderChurch() {
     const consentOn = adult.church_tax_consent ? "checked" : "";
     const on = adult.church_tax ? "checked" : "";
     const disabled = adult.church_tax_consent ? "" : "disabled";
-    const consentText = CHURCH_TAX_CONSENT_TEXT.replace("dieser Person", name);
+    const consentText = churchTaxConsentLabel(name);
     return `<div class="church-tax-block">
       <label class="church-consent"><input type="checkbox" name="church-consent-${index}" ${consentOn}><span>${consentText}</span></label>
       <label class="switch church-row"><input type="checkbox" name="church-${index}" ${on} ${disabled}><span class="track"></span><span class="switch-text">Kirchensteuer in der Rechnung: ${name}</span></label>

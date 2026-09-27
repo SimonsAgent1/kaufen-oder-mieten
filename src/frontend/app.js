@@ -616,7 +616,7 @@ function mountBeliefs() {
     block.className = "church-tax-block";
     const consent = document.createElement("label");
     consent.className = "church-consent";
-    consent.innerHTML = `<input type="checkbox" ${adult.church_tax_consent ? "checked" : ""}><span>${CHURCH_TAX_CONSENT_TEXT.replace("dieser Person", name)}</span>`;
+    consent.innerHTML = `<input type="checkbox" ${adult.church_tax_consent ? "checked" : ""}><span>${churchTaxConsentLabel(name)}</span>`;
     const consentInput = consent.querySelector("input");
     const church = document.createElement("label");
     church.className = "switch belief-switch";

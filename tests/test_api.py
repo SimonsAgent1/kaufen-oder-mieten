@@ -212,6 +212,13 @@ dwelling:
     assert date.fromisoformat(response.json()["as_of"])
 
 
+def test_impressum_page_is_served():
+    response = client.get("/impressum")
+    assert response.status_code == 200
+    assert "Impressum" in response.text
+    assert "HTTPS" in response.text
+
+
 def test_church_tax_without_consent_is_422():
     body = _body()
     body["adults"][0]["church_tax"] = True

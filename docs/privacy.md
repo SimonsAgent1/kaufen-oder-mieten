@@ -24,7 +24,7 @@ Die Demodatei ist keine echte Haushaltsgeschichte. „Beispiel ansehen“ zeigt 
 
 ## Datenschutz auf der Seite
 
-Der Text im Seitenkopf ist die Datenschutzerklärung für den Betrieb unter `kauf-oder-mieten.de`. Verantwortlicher ist Simon Muchau, erreichbar unter `simon.muchau@freenet.de`. Die Seite ist privat und nicht geschäftlich; es gibt kein Impressum.
+Der vollständige Text steht unter `/impressum`. Der Footer-Link heißt „Impressum“. Die Startseite zeigt ihn nicht im Volltext. Verantwortlicher ist Simon Muchau, erreichbar unter `simon.muchau@freenet.de`. Die Seite ist privat und nicht geschäftlich; die Impressum-Seite erklärt, dass keine Pflicht nach § 5 DDG besteht.
 
 Haushaltsangaben bleiben im Browser (`localStorage`). Export ist ein Download; Import liest nur lokal. Ein `?wohnung=`-Link trägt kein Einkommen und kein Geburtsdatum.
 
@@ -32,4 +32,4 @@ Haushaltsangaben bleiben im Browser (`localStorage`). Export ist ein Download; I
 
 Der Schalter Kirchensteuer betrifft Religionszugehörigkeit (Art. 9 DSGVO). Die Seite fragt zuerst eine ausdrückliche Einwilligung ab; ohne sie bleibt `church_tax` aus und wird nicht an den Server geschickt.
 
-Beim Aufruf sehen Betreiber-Infrastruktur (Mini-PC, Fritz!Box) die Verbindung, insbesondere die IP-Adresse. Die Entwicklungsseite im heimischen WLAN (`http://192.168.178.10:8000`) läuft ohne TLS. Geplant ist HTTPS auf `kauf-oder-mieten.de`; dann ist der Seitenname sichtbar, nicht der Inhalt des Formulars. Es werden keine Schriftarten oder Skripte von Drittanbietern geladen. Eine feste Löschfrist für Verbindungslogs ist nicht festgelegt; Anfragen an die genannte Adresse gelten dem Log, falls vorhanden, und der Kopie im Browser.
+Die Seite wird nur über HTTPS ausgeliefert (`BUY_VS_RENT_SSL_CERT` und `BUY_VS_RENT_SSL_KEY` für `buy-vs-rent serve`). Das gilt für die Entwicklungsadresse im WLAN (`https://192.168.178.10:8000`) und später für `kauf-oder-mieten.de`. Es werden keine Schriftarten oder Skripte von Drittanbietern geladen. Der Quellcode-Link ist ein GitHub-Mark; es gibt keine Anfrage an GitHub vor dem Klick.
