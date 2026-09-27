@@ -27,6 +27,20 @@ WERBUNGSKOSTEN = 1_230.0
 PENSION_WERBUNGSKOSTEN = 102.0
 GRUNDFREIBETRAG = 12_348.0
 KINDERGELD_2026 = 259.0
+# One parent receives Kindererziehungszeiten for all children; three Entgeltpunkte per child (SGB VI simplification).
+CHILD_REARING_ENTGELTPUNKTE_PER_CHILD = 3.0
+
+
+def kindergeld_until_age(accept_until_25: bool) -> int:
+    """Kindergeld runs until this birthday age. Nein ends at 18 without training or income tests."""
+    return 25 if accept_until_25 else 18
+
+
+def child_rearing_entgeltpunkte(child_count: int) -> float:
+    """Entgeltpunkte from Kindererziehungszeiten credited to one adult for all children."""
+    if child_count <= 0:
+        return 0.0
+    return child_count * CHILD_REARING_ENTGELTPUNKTE_PER_CHILD
 # Kinderfreibetrag 6,828 € plus BEA-Freibetrag 2,928 €, both parents together.
 KINDERFREIBETRAG_2026 = 9_756.0
 SOLI_FREE_2026 = 20_350.0

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from buy_vs_rent.law.de_2026 import church_tax_rate
-from buy_vs_rent.scenario import Scenario, labels
+from buy_vs_rent.law.de_2026 import child_rearing_entgeltpunkte, church_tax_rate
+from buy_vs_rent.scenario import Scenario, child_rearing_adult_id, labels
 
 
 @dataclass(frozen=True)
@@ -341,20 +341,37 @@ ENTRIES: tuple[Rule, ...] = (
         "owner-occupied",
         "house.owner_occupied_exemption",
         "Eigennutzung",
-        "Im Kaufweg wohnt das Modell ausschließlich selbst bis zum Verkauf; die Funktion setzt §23-Befreiung dafür. Gesetzlich gilt auch Eigennutzung im Verkaufsjahr und in den zwei Kalenderjahren davor; ein Teil-Kalenderjahr zählt mit.",
+        "Ja: ausschließliche Eigennutzung von Kauf bis Verkauf, §23-Befreiung. Nein: nur Haltedauer über zehn Jahre oder kein Gewinn. Gesetzlich gilt auch Eigennutzung im Verkaufsjahr und in den zwei Kalenderjahren davor; ein Teil-Kalenderjahr zählt mit.",
         "§ 23 EStG",
-        "Kauf Dezember 2020 und Verkauf Januar 2021 ist befreit.",
+        "Kauf Dezember 2020 und Verkauf Januar 2021 ist bei Ja befreit.",
+        assumption="Auf dem Kaufweg wohnt das Modell ausschließlich selbst bis zum Verkauf.",
+    ),
+    Rule(
+        "kindergeld-until-age",
+        "law.de_2026.kindergeld_until_age",
+        "Kindergeld bis",
+        "Ja endet mit dem 25. Geburtstag. Nein endet mit 18, ohne Ausbildungs- und Einkommensprüfung.",
+        "BKGG, Modellwahl für Nein",
+        "Ja → 25, Nein → 18.",
+    ),
+    Rule(
+        "child-rearing-points",
+        "law.de_2026.child_rearing_entgeltpunkte",
+        "Kindererziehungszeiten",
+        "Ein Erwachsener erhält je Kind drei Entgeltpunkte, alle Kinder zusammen. Elternzeit zählt weiter keine Entgeltpunkte.",
+        "SGB VI § 56, Näherung drei Punkte je Kind",
+        "Zwei Kinder → 6 Entgeltpunkte für den gewählten Erwachsenen.",
+        assumption="Kindererziehungszeiten erhöhen die geschätzte Rente des gewählten Erwachsenen.",
     ),
     Rule(
         "kindergeld",
         "model.kindergeld",
         "Kindergeld",
-        "259 € je Kind und Monat im Jahr 2026, mit der Inflation fortgeschrieben, bis zum 25. Geburtstag. Die Heirat ist keine Voraussetzung.",
+        "259 € je Kind und Monat im Jahr 2026, mit der Inflation fortgeschrieben, bis zum gewählten Endalter. Die Heirat ist keine Voraussetzung.",
         "BKGG, Betrag 2026",
         "Ein Kind, ein Monat, ohne Inflation: 259 €.",
         assumption=(
-            "Kindergeld ist 259 € je Kind und Monat im Jahr 2026 und läuft bis zum 25. Geburtstag, auch ohne Heirat. "
-            "Ausbildungs- und Einkommensprüfungen ab 18 sind nicht modelliert. "
+            "Kindergeld ist 259 € je Kind und Monat im Jahr 2026, auch ohne Heirat. "
             "Im Dezember wird es gegen den Kinderfreibetrag geprüft. Ehegattensplitting gilt ab dem Heiratsmonat."
         ),
     ),
@@ -408,6 +425,28 @@ def result_sentences(scenario: Scenario) -> list[str]:
         elif entry.id == "withdrawal-drawdown":
             if scenario.beliefs.etf_consume > 0:
                 lines.append(entry.assumption)
+        elif entry.id == "kindergeld":
+            if scenario.kindergeld_until_25:
+                lines.append(entry.assumption)
+            else:
+                lines.append(
+                    "Kindergeld endet im Modell mit 18, ohne Ausbildungs- und Einkommensprüfung ab 18."
+                )
+        elif entry.id == "child-rearing-points":
+            if scenario.children:
+                credit = child_rearing_adult_id(scenario)
+                who = labels(scenario)[credit]
+                points = child_rearing_entgeltpunkte(len(scenario.children))
+                lines.append(
+                    f"Kindererziehungszeiten: {points:.0f} Entgeltpunkte für {who}, alle Kinder zusammen."
+                )
+        elif entry.id == "owner-occupied":
+            if scenario.exclusive_own_use_until_sale:
+                lines.append(entry.assumption)
+            else:
+                lines.append(
+                    "Eigennutzung von Kauf bis Verkauf ist aus. Die Verkaufssteuer folgt Haltedauer und Gewinn."
+                )
         else:
             lines.append(entry.assumption)
     return lines

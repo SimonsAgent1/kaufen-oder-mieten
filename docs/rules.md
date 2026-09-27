@@ -294,15 +294,31 @@ Probe: Gewinn 0 ergibt 0 € Steuer.
 
 ## Eigennutzung
 
-Im Kaufweg wohnt das Modell ausschließlich selbst bis zum Verkauf; die Funktion setzt §23-Befreiung dafür. Gesetzlich gilt auch Eigennutzung im Verkaufsjahr und in den zwei Kalenderjahren davor; ein Teil-Kalenderjahr zählt mit.
+Ja: ausschließliche Eigennutzung von Kauf bis Verkauf, §23-Befreiung. Nein: nur Haltedauer über zehn Jahre oder kein Gewinn. Gesetzlich gilt auch Eigennutzung im Verkaufsjahr und in den zwei Kalenderjahren davor; ein Teil-Kalenderjahr zählt mit.
 
 Quelle: § 23 EStG.
 
-Probe: Kauf Dezember 2020 und Verkauf Januar 2021 ist befreit.
+Probe: Kauf Dezember 2020 und Verkauf Januar 2021 ist bei Ja befreit.
+
+## Kindergeld bis
+
+Ja endet mit dem 25. Geburtstag. Nein endet mit 18, ohne Ausbildungs- und Einkommensprüfung.
+
+Quelle: BKGG, Modellwahl für Nein.
+
+Probe: Ja → 25, Nein → 18.
+
+## Kindererziehungszeiten
+
+Ein Erwachsener erhält je Kind drei Entgeltpunkte, alle Kinder zusammen. Elternzeit zählt weiter keine Entgeltpunkte.
+
+Quelle: SGB VI § 56, Näherung drei Punkte je Kind.
+
+Probe: Zwei Kinder → 6 Entgeltpunkte für den gewählten Erwachsenen.
 
 ## Kindergeld
 
-259 € je Kind und Monat im Jahr 2026, mit der Inflation fortgeschrieben, bis zum 25. Geburtstag. Die Heirat ist keine Voraussetzung.
+259 € je Kind und Monat im Jahr 2026, mit der Inflation fortgeschrieben, bis zum gewählten Endalter. Die Heirat ist keine Voraussetzung.
 
 Quelle: BKGG, Betrag 2026.
 

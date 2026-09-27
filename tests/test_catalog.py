@@ -11,8 +11,10 @@ from buy_vs_rent.house import comparison_cold_rent_monthly, monthly_owner_costs,
 from buy_vs_rent.scenario import Scenario
 from buy_vs_rent.law import de_2026
 from buy_vs_rent.law.de_2026 import (
+    child_rearing_entgeltpunkte,
     church_tax_rate,
     elterngeld_month,
+    kindergeld_until_age,
     kinder_freibetrag_refund,
     monthly_net,
     solidarity,
@@ -56,6 +58,8 @@ def test_rules_page_is_the_catalog():
 
 def test_december_2020_purchase_sold_in_january_2021_is_exempt():
     assert owner_occupied_exemption(date(2020, 12, 1), date(2021, 1, 1))
+    assert kindergeld_until_age(True) == 25
+    assert child_rearing_entgeltpunkte(2) == 6.0
 
 
 def test_worked_examples_match_the_functions():

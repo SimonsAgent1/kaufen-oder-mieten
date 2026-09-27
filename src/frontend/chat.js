@@ -180,7 +180,26 @@ function blankAnswers() {
     horizonAge: null,
     etfMode: null,
     etfReserve: null,
+    kindergeldUntil25: null,
+    childRearingAdult: null,
+    exclusiveOwnUse: null,
   };
+}
+
+function hasBornChildren() {
+  return (chat.answers.children || []).some((child) => childBirthSet(child));
+}
+
+function defaultChildRearingAdultId() {
+  const adults = chat.answers.adults || [];
+  if (adults.length < 2) return "a1";
+  const totals = [0, 0];
+  (chat.answers.children || []).forEach((child) => {
+    (child.leave || []).forEach((months, index) => {
+      totals[index] += months || 0;
+    });
+  });
+  return totals[1] > totals[0] ? "a2" : "a1";
 }
 
 function steps() {
@@ -202,6 +221,10 @@ function steps() {
   if ((chat.answers.children || []).some((child) => childBirthSet(child) && addMonths(child.birth, 14) > asOfMonth())) {
     list.push({ id: "leave", render: renderLeave, read: readLeave });
   }
+  if (hasBornChildren()) {
+    list.push({ id: "kindergeld", render: renderKindergeld, read: readKindergeld });
+    if (count === 2) list.push({ id: "child-rearing", render: renderChildRearing, read: readChildRearing });
+  }
   for (let index = 0; index < count; index += 1) {
     const birth = chat.answers.adults[index]?.birth;
     if (!birth) continue;
@@ -219,6 +242,7 @@ function steps() {
   if (asksBuy()) {
     if (!chat.preset && !chat.linkDwelling) list.push({ id: "dwelling", render: renderDwelling, read: readDwelling });
     else list.push({ id: "cash", render: renderCash, read: readCash });
+    list.push({ id: "own-use", render: renderOwnUse, read: readOwnUse });
   } else if (!chat.preset && !chat.linkDwelling) {
     list.push({ id: "location", render: renderLocation, read: readLocation });
   }
@@ -339,6 +363,9 @@ function clearStep(id) {
     chat.answers.bundesland = "Bayern";
     chat.answers.cash = null;
   }
+  if (id === "kindergeld") chat.answers.kindergeldUntil25 = null;
+  if (id === "child-rearing") chat.answers.childRearingAdult = null;
+  if (id === "own-use") chat.answers.exclusiveOwnUse = null;
 }
 
 function renderPath() {
@@ -632,6 +659,67 @@ function readLeave() {
     if (err) return err;
     chat.answers.children[index].leave = leave;
   }
+  return null;
+}
+
+function renderKindergeld() {
+  const yes = chat.answers.kindergeldUntil25 !== false;
+  const no = chat.answers.kindergeldUntil25 === false;
+  return `<h2>Kindergeld bis 25 annehmen?</h2>
+    <p>Ja läuft bis zum 25. Geburtstag. Nein endet mit 18, ohne Ausbildungs- und Einkommensprüfung.</p>
+    <div class="choices">
+      <button type="button" class="primary" data-next data-kindergeld="yes"${yes && chat.answers.kindergeldUntil25 !== false ? "" : ""}>Ja</button>
+      <button type="button" data-next data-kindergeld="no">Nein</button>
+    </div>
+    <p class="form-error"></p>
+    <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
+}
+
+function readKindergeld() {
+  const choice = chat.clicked?.dataset?.kindergeld;
+  if (choice) chat.answers.kindergeldUntil25 = choice === "yes";
+  else if (chat.answers.kindergeldUntil25 == null) chat.answers.kindergeldUntil25 = true;
+  return null;
+}
+
+function renderChildRearing() {
+  const defaultId = defaultChildRearingAdultId();
+  const picked = chat.answers.childRearingAdult || defaultId;
+  const buttons = chat.answers.adults.map((adult, index) => {
+    const id = index === 0 ? "a1" : "a2";
+    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    const primary = picked === id ? "primary" : "";
+    return `<button type="button" class="${primary}" data-next data-adult="${id}">${name}</button>`;
+  }).join("");
+  return `<h2>Wer erhält die Kindererziehungszeiten?</h2>
+    <p>Ein Erwachsener, alle Kinder zusammen. Standard: mehr Elternzeit, sonst die erste Person.</p>
+    <div class="choices">${buttons}</div>
+    <p class="form-error"></p>
+    <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
+}
+
+function readChildRearing() {
+  const picked = chat.clicked?.dataset?.adult;
+  if (picked) chat.answers.childRearingAdult = picked;
+  else if (!chat.answers.childRearingAdult) chat.answers.childRearingAdult = defaultChildRearingAdultId();
+  return null;
+}
+
+function renderOwnUse() {
+  return `<h2>Eigennutzung bis zum Verkauf?</h2>
+    <p>Ja: ausschließlich selbst wohnen bis zur Pflege, Verkaufssteuer 0 € nach § 23. Nein: nur Haltedauer und Gewinn zählen.</p>
+    <div class="choices">
+      <button type="button" class="primary" data-next data-own-use="yes">Ja</button>
+      <button type="button" data-next data-own-use="no">Nein</button>
+    </div>
+    <p class="form-error"></p>
+    <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
+}
+
+function readOwnUse() {
+  const choice = chat.clicked?.dataset?.ownUse;
+  if (choice) chat.answers.exclusiveOwnUse = choice === "yes";
+  else if (chat.answers.exclusiveOwnUse == null) chat.answers.exclusiveOwnUse = true;
   return null;
 }
 
@@ -1079,6 +1167,11 @@ function buildScenario() {
     horizon: { adult_id: younger.id, age: chat.answers.horizonAge },
     care_copay_2026: null,
     dwelling,
+    kindergeld_until_25: chat.answers.kindergeldUntil25 !== false,
+    child_rearing_credit_adult_id: hasBornChildren()
+      ? chat.answers.childRearingAdult || defaultChildRearingAdultId()
+      : null,
+    exclusive_own_use_until_sale: chat.answers.exclusiveOwnUse !== false,
     beliefs: {
       household_rate: true,
       sollzins: null,
@@ -1319,6 +1412,9 @@ function openPathCompletion(side, current) {
   const consume = current.beliefs?.etf_consume ?? 0;
   chat.answers.etfMode = consume >= 1 ? "draw" : "hold";
   chat.answers.etfReserve = current.beliefs?.etf_reserve ?? 0;
+  chat.answers.kindergeldUntil25 = current.kindergeld_until_25 !== false;
+  chat.answers.childRearingAdult = current.child_rearing_credit_adult_id || null;
+  chat.answers.exclusiveOwnUse = current.exclusive_own_use_until_sale !== false;
   chat.answers.bundesland = current.dwelling.bundesland;
   chat.answers.cash = current.equity_cash ?? 0;
   if (current.path_scope !== "rent") {
@@ -1384,6 +1480,9 @@ window.reopenChat = (scenario) => {
   const consume = scenario.beliefs?.etf_consume ?? 0;
   chat.answers.etfMode = consume >= 1 ? "draw" : "hold";
   chat.answers.etfReserve = scenario.beliefs?.etf_reserve ?? 0;
+  chat.answers.kindergeldUntil25 = scenario.kindergeld_until_25 !== false;
+  chat.answers.childRearingAdult = scenario.child_rearing_credit_adult_id || null;
+  chat.answers.exclusiveOwnUse = scenario.exclusive_own_use_until_sale !== false;
   if (!scenario.adults.some((adult) => adult.church_tax) && scenario.beliefs?.church_tax) {
     chat.answers.adults.forEach((adult) => {
       if (adult.church_tax_consent) adult.church_tax = true;

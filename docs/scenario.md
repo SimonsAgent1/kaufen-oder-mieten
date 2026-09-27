@@ -26,6 +26,8 @@ Ein leeres Label wird „Du“ oder „Zweite Person“. Die Rechnung verwendet 
 
 ## Haus oder Wohnung, Horizont, Annahmen
 
+`kindergeld_until_25` (wahr) läuft Kindergeld bis 25; falsch endet es im Modell mit 18, ohne Ausbildungs- und Einkommensprüfung. `child_rearing_credit_adult_id` ist die `id` des Erwachsenen mit den Kindererziehungszeiten für alle Kinder; ohne Kinder leer. `exclusive_own_use_until_sale` (wahr) nimmt Eigennutzung von Kauf bis Verkauf an.
+
 `equity_cash` ist Bargeld außerhalb der Depots. Beim Kauf zahlt es Nebenkosten und senkt den Kredit. Auf dem Mietweg wird es im Startmonat angelegt.
 
 `horizon` ist `{adult_id, age}` und meint den Monat, in dem diese Person so alt wird. Fehlt das Feld, nimmt die Rechnung die jüngere Person mit 100.

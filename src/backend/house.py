@@ -59,12 +59,19 @@ def house_sale_tax(
     return max(0.0, with_gain - without)
 
 
-def owner_occupied_exemption(purchase: "date", sale: "date") -> bool:
+def owner_occupied_exemption(
+    purchase: "date",
+    sale: "date",
+    *,
+    exclusive_own_use_until_sale: bool = True,
+) -> bool:
     from datetime import date
 
+    if not exclusive_own_use_until_sale:
+        return False
     if not isinstance(purchase, date) or not isinstance(sale, date):
         return False
     if sale < purchase:
         return False
-    # Buy path: the model assumes exclusive own use from purchase through sale (§23).
+    # Buy path: exclusive own use from purchase through sale (§23).
     return True

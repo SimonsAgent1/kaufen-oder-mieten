@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from buy_vs_rent.law.de_2026 import employee_pv_rate
+from buy_vs_rent.law.de_2026 import employee_pv_rate, kindergeld_until_age
 from buy_vs_rent.scenario import (
     Child,
     Scenario,
@@ -16,6 +16,7 @@ from buy_vs_rent.scenario import (
     first_of_month,
     horizon_end,
     kindergeld_window,
+    month_turning,
     months_between,
     retire_month,
 )
@@ -86,21 +87,24 @@ def cold_rent(calendar: Calendar, month: date) -> float:
     return sum(adult.kaltmiete for adult in scenario.adults)
 
 
-def children_under(calendar: Calendar, month: date, age: int = 25) -> list[Child]:
+def children_under(calendar: Calendar, month: date, age: int | None = None) -> list[Child]:
+    if age is None:
+        age = kindergeld_until_age(calendar.scenario.kindergeld_until_25)
     found = []
     for child in calendar.scenario.children:
         start = first_of_month(child.birth)
         if age == 25:
             _, end = kindergeld_window(child)
         else:
-            end = date(child.birth.year + age, child.birth.month, 1)
+            end = month_turning(child.birth, age)
         if start <= month < end:
             found.append(child)
     return found
 
 
 def child_count(calendar: Calendar, month: date) -> int:
-    return len(children_under(calendar, month, 25))
+    age = kindergeld_until_age(calendar.scenario.kindergeld_until_25)
+    return len(children_under(calendar, month, age))
 
 
 def leave_fraction(calendar: Calendar, month: date, adult_id: str) -> float:

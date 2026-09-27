@@ -142,6 +142,9 @@ class Scenario(BaseModel):
     care_copay_2026: float | None = Field(default=None, ge=0, le=30_000)
     dwelling: Dwelling
     beliefs: Beliefs = Field(default_factory=Beliefs)
+    kindergeld_until_25: bool = True
+    child_rearing_credit_adult_id: str | None = None
+    exclusive_own_use_until_sale: bool = True
 
     @field_validator("as_of")
     @classmethod
@@ -200,10 +203,39 @@ class Scenario(BaseModel):
                     adult.church_tax = True
         if self.path_scope in ("both", "buy") and self.dwelling.purchase_price is None:
             raise ValueError("Für Kaufen oder beide Wege braucht das Szenario einen Kaufpreis.")
+        if self.children:
+            if self.child_rearing_credit_adult_id is None:
+                self.child_rearing_credit_adult_id = default_child_rearing_adult_id(self)
+            elif self.child_rearing_credit_adult_id not in known:
+                raise ValueError("Kindererziehungszeiten verweisen auf eine unbekannte Person.")
+        else:
+            self.child_rearing_credit_adult_id = None
         from buy_vs_rent.bounds import validate_scenario
 
         validate_scenario(self)
         return self
+
+
+def default_child_rearing_adult_id(scenario: Scenario) -> str:
+    """Adult with more Elternzeit months across all children, otherwise the first adult."""
+    if len(scenario.adults) == 1:
+        return scenario.adults[0].id
+    totals = {adult.id: 0 for adult in scenario.adults}
+    for child in scenario.children:
+        for item in child.leave:
+            totals[item.adult_id] = totals.get(item.adult_id, 0) + item.months
+    best = scenario.adults[0]
+    for adult in scenario.adults[1:]:
+        if totals[adult.id] > totals[best.id]:
+            best = adult
+    return best.id
+
+
+def child_rearing_adult_id(scenario: Scenario) -> str | None:
+    if not scenario.children:
+        return None
+    assert scenario.child_rearing_credit_adult_id is not None
+    return scenario.child_rearing_credit_adult_id
 
 
 def scenario_for_engine(scenario: Scenario) -> Scenario:

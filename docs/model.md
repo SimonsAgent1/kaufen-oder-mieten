@@ -12,7 +12,7 @@ Die Pflegeversicherung folgt der Zahl der Kinder unter 25. Ein kinderloser Erwac
 
 Elternzeit ersetzt in diesen Monaten den Lohnanteil durch Elterngeld und zählt keine Entgeltpunkte. Elterngeld nutzt die bisherige Formel, inklusive Geschwisterbonus, wenn ein anderes Kind unter drei ist. Die Grenze von 175.000 € wird nicht mit der Inflation angehoben.
 
-Entgeltpunkte laufen ab `work_start` über den Lohnpfad, ohne Kindererziehungszeiten. Ein gesetztes `pension_gross_today` ersetzt die Schätzung.
+Entgeltpunkte laufen ab `work_start` über den Lohnpfad. Kindererziehungszeiten erhöhen die Schätzung für einen gewählten Erwachsenen. Elternzeit zählt keine Punkte. Ein gesetztes `pension_gross_today` ersetzt die Schätzung.
 
 Jede Person spart bis zu ihrem eigenen Rentenmonat. Die andere spart weiter. Kindergeld wird angelegt, solange noch jemand spart. Entnommen wird erst, wenn alle in Rente sind. Davor wächst das Depot nur. Der Regler mischt Erhalt (0,5 Prozent real) und Verzehr bis `etf_reserve` in Euro von heute am Horizont.
 

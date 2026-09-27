@@ -35,7 +35,13 @@ from buy_vs_rent.income import (
     pension_deductions,
     taxable_income,
 )
-from buy_vs_rent.law.de_2026 import CARE_ALONE_2026, CARE_COUPLE_2026, church_tax_rate
+from buy_vs_rent.law.de_2026 import (
+    CARE_ALONE_2026,
+    CARE_COUPLE_2026,
+    child_rearing_entgeltpunkte,
+    church_tax_rate,
+    kindergeld_until_age,
+)
 from buy_vs_rent.mortgage import initial_payment, payment_to_clear, step_month
 from buy_vs_rent.pension import estimate_points, pension_today_euros
 from buy_vs_rent.scenario import (
@@ -43,6 +49,7 @@ from buy_vs_rent.scenario import (
     Scenario,
     add_months,
     care_start,
+    child_rearing_adult_id,
     first_of_month,
     labels,
     month_turning,
@@ -211,6 +218,9 @@ def _pension_estimate(scenario: Scenario, adult: Adult, calendar) -> float:
         inflation=scenario.beliefs.inflation,
         work_share=calendar.work_share.get(adult.id) or None,
     )
+    credit = child_rearing_adult_id(scenario)
+    if credit == adult.id:
+        points += child_rearing_entgeltpunkte(len(scenario.children))
     return pension_today_euros(points)
 
 
@@ -440,10 +450,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             lodging_rent = care_copay * inflation_factor
             renting_extra = 0.0
         actual_rent = lodging_rent + renting_extra
+        kg_age = kindergeld_until_age(scenario.kindergeld_until_25)
         kindergeld = here.children * KINDERGELD_2026 * inflation_factor
         if here.children > 0:
             unit = KINDERGELD_2026 * inflation_factor
-            for child in children_under(calendar, month, 25):
+            for child in children_under(calendar, month, kg_age):
                 paid, months = kindergeld_by_child.get(child.id, (0.0, 0))
                 kindergeld_by_child[child.id] = (paid + unit, months + 1)
         can_claim = eligible(month, inflation_factor)
@@ -539,7 +550,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 property_value *= 1 + dwelling.appreciation
             if not house_sold and here.in_care and purchase is not None:
                 years_held = _years_held(purchase, month)
-                occupied = owner_occupied_exemption(purchase, month)
+                occupied = owner_occupied_exemption(
+                    purchase,
+                    month,
+                    exclusive_own_use_until_sale=scenario.exclusive_own_use_until_sale,
+                )
                 exempt = occupied or years_held > 10
                 other_income, splitting = income_at_sale(month, inflation_factor)
                 house_gain_value = sale_gain(
@@ -751,7 +766,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_final = buy_net
     elif purchase is not None and mortgage is not None:
         years_held = _years_held(purchase, end)
-        occupied = owner_occupied_exemption(purchase, end)
+        occupied = owner_occupied_exemption(
+            purchase,
+            end,
+            exclusive_own_use_until_sale=scenario.exclusive_own_use_until_sale,
+        )
         exempt = occupied or years_held > 10
         other_income, splitting = income_at_sale(end, final_inflation)
         house_gain_value = sale_gain(property_value, dwelling.selling_cost_rate, purchase_price_paid, nebenkosten_paid)
@@ -918,8 +937,7 @@ def _assumptions(
         "Beim Kauf zahlt es die Nebenkosten und senkt den Kredit. Wer mietet, legt denselben Betrag im Startmonat in den ETF.",
         f"Die ETF-Rendite liegt bei {beliefs.etf_return * 100:.1f} % nominal im Jahr, die TER bei {beliefs.ter * 100:.2f} %.",
         f"Die gesetzliche Rente ist brutto in Euro von heute: {pension_bits} im Monat. "
-        "Sie wächst mit der Inflation und wird um Einkommensteuer, Soli, gegebenenfalls Kirchensteuer und die halben Beiträge zur Kranken- und Pflegeversicherung gekürzt. "
-        "Kindererziehungszeiten sind nicht enthalten.",
+        "Sie wächst mit der Inflation und wird um Einkommensteuer, Soli, gegebenenfalls Kirchensteuer und die halben Beiträge zur Kranken- und Pflegeversicherung gekürzt.",
         f"Die Mietsteigerung liegt bei {beliefs.rent_growth * 100:.1f} % pro Jahr.",
         f"Die Inflation liegt bei {beliefs.inflation * 100:.1f} % pro Jahr.",
     ]
@@ -983,11 +1001,17 @@ def _assumptions(
         "Das ist eine Illustration, kein Pflegeplan."
     )
     if exempt:
-        lines.append(
-            "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €. Auf dem Kaufweg wohnt das Modell bis zum Verkauf selbst "
-            "oder die Haltedauer liegt über zehn Jahre. "
-            f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
-        )
+        if scenario.exclusive_own_use_until_sale:
+            lines.append(
+                "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €. Auf dem Kaufweg wohnt das Modell bis zum Verkauf selbst "
+                "oder die Haltedauer liegt über zehn Jahre. "
+                f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
+            )
+        else:
+            lines.append(
+                "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €, weil die Haltedauer über zehn Jahre liegt "
+                f"oder der Gewinn nicht positiv ist. Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
+            )
     return lines
 
 
