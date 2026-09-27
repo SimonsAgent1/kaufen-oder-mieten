@@ -956,6 +956,19 @@ summary { cursor: pointer; font-weight: 650; }
 .legal-body p { margin: 0.65rem 0 0; }
 .legal-body a { color: inherit; text-decoration: underline; }
 .impressum-notice p:first-child { margin-top: 0; }
+.zahlen-table {
+  width: 100%;
+  max-width: 28rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.zahlen-table th,
+.zahlen-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.zahlen-table th { font-weight: 650; color: var(--ink); }
 .banner {
   margin: 0.8rem 0;
   padding: 0.55rem 0.75rem;

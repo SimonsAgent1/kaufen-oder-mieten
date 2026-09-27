@@ -19,6 +19,13 @@ from buy_vs_rent.catalog import render_rules_html
 from buy_vs_rent.profile import load_profile
 from buy_vs_rent.rates import beleihung_spread, fetch_market_rate, household_spread
 from buy_vs_rent.scenario import Scenario, load_scenario, parse_property_link
+from buy_vs_rent.request_counts import (
+    record_compare_ok,
+    record_compare_reject,
+    record_page_load,
+    render_zahlen_html,
+    zahlen_allowed,
+)
 from buy_vs_rent.simulate import compare
 from buy_vs_rent.tax_rates import TRANSFER_TAX
 
@@ -56,8 +63,11 @@ app.mount("/static", StaticFiles(directory=_frontend_dir()), name="static")
 async def log_compare_without_body(request: Request, call_next):
     response = await call_next(request)
     if request.method == "POST" and request.url.path == "/api/compare":
-        host = request.client.host if request.client else "-"
-        logger.info("compare status=%s client=%s", response.status_code, host)
+        if response.status_code == 200:
+            record_compare_ok()
+        else:
+            record_compare_reject()
+        logger.info("compare status=%s", response.status_code)
     return response
 
 
@@ -162,7 +172,15 @@ def sitemap_xml() -> FileResponse:
 
 @app.get("/")
 def index() -> FileResponse:
+    record_page_load()
     return FileResponse(_frontend_dir() / "index.html")
+
+
+@app.get("/zahlen", response_class=HTMLResponse)
+def zahlen_page(request: Request) -> HTMLResponse:
+    if not zahlen_allowed(request.headers.get("host")):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return HTMLResponse(render_zahlen_html(_frontend_dir()))
 
 
 @app.get("/impressum")

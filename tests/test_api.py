@@ -252,6 +252,13 @@ def test_favicon_is_served():
     assert "#d0dcef" in text
 
 
+def test_impressum_mentions_daily_request_counts():
+    response = client.get("/impressum")
+    assert response.status_code == 200
+    assert "nur als Tageszahlen" in response.text
+    assert "ohne gespeicherte IP-Adresse" in response.text
+
+
 def test_impressum_page_is_served():
     response = client.get("/impressum")
     assert response.status_code == 200
