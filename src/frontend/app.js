@@ -8,6 +8,9 @@ let bundeslaender = ["Bayern"];
 let scenarioSnapshot = null;
 let touchedSnapshot = null;
 let captureResultSnapshot = false;
+let horizonMonthYear = null;
+let horizonMonthYearBound = false;
+const BUY_ETF_COLOR = "#0e9f6e";
 const touched = { sollzins: false, anschlusszins: false, pensions: {} };
 
 function percentDisplayDecimals(step) {
@@ -760,6 +763,7 @@ async function showScenario(next, demo) {
   document.getElementById("results").hidden = false;
   await loadBundeslaender();
   captureResultSnapshot = true;
+  horizonMonthYear = null;
   mountBeliefs();
   run();
 }
@@ -891,7 +895,7 @@ function renderResult(result) {
   const gaps = document.getElementById("life-gaps");
   if (careBuy != null && careRent != null) {
     gaps.innerHTML = `
-      <p class="care-label">Bei Pflegebeginn</p>
+      <p class="care-label totals-accent-label">Bei Pflegebeginn</p>
       <div class="hero-grid care-compact">
         <article class="hero buy"><span>Kaufen</span><strong>${summaryAmount(careBuy)}</strong></article>
         <p class="hero-gap delta ${gapTone(careBuy, careRent)}">${gapText(careBuy, careRent)}</p>
@@ -939,7 +943,7 @@ const BUY_FLOW = [
   ["buy_interest", "Zinsen", "#c2410c"],
   ["buy_principal", "Tilgung", "#0c8f62"],
   ["buy_owner", "Eigentümerkosten", "#d97706"],
-  ["buy_etf", "ETF", "#6d28d9"],
+  ["buy_etf", "ETF", BUY_ETF_COLOR],
   ["buy_left", "Übrig", "#94a3b8"],
 ];
 const HORIZON_MONTH_BUY = [
@@ -958,6 +962,32 @@ function horizonMonthPoint(cashflow, purchaseDate) {
   if (!cashflow?.length) return null;
   const anchor = purchaseDate || cashflow[0].date;
   return cashflow.find((point) => point.date >= anchor) ?? cashflow.at(-1);
+}
+
+function cashflowYears(cashflow) {
+  return [...new Set(cashflow.map((point) => point.date.slice(0, 4)))].sort();
+}
+
+function horizonMonthPointForYear(cashflow, year) {
+  return cashflow.find((point) => point.date.startsWith(year)) ?? null;
+}
+
+function defaultHorizonMonthYear(cashflow, purchaseDate) {
+  const point = horizonMonthPoint(cashflow, purchaseDate);
+  return point ? point.date.slice(0, 4) : cashflow[0].date.slice(0, 4);
+}
+
+function bindHorizonMonthYear() {
+  if (horizonMonthYearBound) return;
+  const select = document.getElementById("horizon-month-year");
+  if (!select) return;
+  horizonMonthYearBound = true;
+  select.addEventListener("change", () => {
+    horizonMonthYear = select.value;
+    if (latest) {
+      renderHorizonMonth(latest, document.getElementById("real")?.checked ?? true);
+    }
+  });
 }
 
 function horizonMonthRows(point, layers, real) {
@@ -982,15 +1012,25 @@ function renderHorizonMonth(result, real) {
   const section = document.getElementById("horizon-month");
   const buyList = document.getElementById("horizon-month-buy");
   const rentList = document.getElementById("horizon-month-rent");
-  const title = document.getElementById("horizon-month-title");
-  if (!section || !buyList || !rentList || !title) return;
-  const point = horizonMonthPoint(result.cashflow, result.purchase_date);
+  const yearSelect = document.getElementById("horizon-month-year");
+  if (!section || !buyList || !rentList || !yearSelect) return;
+  bindHorizonMonthYear();
+  const cashflow = result.cashflow || [];
+  const years = cashflowYears(cashflow);
+  if (!years.length) {
+    section.hidden = true;
+    return;
+  }
+  if (!horizonMonthYear || !years.includes(horizonMonthYear)) {
+    horizonMonthYear = defaultHorizonMonthYear(cashflow, result.purchase_date);
+  }
+  yearSelect.innerHTML = years.map((year) => `<option value="${year}">${year}</option>`).join("");
+  yearSelect.value = horizonMonthYear;
+  const point = horizonMonthPointForYear(cashflow, horizonMonthYear);
   if (!point) {
     section.hidden = true;
     return;
   }
-  const year = point.date.slice(0, 4);
-  title.textContent = `Monat im Jahr ${year}`;
   buyList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_BUY, real);
   rentList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_RENT, real);
   section.hidden = !buyList.innerHTML && !rentList.innerHTML;
@@ -1370,7 +1410,7 @@ function paintChart(svg, series, specs, values, plotHeight, prefix, markers) {
   const height = band + plotHeight + padBottom;
   const y = (value) => band + plotHeight - ((value - scale.axisMin) / (scale.axisMax - scale.axisMin)) * plotHeight;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  const colors = { buy: "#0c8f62", rent: "#2a62b5", loan: "#0c8f62", etf: "#6d28d9" };
+  const colors = { buy: "#0c8f62", rent: "#2a62b5", loan: "#0c8f62", etf: BUY_ETF_COLOR };
   const lineLabels = { buy: "Kaufen", rent: "Mieten", loan: "Restschuld", etf: "ETF im Kauf" };
   const paths = specs.map(([key, klass]) => {
     const points = series.map((point, index) => `${x(index).toFixed(1)},${y(point[key]).toFixed(1)}`);

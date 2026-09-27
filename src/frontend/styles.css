@@ -8,6 +8,8 @@
   --teal: #0f766e;
   --clay: #c2410c;
   --buy: #0c8f62;
+  --buy-etf: #0e9f6e;
+  --buy-accent: rgba(12, 143, 98, 0.38);
   --rent: #2a62b5;
   --warn: #9a3412;
   --accent: var(--teal);
@@ -441,12 +443,35 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   padding: 0.85rem 0.95rem 1rem;
   border-radius: 14px;
   border: 1px solid var(--line);
+  border-left: 3px solid var(--buy-accent);
   background: #fff;
   box-shadow: var(--shadow);
   min-width: 0;
   max-width: 100%;
 }
-.horizon-month-heading { margin-bottom: 0.15rem; }
+.horizon-month-col:first-child h3 { color: var(--buy); }
+.horizon-month-col:last-child h3 { color: var(--rent); }
+.horizon-month-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  margin-bottom: 0.15rem;
+}
+.horizon-month-year {
+  font: inherit;
+  font-weight: 650;
+  color: var(--buy);
+  border: 1px solid var(--buy-accent);
+  border-radius: 8px;
+  padding: 0.12rem 0.45rem;
+  background: #fff;
+  max-width: 100%;
+}
+.totals-accent-label {
+  color: var(--buy);
+  font-weight: 650;
+}
 .horizon-month-note { margin: 0 0 0.65rem; }
 .horizon-month-grid {
   display: grid;
@@ -490,6 +515,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   border-radius: 16px;
   background: linear-gradient(180deg, #f8fafb, #ffffff);
   border: 1px solid rgba(20, 32, 43, 0.06);
+  border-left: 3px solid var(--buy-accent);
 }
 .figures { display: flex; flex-direction: column; gap: 0.65rem; }
 .hero-gap {
@@ -518,10 +544,15 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .care-label {
   margin: 0;
   text-align: center;
-  color: var(--muted);
+  color: var(--buy);
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.01em;
+}
+.life-gaps {
+  border-left: 3px solid var(--buy-accent);
+  padding-left: 0.55rem;
+  margin-left: 0.15rem;
 }
 .care-label { margin-top: 0.55rem; }
 .care-compact { margin-top: 0.2rem; }
@@ -747,14 +778,14 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .swatch { width: 0.65rem; height: 0.65rem; border-radius: 99px; display: inline-block; }
 .swatch.buy { background: var(--buy); margin-left: 0.35rem; }
-.swatch.etf { background: #6d28d9; margin-left: 0.5rem; }
+.swatch.etf { background: var(--buy-etf); margin-left: 0.5rem; }
 .swatch.rent { background: var(--rent); margin-left: 0.5rem; }
 svg { width: 100%; height: auto; display: block; }
 .buy-line, .rent-line, .loan-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .buy-line { stroke: var(--buy); }
 .rent-line { stroke: var(--rent); }
 .loan-line { stroke: var(--buy); }
-.etf-line { fill: none; stroke: #6d28d9; stroke-dasharray: 6 4; }
+.etf-line { fill: none; stroke: var(--buy-etf); stroke-dasharray: 6 4; }
 .axis { stroke: #e6ebf0; }
 .tick { fill: var(--muted); font-size: 12px; font-family: ui-sans-serif, system-ui, sans-serif; }
 .tick-mark { stroke: #c5ced6; stroke-width: 1; }

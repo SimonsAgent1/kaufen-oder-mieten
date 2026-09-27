@@ -42,7 +42,7 @@
       <label class="switch result-real"><input type="checkbox" id="real" checked><span class="track"></span> Euro von heute</label>
     </div>
     <div class="summary-block">
-      <p class="horizon-label">Am Horizont</p>
+      <p class="horizon-label totals-accent-label">Am Horizont</p>
       <div class="figures" id="figures"></div>
       <div id="life-gaps" class="life-gaps"></div>
       <p id="life-sentence" class="life-sentence note"></p>
@@ -50,7 +50,10 @@
       <p id="compare-error" class="note compare-error"></p>
     </div>
     <section id="horizon-month" class="horizon-month" hidden aria-labelledby="horizon-month-title">
-      <h2 id="horizon-month-title" class="card-title horizon-month-heading">Monat im Jahr</h2>
+      <h2 id="horizon-month-title" class="card-title horizon-month-heading">
+        <span class="totals-accent-label">Monat im Jahr</span>
+        <select id="horizon-month-year" class="horizon-month-year" aria-label="Jahr wählen"></select>
+      </h2>
       <p class="horizon-month-note note">Durchschnitt je Monat in diesem Jahr. Gleiche Euro-Basis wie „Euro von heute“.</p>
       <div class="horizon-month-grid">
         <div class="horizon-month-col">
