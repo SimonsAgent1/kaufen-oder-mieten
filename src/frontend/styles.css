@@ -715,7 +715,7 @@ svg { width: 100%; height: auto; display: block; }
 .grid { stroke: #e6ebf0; stroke-width: 1; }
 .flow-note { margin: 0 0 0.15rem; color: var(--muted); font-size: 0.8rem; }
 .flow-line { fill: none; stroke: #9f1239; stroke-width: 2; stroke-dasharray: 5 4; }
-.plot { position: relative; }
+.plot { position: relative; touch-action: pan-y; }
 .hover-guide { stroke: #334155; stroke-width: 1; }
 .plot-tip {
   position: absolute;

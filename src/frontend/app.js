@@ -1048,13 +1048,54 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   bindPlotHover(svg, { points, series, x, band, plotHeight });
 }
 
-function bindPlotHover(svg, state) {
-  svg._plot = state;
-  hidePlotTip(svg);
-  if (svg.dataset.hoverBound) return;
-  svg.dataset.hoverBound = "1";
-  svg.addEventListener("pointermove", (event) => showPlotTip(svg, event));
-  svg.addEventListener("pointerleave", () => hidePlotTip(svg));
+const PLOT_TAP_MOVE_PX = 12;
+
+function plotUsesTap() {
+  return window.matchMedia("(hover: none), (pointer: coarse)").matches;
+}
+
+let plotOutsideDismissBound = false;
+
+function bindPlotOutsideDismiss() {
+  if (plotOutsideDismissBound) return;
+  plotOutsideDismissBound = true;
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (!plotUsesTap()) return;
+      document.querySelectorAll(".plot").forEach((plot) => {
+        const svg = plot.querySelector("svg[data-hover-bound]");
+        if (!svg?._plotPinned) return;
+        if (plot.contains(event.target)) return;
+        hidePlotTip(svg);
+      });
+    },
+    true,
+  );
+}
+
+function plotIndexAt(svg, event) {
+  const state = svg._plot;
+  const rect = svg.getBoundingClientRect();
+  const view = svg.viewBox.baseVal;
+  const viewX = ((event.clientX - rect.left) / rect.width) * view.width;
+  let index = 0;
+  let best = Infinity;
+  for (let i = 0; i < state.points.length; i += 1) {
+    const distance = Math.abs(state.x(i) - viewX);
+    if (distance < best) {
+      best = distance;
+      index = i;
+    }
+  }
+  return index;
+}
+
+function dismissOtherPlotTips(activeSvg) {
+  document.querySelectorAll(".plot svg[data-hover-bound]").forEach((svg) => {
+    if (svg === activeSvg) return;
+    hidePlotTip(svg);
+  });
 }
 
 function tipColor(hex) {
@@ -1077,21 +1118,10 @@ function plotTip(svg) {
   return tip;
 }
 
-function showPlotTip(svg, event) {
+function showPlotTip(svg, event, { pin = false } = {}) {
   const state = svg._plot;
   if (!state || !state.points.length) return;
-  const rect = svg.getBoundingClientRect();
-  const view = svg.viewBox.baseVal;
-  const viewX = ((event.clientX - rect.left) / rect.width) * view.width;
-  let index = 0;
-  let best = Infinity;
-  for (let i = 0; i < state.points.length; i += 1) {
-    const distance = Math.abs(state.x(i) - viewX);
-    if (distance < best) {
-      best = distance;
-      index = i;
-    }
-  }
+  const index = plotIndexAt(svg, event);
   const guide = svg.querySelector(".hover-guide");
   const xPos = state.x(index).toFixed(1);
   guide.setAttribute("x1", xPos);
@@ -1100,23 +1130,104 @@ function showPlotTip(svg, event) {
   guide.setAttribute("y2", state.band + state.plotHeight);
   guide.setAttribute("visibility", "visible");
   const year = state.points[index].date.slice(0, 4);
-  const rows = state.series.map((item) => `<div class="tip-row" style="color:${tipColor(item.color)}">${item.label} ${euro.format(item.values[index])}</div>`).join("");
+  const rows = state.series
+    .map(
+      (item) =>
+        `<div class="tip-row" style="color:${tipColor(item.color)}">${item.label} ${euro.format(item.values[index])}</div>`,
+    )
+    .join("");
   const tip = plotTip(svg);
   tip.innerHTML = `<div class="tip-x">${year}</div>${rows}`;
   tip.hidden = false;
+  if (pin) {
+    dismissOtherPlotTips(svg);
+    svg._plotPinned = true;
+  }
+  positionPlotTip(svg, tip, index, event);
+}
+
+function positionPlotTip(svg, tip, index, event) {
+  const state = svg._plot;
+  const rect = svg.getBoundingClientRect();
+  const view = svg.viewBox.baseVal;
+  const margin = 10;
+  if (plotUsesTap() && svg._plotPinned) {
+    const pointX = rect.left + (state.x(index) / view.width) * rect.width;
+    tip.style.position = "fixed";
+    tip.style.maxWidth = `${Math.min(288, window.innerWidth - margin * 2)}px`;
+    let left = pointX + 14;
+    tip.hidden = false;
+    const width = tip.offsetWidth;
+    if (left + width > window.innerWidth - margin) {
+      left = Math.max(margin, pointX - width - 14);
+    }
+    left = Math.max(margin, Math.min(left, window.innerWidth - margin - width));
+    let top = event.clientY - tip.offsetHeight - 10;
+    top = Math.max(margin, Math.min(top, window.innerHeight - margin - tip.offsetHeight));
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+    return;
+  }
+  tip.style.position = "absolute";
+  tip.style.maxWidth = "";
   const plot = svg.parentElement.getBoundingClientRect();
   const pointX = rect.left - plot.left + (state.x(index) / view.width) * rect.width;
   let left = pointX + 14;
   if (left + tip.offsetWidth > plot.width - 4) left = Math.max(4, pointX - tip.offsetWidth - 14);
-  const top = Math.min(Math.max(4, event.clientY - plot.top - tip.offsetHeight - 10), plot.height - tip.offsetHeight - 4);
+  const top = Math.min(
+    Math.max(4, event.clientY - plot.top - tip.offsetHeight - 10),
+    plot.height - tip.offsetHeight - 4,
+  );
   tip.style.left = `${left}px`;
   tip.style.top = `${top}px`;
 }
 
 function hidePlotTip(svg) {
+  svg._plotPinned = false;
   svg.querySelector(".hover-guide")?.setAttribute("visibility", "hidden");
   const tip = svg.parentElement?.querySelector(".plot-tip");
-  if (tip) tip.hidden = true;
+  if (!tip) return;
+  tip.hidden = true;
+  tip.style.position = "";
+  tip.style.left = "";
+  tip.style.top = "";
+  tip.style.maxWidth = "";
+}
+
+function bindPlotHover(svg, state) {
+  svg._plot = state;
+  hidePlotTip(svg);
+  bindPlotOutsideDismiss();
+  if (svg.dataset.hoverBound) return;
+  svg.dataset.hoverBound = "1";
+  const onCatch = (target) => target?.classList?.contains("hover-catch") || target?.closest?.(".hover-catch");
+  if (!plotUsesTap()) {
+    svg.addEventListener("pointermove", (event) => showPlotTip(svg, event));
+    svg.addEventListener("pointerleave", () => hidePlotTip(svg));
+    return;
+  }
+  let activePointer = null;
+  svg.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (!onCatch(event.target)) return;
+      activePointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    },
+    { passive: true },
+  );
+  svg.addEventListener(
+    "pointerup",
+    (event) => {
+      if (!activePointer || event.pointerId !== activePointer.id) return;
+      const dx = event.clientX - activePointer.x;
+      const dy = event.clientY - activePointer.y;
+      activePointer = null;
+      if (Math.hypot(dx, dy) > PLOT_TAP_MOVE_PX) return;
+      if (!onCatch(event.target)) return;
+      showPlotTip(svg, event, { pin: true });
+    },
+    { passive: true },
+  );
 }
 
 function xAt(series, date, xOf) {
