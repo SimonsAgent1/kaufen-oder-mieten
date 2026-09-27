@@ -46,10 +46,11 @@ def test_kindergeld_until_age_defaults():
     assert kindergeld_until_age(False) == 18
 
 
-def test_child_rearing_entgeltpunkte_per_child():
-    assert child_rearing_entgeltpunkte(0) == 0.0
-    assert child_rearing_entgeltpunkte(1) == 3.0
-    assert child_rearing_entgeltpunkte(2) == 6.0
+def test_child_rearing_entgeltpunkte_by_birth():
+    assert child_rearing_entgeltpunkte() == 0.0
+    assert child_rearing_entgeltpunkte(date(1992, 1, 1)) == 3.0
+    assert child_rearing_entgeltpunkte(date(1991, 12, 1)) == 2.0
+    assert child_rearing_entgeltpunkte(date(1991, 12, 1), date(2000, 6, 1)) == 5.0
 
 
 def test_default_child_rearing_adult_follows_elternzeit():

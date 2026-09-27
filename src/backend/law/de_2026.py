@@ -5,6 +5,8 @@ A later year is a new module. The month loop reads this pack and does not carry 
 
 from __future__ import annotations
 
+from datetime import date
+
 # 2026 social-security anchors. Employee shares are a simplification:
 # Rentenversicherung 9.3%, Arbeitslosenversicherung 1.3%,
 # Employee shares, 2026. KV is half of 14.6% plus half of the 2.9% average Zusatzbeitrag.
@@ -27,8 +29,9 @@ WERBUNGSKOSTEN = 1_230.0
 PENSION_WERBUNGSKOSTEN = 102.0
 GRUNDFREIBETRAG = 12_348.0
 KINDERGELD_2026 = 259.0
-# One parent receives Kindererziehungszeiten for all children; three Entgeltpunkte per child (SGB VI simplification).
-CHILD_REARING_ENTGELTPUNKTE_PER_CHILD = 3.0
+# Kinderfreibetrag 6,828 € plus BEA-Freibetrag 2,928 €, both parents together.
+KINDERFREIBETRAG_2026 = 9_756.0
+CHILD_REARING_BIRTH_CUTOFF = date(1992, 1, 1)
 
 
 def kindergeld_until_age(accept_until_25: bool) -> int:
@@ -36,13 +39,16 @@ def kindergeld_until_age(accept_until_25: bool) -> int:
     return 25 if accept_until_25 else 18
 
 
-def child_rearing_entgeltpunkte(child_count: int) -> float:
-    """Entgeltpunkte from Kindererziehungszeiten credited to one adult for all children."""
-    if child_count <= 0:
-        return 0.0
-    return child_count * CHILD_REARING_ENTGELTPUNKTE_PER_CHILD
-# Kinderfreibetrag 6,828 € plus BEA-Freibetrag 2,928 €, both parents together.
-KINDERFREIBETRAG_2026 = 9_756.0
+def _child_rearing_entgeltpunkte_for_birth(birth: date) -> float:
+    """Entgeltpunkte for one child: 36 months from 1992-01-01, else 24 months (§§ 56 Abs. 1, 249, 70 Abs. 2 SGB VI)."""
+    month = date(birth.year, birth.month, 1)
+    return 3.0 if month >= CHILD_REARING_BIRTH_CUTOFF else 2.0
+
+
+def child_rearing_entgeltpunkte(*births: date) -> float:
+    """Sum for one adult who receives Kindererziehungszeiten for all listed children (model choice)."""
+    return sum(_child_rearing_entgeltpunkte_for_birth(birth) for birth in births)
+
 SOLI_FREE_2026 = 20_350.0
 ELTERNGELD_MIN = 300.0
 ELTERNGELD_CAP = 1_800.0

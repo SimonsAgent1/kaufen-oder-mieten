@@ -310,11 +310,11 @@ Probe: Ja → 25, Nein → 18.
 
 ## Kindererziehungszeiten
 
-Ein Erwachsener erhält je Kind drei Entgeltpunkte, alle Kinder zusammen. Elternzeit zählt weiter keine Entgeltpunkte.
+Ein Erwachsener erhält die Punkte für alle Kinder zusammen (Modellwahl). Geburt ab 01.01.1992: 36 Monate, drei Entgeltpunkte. Davor: 24 Monate, zwei. Elternzeit zählt keine Entgeltpunkte.
 
-Quelle: SGB VI § 56, Näherung drei Punkte je Kind.
+Quelle: §§ 56 Abs. 1, 249 und 70 Abs. 2 SGB VI.
 
-Probe: Zwei Kinder → 6 Entgeltpunkte für den gewählten Erwachsenen.
+Probe: Kind 1991-12-01 und Kind 2000-06-01 → 5 Entgeltpunkte.
 
 ## Kindergeld
 

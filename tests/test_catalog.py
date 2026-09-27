@@ -59,7 +59,7 @@ def test_rules_page_is_the_catalog():
 def test_december_2020_purchase_sold_in_january_2021_is_exempt():
     assert owner_occupied_exemption(date(2020, 12, 1), date(2021, 1, 1))
     assert kindergeld_until_age(True) == 25
-    assert child_rearing_entgeltpunkte(2) == 6.0
+    assert child_rearing_entgeltpunkte(date(1992, 1, 1), date(2000, 1, 1)) == 6.0
 
 
 def test_worked_examples_match_the_functions():

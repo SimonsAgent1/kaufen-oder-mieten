@@ -220,7 +220,7 @@ def _pension_estimate(scenario: Scenario, adult: Adult, calendar) -> float:
     )
     credit = child_rearing_adult_id(scenario)
     if credit == adult.id:
-        points += child_rearing_entgeltpunkte(len(scenario.children))
+        points += child_rearing_entgeltpunkte(*(child.birth for child in scenario.children))
     return pension_today_euros(points)
 
 

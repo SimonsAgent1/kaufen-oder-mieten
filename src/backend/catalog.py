@@ -358,9 +358,9 @@ ENTRIES: tuple[Rule, ...] = (
         "child-rearing-points",
         "law.de_2026.child_rearing_entgeltpunkte",
         "Kindererziehungszeiten",
-        "Ein Erwachsener erhält je Kind drei Entgeltpunkte, alle Kinder zusammen. Elternzeit zählt weiter keine Entgeltpunkte.",
-        "SGB VI § 56, Näherung drei Punkte je Kind",
-        "Zwei Kinder → 6 Entgeltpunkte für den gewählten Erwachsenen.",
+        "Ein Erwachsener erhält die Punkte für alle Kinder zusammen (Modellwahl). Geburt ab 01.01.1992: 36 Monate, drei Entgeltpunkte. Davor: 24 Monate, zwei. Elternzeit zählt keine Entgeltpunkte.",
+        "§§ 56 Abs. 1, 249 und 70 Abs. 2 SGB VI",
+        "Kind 1991-12-01 und Kind 2000-06-01 → 5 Entgeltpunkte.",
         assumption="Kindererziehungszeiten erhöhen die geschätzte Rente des gewählten Erwachsenen.",
     ),
     Rule(
@@ -436,7 +436,7 @@ def result_sentences(scenario: Scenario) -> list[str]:
             if scenario.children:
                 credit = child_rearing_adult_id(scenario)
                 who = labels(scenario)[credit]
-                points = child_rearing_entgeltpunkte(len(scenario.children))
+                points = child_rearing_entgeltpunkte(*(child.birth for child in scenario.children))
                 lines.append(
                     f"Kindererziehungszeiten: {points:.0f} Entgeltpunkte für {who}, alle Kinder zusammen."
                 )
