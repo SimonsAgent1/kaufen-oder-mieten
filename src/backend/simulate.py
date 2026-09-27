@@ -287,6 +287,27 @@ class _Mortgage:
     switched: bool = False
 
 
+def path_depot_empty_before_horizon(
+    path_scope: str,
+    *,
+    rent_etf_value: float,
+    buy_etf_value: float,
+    owns_home: bool,
+) -> bool:
+    """True when an ETF on a user-visible path is empty before the horizon.
+
+    On buy-only runs the parallel rent ETF is not shown. After a purchase, buy-path
+    wealth may sit in the house while the buy ETF is near zero.
+    """
+    rent_low = rent_etf_value <= 1.0
+    buy_low = buy_etf_value <= 1.0
+    if path_scope == "rent":
+        return rent_low
+    if path_scope == "buy":
+        return buy_low and not owns_home
+    return rent_low or (buy_low and not owns_home)
+
+
 def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     if display is None:
         display = scenario
@@ -701,7 +722,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         interest_paid += buy_interest_flow
         if not here.all_retired and invest_rent > 0:
             saving_amounts.append(invest_rent)
-        if month < end and (buy.value <= 1.0 or rent.value <= 1.0):
+        if month < end and path_depot_empty_before_horizon(
+            display.path_scope,
+            rent_etf_value=rent.value,
+            buy_etf_value=buy.value,
+            owns_home=mortgage is not None,
+        ):
             depot_empty = True
         income = take_home + pension_net + kindergeld
         buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow

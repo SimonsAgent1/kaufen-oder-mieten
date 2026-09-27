@@ -129,6 +129,21 @@ function wireStepDocumentEnter(stepId) {
 const STAY_ON_STEP = "__stay__";
 /** Blocks a second forward in the same click (Weiter under the cursor on the new step). */
 let advanceLock = false;
+let suppressAdvanceUntil = 0;
+
+function setChatAdvanceSuppressed(ms = 400) {
+  suppressAdvanceUntil = performance.now() + ms;
+  const root = host();
+  root.querySelectorAll(".chat-nav button, .choices [data-next]").forEach((btn) => {
+    btn.disabled = true;
+  });
+  setTimeout(() => {
+    if (host().hidden) return;
+    host().querySelectorAll(".chat-nav button, .choices [data-next]").forEach((btn) => {
+      btn.disabled = false;
+    });
+  }, ms);
+}
 /** Internal placeholders for the hidden path when only one side was asked (not shown in recap). */
 const HIDDEN_RENT_KALT = 700;
 
@@ -163,6 +178,8 @@ const chat = {
   linkDwelling: null,
   fromWohnungLink: false,
   hasProfile: false,
+  /** Ergänzen: only steps for the missing path; prior is the saved path_scope. */
+  pathCompletion: null,
 };
 
 function blankAnswers() {
@@ -204,7 +221,31 @@ function defaultChildRearingAdultId() {
   return totals[1] > totals[0] ? "a2" : "a1";
 }
 
+function stepsForPathCompletion(priorScope) {
+  const list = [];
+  if (priorScope === "rent") {
+    if (!chat.preset && !chat.linkDwelling) {
+      list.push({ id: "dwelling", render: renderDwelling, read: readDwelling });
+    } else {
+      list.push({ id: "cash", render: renderCash, read: readCash });
+    }
+    if (chat.answers.exclusiveOwnUse == null) {
+      list.push({ id: "own-use", render: renderOwnUse, read: readOwnUse });
+    }
+  } else if (priorScope === "buy") {
+    list.push({ id: "rent", render: renderRent, read: readRent });
+    if (childrenOverlap(chat.answers.children || [])) {
+      list.push({ id: "extra", render: renderExtra, read: readExtra });
+    }
+  }
+  list.push({ id: "recap", render: renderRecap, read: () => {} });
+  return list;
+}
+
 function steps() {
+  if (chat.pathCompletion) {
+    return stepsForPathCompletion(chat.pathCompletion.prior);
+  }
   const list = [];
   if (!chat.answers.pathScope) {
     list.push({ id: "path", render: renderPath, read: readPath });
@@ -247,9 +288,12 @@ function steps() {
     list.push({ id: "own-use", render: renderOwnUse, read: readOwnUse });
   } else if (!chat.preset && !chat.linkDwelling) {
     list.push({ id: "location", render: renderLocation, read: readLocation });
+    list.push({ id: "church", render: renderChurch, read: readChurch });
   }
   list.push({ id: "horizon", render: renderHorizon, read: readHorizon });
-  list.push({ id: "church", render: renderChurch, read: readChurch });
+  if (asksBuy() || chat.preset || chat.linkDwelling) {
+    list.push({ id: "church", render: renderChurch, read: readChurch });
+  }
   list.push({ id: "etf", render: renderEtf, read: readEtf });
   list.push({ id: "recap", render: renderRecap, read: () => {} });
   return list;
@@ -425,6 +469,7 @@ function render() {
   });
   host().querySelectorAll("[data-jump]").forEach((button) => {
     button.addEventListener("click", () => {
+      if (chat.pathCompletion) chat.pathCompletion = null;
       const sequenceNow = steps();
       const index = sequenceNow.findIndex((item) => item.id === button.dataset.jump);
       if (index >= 0) {
@@ -456,7 +501,7 @@ function wireChurchConsent(root) {
 }
 
 function forward(step) {
-  if (advanceLock) return;
+  if (advanceLock || performance.now() < suppressAdvanceUntil) return;
   const error = step.read();
   const note = host().querySelector(".form-error");
   if (error === STAY_ON_STEP) {
@@ -481,12 +526,21 @@ function forward(step) {
   advanceLock = true;
   requestAnimationFrame(() => {
     render();
+    setChatAdvanceSuppressed();
     advanceLock = false;
   });
 }
 
 function back() {
   if (chat.cursor === 0) {
+    if (chat.pathCompletion?.returnScenario) {
+      const saved = chat.pathCompletion.returnScenario;
+      chat.pathCompletion = null;
+      clearDocumentEnter();
+      host().hidden = true;
+      window.showScenario(saved, false);
+      return;
+    }
     showGate();
     return;
   }
@@ -1041,19 +1095,22 @@ function readChurch() {
 }
 
 function renderEtf() {
+  const etfChoices = `<div class="choices">
+      <button type="button" ${chat.answers.etfMode === "hold" ? 'class="primary" ' : ""}data-next data-etf="hold">Den Wert halten</button>
+      <button type="button" ${chat.answers.etfMode === "draw" ? 'class="primary" ' : ""}data-next data-etf="draw">Bis zum Ende abbauen</button>
+    </div>`;
   if (!chat.answers.etfMode) {
     return `<h2>Depot nach der Rente</h2>
     <p>Halten wächst den heutigen realen Wert um 0,5 % pro Jahr. Abbauen senkt ihn bis zum Horizont auf den Rest.</p>
-    <div class="choices">
-      <button type="button" data-next data-etf="hold">Den Wert halten</button>
-      <button type="button" data-next data-etf="draw">Bis zum Ende abbauen</button>
-    </div>
+    ${etfChoices}
     <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button></div>`;
   }
   if (chat.answers.etfMode === "hold") {
     return `<h2>Depot nach der Rente</h2>
-    <p>Den Wert halten.</p>
+    <p>Halten wächst den heutigen realen Wert um 0,5 % pro Jahr. Abbauen senkt ihn bis zum Horizont auf den Rest.</p>
+    ${etfChoices}
+    <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
   }
   const reserve = chat.answers.etfReserve === null ? 0 : chat.answers.etfReserve;
@@ -1065,17 +1122,17 @@ function renderEtf() {
 }
 
 function readEtf() {
-  if (!chat.answers.etfMode) {
-    const mode = chat.clicked?.dataset?.etf;
-    if (!mode) return "Bitte eine Option wählen.";
-    chat.answers.etfMode = mode;
-    if (mode === "hold") {
+  const picked = chat.clicked?.dataset?.etf;
+  if (picked) {
+    chat.answers.etfMode = picked;
+    if (picked === "hold") {
       chat.answers.etfReserve = 0;
       return null;
     }
     chat.answers.etfReserve = chat.answers.etfReserve ?? 0;
     return STAY_ON_STEP;
   }
+  if (!chat.answers.etfMode) return "Bitte eine Option wählen.";
   if (chat.answers.etfMode === "hold") return null;
   const reserve = readEuroField(host(), "reserve");
   const err = bounds()?.validateEuro(reserve, bounds().CAPS.reserve, "Restbetrag", { allowZero: true });
@@ -1319,6 +1376,7 @@ async function finish() {
     if (note) note.textContent = apiErrorMessage(payload);
     return;
   }
+  chat.pathCompletion = null;
   window.scenarioStore.persistScenario(scenario);
   clearDocumentEnter();
   host().hidden = true;
@@ -1337,6 +1395,7 @@ function dwellingPresetFromScenario(dwelling) {
 }
 
 function startChatFromGate() {
+  chat.pathCompletion = null;
   chat.answers = blankAnswers();
   if (chat.fromWohnungLink && chat.linkDwelling) {
     chat.preset = chat.linkDwelling;
@@ -1434,7 +1493,11 @@ async function bootChat() {
 }
 
 function openPathCompletion(side, current) {
-  if (!current) return;
+  if (!current || current.path_scope === "both") return;
+  chat.pathCompletion = {
+    prior: current.path_scope,
+    returnScenario: structuredClone(current),
+  };
   chat.answers = blankAnswers();
   chat.answers.pathScope = "both";
   if (chat.fromWohnungLink) {
@@ -1466,12 +1529,12 @@ function openPathCompletion(side, current) {
     : current.married_from > asOfMonth()
       ? "future"
       : "yes";
-  if (current.path_scope === "both") {
+  if (current.path_scope !== "buy") {
     chat.answers.rents = {
-      solo: current.adults[0]?.kaltmiete || 0,
-      a: current.adults[0]?.kaltmiete || 0,
-      b: current.adults[1]?.kaltmiete || 0,
-      shared: current.shared_kaltmiete || 0,
+      solo: current.adults[0]?.kaltmiete ?? 0,
+      a: current.adults[0]?.kaltmiete ?? 0,
+      b: current.adults[1]?.kaltmiete ?? 0,
+      shared: current.shared_kaltmiete ?? 0,
     };
   }
   chat.answers.children = (current.children || []).map((child) => ({
@@ -1496,10 +1559,13 @@ function openPathCompletion(side, current) {
     chat.answers.price = current.dwelling.purchase_price;
     chat.answers.moveIn = current.dwelling.move_in_cost_2026 || 0;
   }
-  chat.answers.careAge = current.adults[0]?.care_age ?? null;
+  const youngerAdult = current.adults.reduce(
+    (best, adult) => (adult.birth > best.birth ? adult : best),
+    current.adults[0],
+  );
+  chat.answers.careAge = youngerAdult?.care_age ?? null;
   chat.answers.horizonAge = current.horizon?.age ?? null;
-  const target = side === "rent" ? "rent" : "dwelling";
-  chat.cursor = Math.max(0, steps().findIndex((step) => step.id === target));
+  chat.cursor = 0;
   showChat();
   render();
 }
@@ -1507,6 +1573,7 @@ function openPathCompletion(side, current) {
 window.openPathCompletion = openPathCompletion;
 
 window.reopenChat = (scenario) => {
+  chat.pathCompletion = null;
   chat.answers = blankAnswers();
   chat.answers.pathScope = scenario.path_scope || "both";
   if (chat.fromWohnungLink) {
@@ -1577,6 +1644,7 @@ window.reopenChat = (scenario) => {
 };
 
 window.resetChat = () => {
+  chat.pathCompletion = null;
   chat.answers = blankAnswers();
   chat.cursor = 0;
   if (chat.fromWohnungLink) chat.preset = chat.linkDwelling;

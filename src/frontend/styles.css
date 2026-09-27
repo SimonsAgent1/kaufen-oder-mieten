@@ -484,6 +484,12 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   gap: 0.35rem 0.55rem;
   margin-bottom: 0.15rem;
 }
+.horizon-month-title-text {
+  color: var(--ink);
+  font-weight: 650;
+  padding-left: 0.55rem;
+  border-left: 3px solid var(--buy-accent);
+}
 .horizon-month-year {
   font: inherit;
   font-weight: 600;
@@ -761,7 +767,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   border-right: 1px solid var(--line);
 }
 #results[data-path-view="rent"] .horizon-month {
-  border-left: 1px solid var(--line);
+  border-left: 3px solid var(--buy-accent);
   border-right: 3px solid var(--rent-accent);
 }
 #results[data-path-view="buy"] .horizon-month-grid,

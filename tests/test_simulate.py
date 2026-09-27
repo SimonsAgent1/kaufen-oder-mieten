@@ -5,7 +5,7 @@ import pytest
 from buy_vs_rent.household import build_calendar, child_count, cold_rent, leave_fraction
 from buy_vs_rent.law.de_2026 import employee_pv_rate
 from buy_vs_rent.scenario import Beliefs, Scenario
-from buy_vs_rent.simulate import compare
+from buy_vs_rent.simulate import compare, path_depot_empty_before_horizon
 
 AS_OF = date(2026, 9, 1)
 BIRTH = date(1990, 9, 1)
@@ -465,6 +465,55 @@ def test_monthly_slices_add_up():
         buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left
         assert abs(rent_sum - point.income) < 0.05 or abs(rent_sum - point.income - point.rent_draw) < 0.05
         assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
+
+
+def test_path_depot_empty_before_horizon_ignores_rent_on_buy_only():
+    assert not path_depot_empty_before_horizon(
+        "buy",
+        rent_etf_value=0.0,
+        buy_etf_value=50_000.0,
+        owns_home=True,
+    )
+    assert path_depot_empty_before_horizon(
+        "rent",
+        rent_etf_value=0.0,
+        buy_etf_value=50_000.0,
+        owns_home=True,
+    )
+
+
+def test_buy_only_does_not_warn_when_rent_comparison_depot_is_empty():
+    scenario = _scenario(
+        path_scope="buy",
+        adults=[_adult(depot=100_000, sparrate=500, kaltmiete=1_000)],
+        equity_cash=50_000,
+        horizon={"adult_id": "ada", "age": 85},
+        beliefs={"rent_growth": 0, "inflation": 0, "etf_return": 0.05, "ter": 0},
+        dwelling={"purchase_price": 400_000, "bundesland": "Hessen", "owner_costs": 200, "min_equity": False},
+    )
+    result = compare(scenario, display=scenario)
+    assert result.buy_final_nominal > 100_000
+    assert not any("Depot ist vor dem Horizont leer" in line for line in result.warnings)
+
+
+def test_rent_path_includes_church_tax_assumption():
+    result = compare(
+        _scenario(
+            path_scope="rent",
+            adults=[
+                _adult(
+                    depot=80_000,
+                    sparrate=200,
+                    kaltmiete=700,
+                    church_tax=True,
+                    church_tax_consent=True,
+                )
+            ],
+            dwelling={"bundesland": "Hessen", "min_equity": True},
+        )
+    )
+    assert any(line.startswith("Kirchensteuer ist für") for line in result.assumptions)
+    assert any("Bundesland für die Kirchensteuer" in line for line in result.assumptions)
 
 
 def test_church_tax_is_off_until_switched_on():
