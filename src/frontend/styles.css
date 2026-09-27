@@ -21,7 +21,7 @@ body {
   max-width: 1080px;
   padding: 1.4rem 1.1rem 3rem;
   overflow-x: clip;
-  font: 15px/1.4 "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  font: 15px/1.4 ui-sans-serif, system-ui, sans-serif;
   color: var(--ink);
   background:
     radial-gradient(820px 260px at 0% -8%, rgba(15, 118, 110, 0.1), transparent 60%),
@@ -38,7 +38,7 @@ header {
 }
 
 h1, h2, legend { font-weight: 650; letter-spacing: -0.03em; }
-h1 { margin: 0; font-family: Fraunces, Georgia, serif; font-size: 2rem; font-weight: 560; }
+h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 2rem; font-weight: 600; }
 h2 { margin: 0; font-size: 1.05rem; }
 .kicker {
   margin: 0 0 0.2rem;
@@ -79,7 +79,7 @@ h2 { margin: 0; font-size: 1.05rem; }
 .marker { stroke-width: 1.35; stroke-dasharray: 3 4; }
 .marker-stem { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .marker-dot { stroke: #fff; stroke-width: 1.4; }
-.marker-label { font-size: 12px; font-weight: 650; font-family: "Source Sans 3", sans-serif; }
+.marker-label { font-size: 12px; font-weight: 650; font-family: ui-sans-serif, system-ui, sans-serif; }
 
 .switch {
   display: inline-flex;
@@ -449,7 +449,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .hero-gap {
   margin: 0;
   text-align: center;
-  font-family: Fraunces, Georgia, serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 1.75rem;
   font-weight: 560;
   letter-spacing: -0.03em;
@@ -651,7 +651,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 .hero strong {
   display: block;
   margin-top: 0.15rem;
-  font-family: Fraunces, Georgia, serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 1.85rem;
   font-weight: 560;
   letter-spacing: -0.03em;
@@ -706,7 +706,7 @@ svg { width: 100%; height: auto; display: block; }
 .loan-line { stroke: var(--buy); }
 .etf-line { fill: none; stroke: #6d28d9; stroke-dasharray: 6 4; }
 .axis { stroke: #e6ebf0; }
-.tick { fill: var(--muted); font-size: 12px; font-family: "Source Sans 3", sans-serif; }
+.tick { fill: var(--muted); font-size: 12px; font-family: ui-sans-serif, system-ui, sans-serif; }
 .tick-mark { stroke: #c5ced6; stroke-width: 1; }
 .grid { stroke: #e6ebf0; stroke-width: 1; }
 .flow-note { margin: 0 0 0.15rem; color: var(--muted); font-size: 0.8rem; }

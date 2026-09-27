@@ -32,4 +32,4 @@ Haushaltsangaben bleiben im Browser (`localStorage`). Export ist ein Download; I
 
 Der Schalter Kirchensteuer betrifft Religionszugehörigkeit (Art. 9 DSGVO). Die Seite fragt zuerst eine ausdrückliche Einwilligung ab; ohne sie bleibt `church_tax` aus und wird nicht an den Server geschickt.
 
-Beim Aufruf sehen Betreiber-Infrastruktur (Mini-PC, Fritz!Box) die Verbindung, insbesondere die IP-Adresse. Über HTTPS ist der Seitenname sichtbar, nicht der Inhalt des Formulars. Eine feste Löschfrist für Verbindungslogs ist nicht festgelegt; Anfragen an die genannte Adresse gelten dem Log, falls vorhanden, und der Kopie im Browser.
+Beim Aufruf sehen Betreiber-Infrastruktur (Mini-PC, Fritz!Box) die Verbindung, insbesondere die IP-Adresse. Die Entwicklungsseite im heimischen WLAN (`http://192.168.178.10:8000`) läuft ohne TLS. Geplant ist HTTPS auf `kauf-oder-mieten.de`; dann ist der Seitenname sichtbar, nicht der Inhalt des Formulars. Es werden keine Schriftarten oder Skripte von Drittanbietern geladen. Eine feste Löschfrist für Verbindungslogs ist nicht festgelegt; Anfragen an die genannte Adresse gelten dem Log, falls vorhanden, und der Kopie im Browser.
