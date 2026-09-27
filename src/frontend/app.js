@@ -12,6 +12,8 @@ let horizonMonthYear = null;
 let horizonMonthYearBound = false;
 const BUY_ETF_COLOR = "#0e9f6e";
 const RENT_ETF_COLOR = "#3d7cc9";
+const FLOW_LEFT_KEYS = new Set(["buy_left", "rent_left"]);
+const FLOW_WARN_COLOR = "#9a3412";
 const touched = { sollzins: false, anschlusszins: false, pensions: {} };
 
 function percentDisplayDecimals(step) {
@@ -863,6 +865,10 @@ function gapText(buy, rent) {
   return `<span class="gap-${ahead}">${label}</span> +${summaryAmount(Math.abs(gap))}${factor}`;
 }
 
+function gapLineHtml(buy, rent) {
+  return `<p class="hero-gap delta ${gapTone(buy, rent)}"><span class="hero-gap-side" aria-hidden="true"></span><span class="hero-gap-text">${gapText(buy, rent)}</span><span class="hero-gap-side hero-gap-side-end" aria-hidden="true"></span></p>`;
+}
+
 function renderResult(result) {
   const real = document.getElementById("real").checked;
   const buy = real ? result.buy_final_real : result.buy_final_nominal;
@@ -886,20 +892,20 @@ function renderResult(result) {
   document.getElementById("figures").innerHTML = `
     <div class="hero-grid">
       <article class="hero buy"><span>Kaufen</span><strong>${summaryAmount(buy)}</strong></article>
-      <p class="hero-gap delta ${gapTone(buy, rent)}">${gapText(buy, rent)}</p>
+      ${gapLineHtml(buy, rent)}
       <article class="hero rent"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
     </div>
     <p class="figures-advice note">Vergleich der Modellergebnisse, keine Empfehlung, kein Angebot.</p>
   `;
-  const gapEl = document.querySelector("#figures .hero-gap");
-  if (gapEl && gapInfo) gapEl.append(infoButton(gapInfo));
+  const gapSide = document.querySelector("#figures .hero-gap-side-end");
+  if (gapSide && gapInfo) gapSide.append(infoButton(gapInfo));
   const gaps = document.getElementById("life-gaps");
   if (careBuy != null && careRent != null) {
     gaps.innerHTML = `
       <p class="care-label totals-accent-label">Bei Pflegebeginn</p>
       <div class="hero-grid care-compact">
         <article class="hero buy"><span>Kaufen</span><strong>${summaryAmount(careBuy)}</strong></article>
-        <p class="hero-gap delta ${gapTone(careBuy, careRent)}">${gapText(careBuy, careRent)}</p>
+        ${gapLineHtml(careBuy, careRent)}
         <article class="hero rent"><span>Mieten</span><strong>${summaryAmount(careRent)}</strong></article>
       </div>`;
   } else {
@@ -952,6 +958,7 @@ const HORIZON_MONTH_BUY = [
   ["buy_principal", "Tilgung"],
   ["buy_owner", "Eigentümerkosten"],
   ["buy_etf", "ETF"],
+  ["buy_left", "Übrig"],
 ];
 const HORIZON_MONTH_RENT = [
   ["rent_housing", "Miete"],
@@ -995,8 +1002,10 @@ function horizonMonthRows(point, layers, real) {
   const rows = layers
     .map(([key, label]) => {
       const value = flowAmount(point, key, real);
-      if (value <= 1) return "";
-      return `<li><span class="horizon-month-label">${label}</span><strong>${euro.format(value)}</strong></li>`;
+      if (!FLOW_LEFT_KEYS.has(key) && value <= 1) return "";
+      const warn = FLOW_LEFT_KEYS.has(key) && value < -1;
+      const warnAttr = warn ? ' class="flow-ubrig-warn"' : "";
+      return `<li><span class="horizon-month-label">${label}</span><strong${warnAttr}>${euro.format(value)}</strong></li>`;
     })
     .filter(Boolean);
   const drawKey = layers === HORIZON_MONTH_BUY ? "buy_draw" : "rent_draw";
@@ -1034,6 +1043,10 @@ function renderHorizonMonth(result, real) {
   }
   buyList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_BUY, real);
   rentList.innerHTML = horizonMonthRows(point, HORIZON_MONTH_RENT, real);
+  const note = document.getElementById("horizon-month-ubrig-note");
+  const buyLeft = flowAmount(point, "buy_left", real);
+  const rentLeft = flowAmount(point, "rent_left", real);
+  if (note) note.hidden = buyLeft >= -1 && rentLeft >= -1;
   section.hidden = !buyList.innerHTML && !rentList.innerHTML;
 }
 
@@ -1066,9 +1079,19 @@ function flowAmount(point, key, real) {
   return real ? amount / (point.inflation || 1) : amount;
 }
 
+function flowLayerVisible(layerKey, points, real) {
+  if (FLOW_LEFT_KEYS.has(layerKey)) return true;
+  return points.some((point) => flowAmount(point, layerKey, real) > 1);
+}
+
+function stackLayerValue(layerKey, value) {
+  if (FLOW_LEFT_KEYS.has(layerKey)) return value;
+  return Math.max(0, value);
+}
+
 function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKey) {
   if (!svg) return;
-  const shown = layers.filter((layer) => points.some((point) => flowAmount(point, layer[0], real) > 1));
+  const shown = layers.filter((layer) => flowLayerVisible(layer[0], points, real));
   const draw = points.some((point) => flowAmount(point, drawKey, real) > 150);
   if (legend) {
     const items = shown.map(([, label, color]) => `<span class="swatch flow-swatch" style="background:${color}"></span>${label}`);
@@ -1080,7 +1103,10 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   const padBottom = 26;
   const plotHeight = 200;
   const x = (index) => padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
-  const rows = points.map((point) => shown.map((layer) => Math.max(0, flowAmount(point, layer[0], real))));
+  const stackLayers = shown.filter((layer) => !FLOW_LEFT_KEYS.has(layer[0]));
+  const rows = points.map((point) =>
+    stackLayers.map((layer) => Math.max(0, flowAmount(point, layer[0], real))),
+  );
   const totals = rows.map((row) => row.reduce((sum, value) => sum + value, 0));
   const draws = points.map((point) => Math.max(0, flowAmount(point, drawKey, real)));
   const scale = valueScale(0, Math.max(1, ...totals, ...draws));
@@ -1096,7 +1122,7 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   const height = band + plotHeight + padBottom;
   const y = (value) => band + plotHeight - ((value - scale.axisMin) / (scale.axisMax - scale.axisMin)) * plotHeight;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  const areas = shown.map((layer, layerIndex) => {
+  const areas = stackLayers.map((layer, layerIndex) => {
     const upper = rows.map((row, index) => {
       const sum = row.slice(0, layerIndex + 1).reduce((total, value) => total + value, 0);
       return `${x(index).toFixed(1)},${y(sum).toFixed(1)}`;
@@ -1122,7 +1148,8 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   const series = shown.map((layer, layerIndex) => ({
     label: layer[1],
     color: layer[2],
-    values: rows.map((row) => row[layerIndex]),
+    key: layer[0],
+    values: points.map((point) => flowAmount(point, layer[0], real)),
   }));
   if (draw) series.push({ label: "ETF-Entnahme", color: "#9f1239", values: draws });
   const marks = placed.map((marker) => {
@@ -1142,7 +1169,19 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
       <circle class="marker-dot" style="fill:${marker.color}" cx="${lineX.toFixed(1)}" cy="${y(stackTop)}" r="3.2" />
       <text class="marker-label" style="fill:${marker.color}" x="${labelX.toFixed(1)}" y="${labelY}" text-anchor="middle">${marker.label}</text>`;
   }).join("");
-  svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ticks}${marks}
+  const leftLayer = shown.find((layer) => FLOW_LEFT_KEYS.has(layer[0]));
+  const ubrigWarn = leftLayer
+    ? points
+        .map((point, index) => {
+          const value = flowAmount(point, leftLayer[0], real);
+          if (value >= -1) return "";
+          const bar = Math.min(18, Math.abs(value) / 80);
+          const y0 = y(0);
+          return `<rect class="flow-ubrig-warn" x="${(x(index) - 4).toFixed(1)}" y="${(y0 - bar).toFixed(1)}" width="8" height="${bar.toFixed(1)}" rx="2" />`;
+        })
+        .join("")
+    : "";
+  svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ubrigWarn}${ticks}${marks}
     <line class="hover-guide" visibility="hidden" />
     <rect class="hover-catch" x="${padX}" y="${band}" width="${width - padX * 2}" height="${plotHeight}" fill="transparent" />`;
   bindPlotHover(svg, { points, series, x, band, plotHeight });
@@ -1231,10 +1270,12 @@ function showPlotTip(svg, event, { pin = false } = {}) {
   guide.setAttribute("visibility", "visible");
   const year = state.points[index].date.slice(0, 4);
   const rows = state.series
-    .map(
-      (item) =>
-        `<div class="tip-row" style="color:${tipColor(item.color)}">${item.label} ${euro.format(item.values[index])}</div>`,
-    )
+    .map((item) => {
+      const value = item.values[index];
+      const color =
+        item.label === "Übrig" && value < -1 ? FLOW_WARN_COLOR : tipColor(item.color);
+      return `<div class="tip-row" style="color:${color}">${item.label} ${euro.format(value)}</div>`;
+    })
     .join("");
   const tip = plotTip(svg);
   tip.innerHTML = `<div class="tip-x">${year}</div>${rows}`;
