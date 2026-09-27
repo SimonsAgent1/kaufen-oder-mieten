@@ -363,6 +363,11 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .beliefs-panel .belief-switch { margin-top: 0.5rem; }
 .beliefs-panel .belief-switch:first-of-type { margin-top: 0.55rem; }
+.church-tax-block { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.55rem; grid-column: 1 / -1; }
+.church-consent { display: flex; gap: 0.55rem; align-items: flex-start; font-size: 0.82rem; line-height: 1.4; color: var(--muted); cursor: pointer; }
+.church-consent input { margin-top: 0.2rem; flex-shrink: 0; }
+.church-tax-block .belief-switch { margin-top: 0; }
+.chat .church-tax-block { margin-bottom: 0.65rem; }
 .slider-group {
   margin-top: 0.6rem;
   min-width: 0;

@@ -30,6 +30,6 @@ Haushaltsangaben bleiben im Browser (`localStorage`). Export ist ein Download; I
 
 „Rechnen“ sendet das Szenario einmal an den Server für die Antwort. Der Server speichert es nicht. Pro Aufruf von `/api/compare` schreibt das Programm höchstens eine Logzeile mit Status und Client-Adresse, ohne Szenario-Inhalt, ohne Gehalt, ohne Geburtsdatum und ohne Namen.
 
-Der Schalter Kirchensteuer betrifft Religionszugehörigkeit (Art. 9 DSGVO). Die Erklärung auf der Seite sagt, dass der Schalter allein keine ausdrückliche Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO ist.
+Der Schalter Kirchensteuer betrifft Religionszugehörigkeit (Art. 9 DSGVO). Die Seite fragt zuerst eine ausdrückliche Einwilligung ab; ohne sie bleibt `church_tax` aus und wird nicht an den Server geschickt.
 
 Beim Aufruf sehen Betreiber-Infrastruktur (Mini-PC, Fritz!Box) die Verbindung, insbesondere die IP-Adresse. Über HTTPS ist der Seitenname sichtbar, nicht der Inhalt des Formulars. Eine feste Löschfrist für Verbindungslogs ist nicht festgelegt; Anfragen an die genannte Adresse gelten dem Log, falls vorhanden, und der Kopie im Browser.

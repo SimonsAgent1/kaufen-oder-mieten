@@ -252,6 +252,7 @@ function normalizeSliderScenario() {
     if (!Number.isFinite(Number(adult.care_age))) adult.care_age = 75;
     if (!Number.isFinite(Number(adult.salary_growth))) adult.salary_growth = 0.02;
     if (adult.church_tax == null) adult.church_tax = false;
+    applyChurchTaxConsent(adult);
   });
   if (!scenario.beliefs) scenario.beliefs = {};
   for (const [key, fallback] of Object.entries(BELIEF_DEFAULTS)) {
@@ -403,7 +404,7 @@ function mountBeliefs() {
   normalizeSliderScenario();
   if (scenario.beliefs?.church_tax) {
     scenario.adults.forEach((adult) => {
-      if (!adult.church_tax) adult.church_tax = true;
+      if (adult.church_tax_consent) adult.church_tax = true;
     });
     scenario.beliefs.church_tax = false;
   }
@@ -611,14 +612,33 @@ function mountBeliefs() {
   buckets.Zins.push(household);
   scenario.adults.forEach((adult, index) => {
     const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    const block = document.createElement("div");
+    block.className = "church-tax-block";
+    const consent = document.createElement("label");
+    consent.className = "church-consent";
+    consent.innerHTML = `<input type="checkbox" ${adult.church_tax_consent ? "checked" : ""}><span>${CHURCH_TAX_CONSENT_TEXT.replace("dieser Person", name)}</span>`;
+    const consentInput = consent.querySelector("input");
     const church = document.createElement("label");
     church.className = "switch belief-switch";
-    church.innerHTML = `<input type="checkbox" ${adult.church_tax ? "checked" : ""}><span class="track"></span><span class="switch-text">Kirchensteuer: ${name}</span>`;
-    church.querySelector("input").addEventListener("change", (event) => {
+    church.innerHTML = `<input type="checkbox" ${adult.church_tax ? "checked" : ""} ${adult.church_tax_consent ? "" : "disabled"}><span class="track"></span><span class="switch-text">Kirchensteuer in der Rechnung: ${name}</span>`;
+    const switchInput = church.querySelector("input");
+    consentInput.addEventListener("change", (event) => {
+      adult.church_tax_consent = event.target.checked;
+      applyChurchTaxConsent(adult);
+      switchInput.disabled = !adult.church_tax_consent;
+      switchInput.checked = adult.church_tax;
+      schedule();
+    });
+    switchInput.addEventListener("change", (event) => {
+      if (!adult.church_tax_consent) {
+        event.target.checked = false;
+        return;
+      }
       adult.church_tax = event.target.checked;
       schedule();
     });
-    buckets.Regeln.push(church);
+    block.append(consent, church);
+    buckets.Regeln.push(block);
   });
   buckets.Regeln.push(
     slider("basiszins", "Basiszins Vorabpauschale", 0, 0.06, 0.0001, beliefValue("basiszins"), "%", (value) => setBelief("basiszins", value)),
@@ -638,6 +658,7 @@ async function run() {
   if (!touched.anschlusszins) body.beliefs.anschlusszins = null;
   for (const adult of body.adults) {
     if (!touched.pensions[adult.id]) adult.pension_gross_today = null;
+    applyChurchTaxConsent(adult);
   }
   const response = await fetch("/api/compare", {
     method: "POST",
@@ -703,6 +724,7 @@ document.getElementById("gate-choice")?.addEventListener("click", () => {
   if (!touched.anschlusszins) body.beliefs.anschlusszins = null;
   for (const adult of body.adults) {
     if (!touched.pensions[adult.id]) adult.pension_gross_today = null;
+    applyChurchTaxConsent(adult);
   }
   window.scenarioStore.saveOpenRow(body);
   document.getElementById("banner").hidden = true;

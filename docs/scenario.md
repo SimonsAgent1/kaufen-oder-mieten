@@ -8,7 +8,7 @@ Version 1. Unbekannte Felder werden abgelehnt. Die Datei ist YAML oder JSON.
 
 `adults` enthält eine oder zwei Personen. Eine dritte Person lehnt der Prüfer ab, bis es dafür Steuerregeln gibt.
 
-Jede Person hat `id`, `label`, `birth`, `work_start` (leer, wenn nie erwerbstätig), `retire_age` (67), `care_age` (75), `gross_salary`, `salary_growth` (0,02), `depot`, `sparrate`, `pension_gross_today` (leer heißt schätzen), `kaltmiete` für die Zeit vor dem gemeinsamen Haushalt und `church_tax` (aus). Die Kirchensteuer gilt nur für diese Person. Ein altes `beliefs.church_tax` ohne per-`church_tax` schaltet sie für alle Erwachsenen ein.
+Jede Person hat `id`, `label`, `birth`, `work_start` (leer, wenn nie erwerbstätig), `retire_age` (67), `care_age` (75), `gross_salary`, `salary_growth` (0,02), `depot`, `sparrate`, `pension_gross_today` (leer heißt schätzen), `kaltmiete` für die Zeit vor dem gemeinsamen Haushalt, `church_tax` (aus) und `church_tax_consent` (aus). `church_tax` darf nur `true` sein, wenn `church_tax_consent` `true` ist. Ein altes `beliefs.church_tax` schaltet die Kirchensteuer nur für Erwachsene mit Einwilligung ein.
 
 Ein leeres Label wird „Du“ oder „Zweite Person“. Die Rechnung verwendet die `id`.
 

@@ -54,6 +54,7 @@ class Adult(BaseModel):
     pension_gross_today: float | None = Field(default=None, ge=0, le=20_000)
     kaltmiete: float = Field(ge=0, le=20_000)
     church_tax: bool = False
+    church_tax_consent: bool = False
 
 
 class Child(BaseModel):
@@ -181,9 +182,17 @@ class Scenario(BaseModel):
             raise ValueError("Der Horizont verweist auf eine unbekannte Person.")
         if self.extra_rent is not None and self.extra_rent.until <= self.extra_rent.start:
             raise ValueError("Die höhere Miete endet nach ihrem Beginn.")
+        for adult in self.adults:
+            if adult.church_tax and not adult.church_tax_consent:
+                raise ValueError(
+                    "Kirchensteuer braucht zuerst die ausdrückliche Einwilligung auf der Seite."
+                )
+            if not adult.church_tax_consent:
+                adult.church_tax = False
         if self.beliefs.church_tax:
             for adult in self.adults:
-                adult.church_tax = True
+                if adult.church_tax_consent:
+                    adult.church_tax = True
         from buy_vs_rent.bounds import validate_scenario
 
         validate_scenario(self)

@@ -6,6 +6,14 @@ const PROFILE_ROW_ID = "local-profile";
 const PROFILE_DISMISSED_KEY = "buy-vs-rent-profile-dismissed";
 const LINK_FIELDS = ["purchase_price", "bundesland", "notary_rate", "broker_rate", "owner_costs"];
 
+window.CHURCH_TAX_CONSENT_TEXT =
+  "Ich willige ausdrücklich ein, dass die Angabe zur Kirchensteuer-Mitgliedschaft für die Steuerberechnung dieser Person verwendet wird (Art. 9 Abs. 1 und Abs. 2 lit. a DSGVO).";
+
+window.applyChurchTaxConsent = function applyChurchTaxConsent(adult) {
+  if (adult.church_tax_consent == null) adult.church_tax_consent = false;
+  if (!adult.church_tax_consent) adult.church_tax = false;
+};
+
 let activeRowId = null;
 let pendingNew = false;
 

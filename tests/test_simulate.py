@@ -473,7 +473,16 @@ def test_church_tax_is_off_until_switched_on():
     assert any("Kirchensteuer ist für niemanden an." == line for line in quiet.assumptions)
     taxed = compare(
         _scenario(
-            adults=[_adult(depot=80_000, sparrate=200, kaltmiete=700, pension_gross_today=2000, church_tax=True)],
+            adults=[
+                _adult(
+                    depot=80_000,
+                    sparrate=200,
+                    kaltmiete=700,
+                    pension_gross_today=2000,
+                    church_tax=True,
+                    church_tax_consent=True,
+                )
+            ],
             horizon={"adult_id": "ada", "age": 70},
         )
     )
@@ -705,7 +714,13 @@ def test_per_adult_church_tax_only_on_one_adult():
     result = compare(
         _scenario(
             adults=[
-                _adult(adult_id="a1", label="Erste", church_tax=True, pension_gross_today=1500),
+                _adult(
+                    adult_id="a1",
+                    label="Erste",
+                    church_tax=True,
+                    church_tax_consent=True,
+                    pension_gross_today=1500,
+                ),
                 _adult(adult_id="a2", label="Zweite", birth=date(1992, 9, 1), church_tax=False, pension_gross_today=1500),
             ],
             together_from=AS_OF,
@@ -725,7 +740,7 @@ def test_consume_zero_ignores_reserve():
     assert spent.buy_final_nominal == pytest.approx(kept.buy_final_nominal)
 
 
-def test_beliefs_church_tax_legacy_turns_on_every_adult():
+def test_beliefs_church_tax_legacy_ignores_adults_without_consent():
     scenario = _scenario(
         adults=[_adult(adult_id="a1", care_age=69), _adult(adult_id="a2", birth=date(1992, 9, 1), care_age=69)],
         together_from=AS_OF,
@@ -734,7 +749,28 @@ def test_beliefs_church_tax_legacy_turns_on_every_adult():
         dwelling={"purchase_price": 400_000, "bundesland": "Hessen", "min_equity": False},
         beliefs={"church_tax": True},
     )
-    assert all(adult.church_tax for adult in scenario.adults)
+    assert not any(adult.church_tax for adult in scenario.adults)
+
+
+def test_beliefs_church_tax_legacy_turns_on_consenting_adults_only():
+    scenario = _scenario(
+        adults=[
+            _adult(adult_id="a1", care_age=69, church_tax_consent=True),
+            _adult(adult_id="a2", birth=date(1992, 9, 1), care_age=69, church_tax_consent=False),
+        ],
+        together_from=AS_OF,
+        shared_kaltmiete=1000,
+        horizon={"adult_id": "a1", "age": 70},
+        dwelling={"purchase_price": 400_000, "bundesland": "Hessen", "min_equity": False},
+        beliefs={"church_tax": True},
+    )
+    assert scenario.adults[0].church_tax
+    assert not scenario.adults[1].church_tax
+
+
+def test_church_tax_without_consent_is_rejected():
+    with pytest.raises(ValueError, match="Einwilligung"):
+        _scenario(adults=[_adult(church_tax=True, church_tax_consent=False)])
 
 
 def test_future_marriage_month_is_kept():

@@ -217,6 +217,7 @@ function clearStep(id) {
   if (id === "church") {
     (chat.answers.adults || []).forEach((adult) => {
       delete adult.church_tax;
+      delete adult.church_tax_consent;
     });
     return;
   }
@@ -319,6 +320,19 @@ function render() {
   });
   wireEuroFields(host());
   wireEnter(host());
+  wireChurchConsent(host());
+}
+
+function wireChurchConsent(root) {
+  root.querySelectorAll("[name^='church-consent-']").forEach((input) => {
+    const index = input.name.replace("church-consent-", "");
+    input.addEventListener("change", () => {
+      const switchInput = root.querySelector(`[name=church-${index}]`);
+      if (!switchInput) return;
+      switchInput.disabled = !input.checked;
+      if (!input.checked) switchInput.checked = false;
+    });
+  });
 }
 
 function forward(step) {
@@ -790,11 +804,17 @@ function readHorizon() {
 function renderChurch() {
   const rows = chat.answers.adults.map((adult, index) => {
     const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    const consentOn = adult.church_tax_consent ? "checked" : "";
     const on = adult.church_tax ? "checked" : "";
-    return `<label class="switch church-row"><input type="checkbox" name="church-${index}" ${on}><span class="track"></span><span class="switch-text">${name}</span></label>`;
+    const disabled = adult.church_tax_consent ? "" : "disabled";
+    const consentText = CHURCH_TAX_CONSENT_TEXT.replace("dieser Person", name);
+    return `<div class="church-tax-block">
+      <label class="church-consent"><input type="checkbox" name="church-consent-${index}" ${consentOn}><span>${consentText}</span></label>
+      <label class="switch church-row"><input type="checkbox" name="church-${index}" ${on} ${disabled}><span class="track"></span><span class="switch-text">Kirchensteuer in der Rechnung: ${name}</span></label>
+    </div>`;
   }).join("");
   return `<h2>Kirchensteuer</h2>
-    <p>Aus, bis ihr sie für eine Person einschaltet. Sie ist ein Anteil der Lohnsteuer: 8 % in Bayern und Baden-Württemberg, 9 % sonst.</p>
+    <p>Aus, bis ihr sie für eine Person einschaltet. Sie ist ein Anteil der Lohnsteuer: 8 % in Bayern und Baden-Württemberg, 9 % sonst. Der Schalter allein reicht nicht: zuerst die Einwilligung, dann der Schalter.</p>
     ${rows}
     <p class="form-error"></p>
     <div class="chat-nav"><button type="button" data-back>Zurück</button><button type="button" class="primary" data-next>Weiter</button></div>`;
@@ -802,7 +822,9 @@ function renderChurch() {
 
 function readChurch() {
   chat.answers.adults.forEach((adult, index) => {
+    adult.church_tax_consent = Boolean(host().querySelector(`[name=church-consent-${index}]`)?.checked);
     adult.church_tax = Boolean(host().querySelector(`[name=church-${index}]`)?.checked);
+    applyChurchTaxConsent(adult);
   });
   return null;
 }
@@ -882,7 +904,8 @@ function buildScenario() {
       sparrate: retired ? 0 : adult.sparrate || 0,
       pension_gross_today: null,
       kaltmiete,
-      church_tax: Boolean(adult.church_tax),
+      church_tax: Boolean(adult.church_tax_consent && adult.church_tax),
+      church_tax_consent: Boolean(adult.church_tax_consent),
     };
   });
   const children = (chat.answers.children || []).map((child, index) => ({
@@ -1129,6 +1152,7 @@ window.reopenChat = (scenario) => {
     sparrate: adult.sparrate,
     retire_age: adult.retire_age,
     church_tax: Boolean(adult.church_tax),
+    church_tax_consent: Boolean(adult.church_tax_consent),
   }));
   chat.answers.together = scenario.together_from;
   if (scenario.together_from) {
@@ -1159,7 +1183,7 @@ window.reopenChat = (scenario) => {
   chat.answers.etfReserve = scenario.beliefs?.etf_reserve ?? 0;
   if (!scenario.adults.some((adult) => adult.church_tax) && scenario.beliefs?.church_tax) {
     chat.answers.adults.forEach((adult) => {
-      adult.church_tax = true;
+      if (adult.church_tax_consent) adult.church_tax = true;
     });
   }
   chat.answers.price = scenario.dwelling.purchase_price;

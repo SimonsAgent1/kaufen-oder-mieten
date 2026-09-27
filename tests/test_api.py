@@ -212,6 +212,15 @@ dwelling:
     assert date.fromisoformat(response.json()["as_of"])
 
 
+def test_church_tax_without_consent_is_422():
+    body = _body()
+    body["adults"][0]["church_tax"] = True
+    body["adults"][0]["church_tax_consent"] = False
+    response = client.post("/api/compare", json=body)
+    assert response.status_code == 422
+    assert "Einwilligung" in response.json()["detail"]
+
+
 def test_compare_log_line_omits_scenario_body(monkeypatch, caplog):
     monkeypatch.setattr(
         "buy_vs_rent.api.fetch_market_rate",
