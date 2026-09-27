@@ -1,21 +1,18 @@
 {
 	email simon.muchau@freenet.de
+	# User service: Fritz!Box WAN 443 → LAN 8443. Port 80 stays AdGuard.
+	https_port 8443
+	http_port 8080
+	auto_https disable_redirects
 }
 
 kauf-oder-mieten.de, www.kauf-oder-mieten.de {
+	# CloudDNS: Legacy DNS API cannot edit the zone. Certs from certbot (see CLOUDDNS-CERTS.md).
+	tls /home/simon-mini/.config/caddy/certs/fullchain.pem /home/simon-mini/.config/caddy/certs/privkey.pem
+
 	reverse_proxy https://127.0.0.1:8000 {
 		transport http {
 			tls_insecure_skip_verify
 		}
-	}
-
-	tls {
-		dns netcup {
-			customer_number {env.NETCUP_CUSTOMER_NUMBER}
-			api_key {env.NETCUP_API_KEY}
-			api_password {env.NETCUP_API_PASSWORD}
-		}
-		propagation_timeout 900s
-		propagation_delay 300s
 	}
 }
