@@ -7,6 +7,7 @@ let requestId = 0;
 let bundeslaender = ["Bayern"];
 let scenarioSnapshot = null;
 let touchedSnapshot = null;
+let captureResultSnapshot = false;
 const touched = { sollzins: false, anschlusszins: false, pensions: {} };
 
 function percentDisplayDecimals(step) {
@@ -721,12 +722,15 @@ async function run() {
   }
   latest = await response.json();
   if (!touched.sollzins) scenario.beliefs.sollzins = null;
-  scenarioSnapshot = structuredClone(scenario);
-  touchedSnapshot = {
-    sollzins: touched.sollzins,
-    anschlusszins: touched.anschlusszins,
-    pensions: { ...touched.pensions },
-  };
+  if (captureResultSnapshot) {
+    scenarioSnapshot = structuredClone(scenario);
+    touchedSnapshot = {
+      sollzins: touched.sollzins,
+      anschlusszins: touched.anschlusszins,
+      pensions: { ...touched.pensions },
+    };
+    captureResultSnapshot = false;
+  }
   renderResult(latest);
   syncBeliefDisplays();
   syncHeaderAdvice();
@@ -755,6 +759,7 @@ async function showScenario(next, demo) {
   document.getElementById("chat").hidden = true;
   document.getElementById("results").hidden = false;
   await loadBundeslaender();
+  captureResultSnapshot = true;
   mountBeliefs();
   run();
 }
