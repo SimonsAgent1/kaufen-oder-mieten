@@ -109,6 +109,29 @@ def test_release_version_bumps_once_and_retry_skips():
         shutil.rmtree(tmp)
 
 
+def test_release_version_minor_bump():
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        subprocess.run(["git", "init"], cwd=tmp, check=True, capture_output=True)
+        scripts = tmp / "scripts"
+        scripts.mkdir()
+        shutil.copy(ROOT / "scripts" / "release-version.sh", scripts / "release-version.sh")
+        (tmp / "pyproject.toml").write_text('version = "1.0.0"\n', encoding="utf-8")
+        env = {**_git_env(), "BUY_VS_RENT_RELEASE_BUMP": "minor"}
+        subprocess.run(["git", "add", "pyproject.toml"], cwd=tmp, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "feat: fixture"],
+            cwd=tmp,
+            check=True,
+            capture_output=True,
+            env=env,
+        )
+        subprocess.run(["bash", "scripts/release-version.sh"], cwd=tmp, check=True, env=env)
+        assert 'version = "1.1.0"' in (tmp / "pyproject.toml").read_text(encoding="utf-8")
+    finally:
+        shutil.rmtree(tmp)
+
+
 def _publish_fixture() -> Path:
     tmp = Path(tempfile.mkdtemp())
     subprocess.run(["git", "init", "-b", "main"], cwd=tmp, check=True, capture_output=True)

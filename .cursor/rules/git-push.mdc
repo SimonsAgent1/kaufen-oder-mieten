@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Git push
 
-Do not run `git push github` yourself. Use `scripts/publish.sh` from a clean `main` after tests pass. It runs the private-path leak check, `pytest tests`, bumps the patch in `pyproject.toml` with a `chore: release` commit (skipped when that commit is already `HEAD`), then pushes `main` to the public GitHub remote `github` only. It refuses the retired public GitLab URL `git@gitlab.com:meine-group4/kaufen-oder-mieten.git`. Never push the `private` branch to a public remote.
+Do not run `git push github` yourself. Use `scripts/publish.sh` from a clean `main` after tests pass. It runs the private-path leak check, `pytest tests`, bumps `pyproject.toml` with a `chore: release` commit (skipped when that commit is already `HEAD`), then pushes `main` to the public GitHub remote `github` only. The bump is patch unless `BUY_VS_RENT_RELEASE_BUMP=minor` (minor segment +1, patch segment 0). It refuses the retired public GitLab URL `git@gitlab.com:meine-group4/kaufen-oder-mieten.git`. Never push the `private` branch to a public remote.
 
 Use `scripts/backup.sh` only for the private `backup` remote (`main` and `private`). It refuses URLs that match public `github` or the retired public GitLab project. Set `git remote add backup <private-url>` or `BUY_VS_RENT_BACKUP_REMOTE`; do not invent a URL.
 
