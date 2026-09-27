@@ -39,6 +39,17 @@ function setControlDisplay(label, value, unit, step) {
   }
 }
 
+function syncHeaderAdvice() {
+  const el = document.getElementById("header-advice");
+  if (!el) return;
+  const base = "Keine Finanz-, Steuer- oder Kreditempfehlung.";
+  if (touched.sollzins || touched.anschlusszins) {
+    el.textContent = `${base} Der Sollzins ist Ihre Angabe, kein Angebot.`;
+  } else {
+    el.textContent = `${base} Der Zinssatz ist ein Bundesbank-Durchschnitt, kein Angebot.`;
+  }
+}
+
 function syncBeliefDisplays() {
   if (!latest) return;
   if (!touched.sollzins && latest.sollzins_used != null) {
@@ -322,6 +333,7 @@ function setBelief(name, value) {
     if (!touched.anschlusszins) scenario.beliefs.anschlusszins = value;
   }
   if (name === "anschlusszins") touched.anschlusszins = true;
+  if (name === "sollzins" || name === "anschlusszins") syncHeaderAdvice();
 }
 
 function slider(name, label, min, max, step, value, unit, onInput, infoText) {
@@ -717,6 +729,7 @@ async function run() {
   };
   renderResult(latest);
   syncBeliefDisplays();
+  syncHeaderAdvice();
   syncAssumptionInfos();
   syncPurchasePriceInfo();
 }
@@ -866,6 +879,7 @@ function renderResult(result) {
       <p class="hero-gap delta ${gapTone(buy, rent)}">${gapText(buy, rent)}</p>
       <article class="hero rent"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
     </div>
+    <p class="figures-advice note">Vergleich der Modellergebnisse, keine Empfehlung, kein Angebot.</p>
   `;
   const gapEl = document.querySelector("#figures .hero-gap");
   if (gapEl && gapInfo) gapEl.append(infoButton(gapInfo));

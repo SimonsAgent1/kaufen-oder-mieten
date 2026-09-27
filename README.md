@@ -38,7 +38,7 @@ Eine lokale Datei kann die Seite vorfüllen, wenn du das willst:
 BUY_VS_RENT_PROFILE=private/profile.yaml .venv/bin/buy-vs-rent serve
 ```
 
-Ohne diese Variable gibt es keine gespeicherten Angaben. Details stehen in [docs/privacy.md](docs/privacy.md).
+Ohne diese Variable lädt der Server keine Haushaltsdatei. Gespeicherte Zeilen im Browser bleiben auf dem Gerät. Details stehen in [docs/privacy.md](docs/privacy.md).
 
 ## Tests
 

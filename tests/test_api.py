@@ -225,6 +225,7 @@ def test_impressum_page_is_served():
     assert response.status_code == 200
     assert "Impressum" in response.text
     assert "HTTPS" in response.text
+    assert "[Name]" not in response.text
 
 
 def test_church_tax_without_consent_is_422():

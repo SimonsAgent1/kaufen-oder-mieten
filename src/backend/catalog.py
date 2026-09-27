@@ -354,6 +354,7 @@ ENTRIES: tuple[Rule, ...] = (
         "Ein Kind, ein Monat, ohne Inflation: 259 €.",
         assumption=(
             "Kindergeld ist 259 € je Kind und Monat im Jahr 2026 und läuft bis zum 25. Geburtstag, auch ohne Heirat. "
+            "Ausbildungs- und Einkommensprüfungen ab 18 sind nicht modelliert. "
             "Im Dezember wird es gegen den Kinderfreibetrag geprüft. Ehegattensplitting gilt ab dem Heiratsmonat."
         ),
     ),

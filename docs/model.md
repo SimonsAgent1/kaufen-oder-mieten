@@ -6,7 +6,7 @@ Der Monatslauf beginnt bei `as_of` und endet im Horizont. Was in einem Monat gil
 
 Die Kaltmiete ist die der einen Person, oder die Summe beider, bis `together_from`, danach die gemeinsame Miete. Sie steigt einmal im Jahr mit `rent_growth`. `extra_rent` kommt in Euro von 2026 nur dazu, solange dieser Weg noch mietet und der Monat im Fenster liegt. Nach dem Kauf fällt der Zuschlag auf dem Kaufweg weg. Ohne Feld gibt es keinen Zuschlag.
 
-Kindergeld ist 259 € von 2026 je Kind unter 25, vom Geburtsmonat bis zum Monat vor dem 25. Geburtstag, auch ohne Heirat. Im Dezember wird je Kind das bisher gezahlte Kindergeld mit dem anteiligen Freibetrag für dieselben Monate verglichen, dann über alle Kinder summiert. Ehegattensplitting nur ab `married_from`.
+Kindergeld ist 259 € von 2026 je Kind unter 25, vom Geburtsmonat bis zum Monat vor dem 25. Geburtstag, auch ohne Heirat. Ausbildungs- und Einkommensprüfungen ab 18 sind nicht modelliert. Im Dezember wird je Kind das bisher gezahlte Kindergeld mit dem anteiligen Freibetrag für dieselben Monate verglichen, dann über alle Kinder summiert. Ehegattensplitting nur ab `married_from`.
 
 Die Pflegeversicherung folgt der Zahl der Kinder unter 25. Ein kinderloser Erwachsener ab 23 zahlt 0,6 Punkte mehr. Ab dem zweiten Kind unter 25 sinkt der Anteil um 0,25 Punkte je weiterem Kind, bis zum fünften.
 

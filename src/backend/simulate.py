@@ -976,7 +976,8 @@ def _assumptions(
     )
     if exempt:
         lines.append(
-            "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €, weil selbst genutzt wurde oder länger als zehn Jahre gehalten wurde. "
+            "Die Steuer auf den Verkauf von Haus oder Wohnung ist 0 €. Auf dem Kaufweg wohnt das Modell bis zum Verkauf selbst "
+            "oder die Haltedauer liegt über zehn Jahre. "
             f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
         )
     return lines
