@@ -15,10 +15,12 @@ Die Angaben eines Haushalts liegen in einer Szenario-Datei. Dieselbe Datei öffn
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
+export BUY_VS_RENT_SSL_CERT=pfad/zum/cert.pem
+export BUY_VS_RENT_SSL_KEY=pfad/zum/key.pem
 .venv/bin/buy-vs-rent serve
 ```
 
-Die Seite liegt unter [http://127.0.0.1:8000](http://127.0.0.1:8000). Der Chat fragt die Haushaltsdaten ab. „Beispiel ansehen“ lädt die Demodatei.
+Die Seite liegt unter [https://127.0.0.1:8000](https://127.0.0.1:8000). Ohne gültiges Zertifikat warnt der Browser; das ist bei einem selbstsignierten Zertifikat normal. Der Chat fragt die Haushaltsdaten ab. „Beispiel ansehen“ lädt die Demodatei.
 
 ## Dieselbe Datei im Terminal
 
