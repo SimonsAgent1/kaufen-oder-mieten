@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 from importlib.resources import files
 from pathlib import Path
 
@@ -22,6 +23,8 @@ from buy_vs_rent.tax_rates import TRANSFER_TAX
 
 FRONTEND = Path(str(files("buy_vs_rent").joinpath("frontend")))
 DEMO = Path(str(files("buy_vs_rent").joinpath("profile.example.yaml")))
+
+logger = logging.getLogger("buy_vs_rent.access")
 
 
 def _repo_root() -> Path:
@@ -46,6 +49,15 @@ def _demo_path() -> Path:
 
 app = FastAPI(title="Kaufen oder mieten")
 app.mount("/static", StaticFiles(directory=_frontend_dir()), name="static")
+
+
+@app.middleware("http")
+async def log_compare_without_body(request: Request, call_next):
+    response = await call_next(request)
+    if request.method == "POST" and request.url.path == "/api/compare":
+        host = request.client.host if request.client else "-"
+        logger.info("compare status=%s client=%s", response.status_code, host)
+    return response
 
 
 def _validation_message(exc: RequestValidationError) -> str:

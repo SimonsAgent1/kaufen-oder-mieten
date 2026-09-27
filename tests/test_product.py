@@ -65,7 +65,7 @@ def test_public_tree_has_no_personal_names():
         text = path.read_text(encoding="utf-8")
         if path.name == "index.html":
             text = re.sub(
-                r'<p class="privacy-notice">.*?</p>',
+                r'<div class="privacy-notice">.*?</div>',
                 "",
                 text,
                 count=1,

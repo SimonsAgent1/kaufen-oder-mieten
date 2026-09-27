@@ -21,3 +21,15 @@ Export lädt die Datei herunter und sagt, dass Einkommen und Geburtsdaten darin 
 Ein Link `?wohnung=` darf nur den Kaufblock für ein Haus oder eine Wohnung tragen: Preis, Bundesland, Notar, Makler, Eigentümerkosten. Keine Einzugskosten und kein Gehalt. Alles andere wird verworfen.
 
 Die Demodatei ist keine echte Haushaltsgeschichte. „Beispiel ansehen“ zeigt das an.
+
+## Datenschutz auf der Seite
+
+Der Text im Seitenkopf ist die Datenschutzerklärung für den Betrieb unter `kauf-oder-mieten.de`. Verantwortlicher ist Simon Muchau, erreichbar unter `simon.muchau@freenet.de`. Die Seite ist privat und nicht geschäftlich; es gibt kein Impressum.
+
+Haushaltsangaben bleiben im Browser (`localStorage`). Export ist ein Download; Import liest nur lokal. Ein `?wohnung=`-Link trägt kein Einkommen und kein Geburtsdatum.
+
+„Rechnen“ sendet das Szenario einmal an den Server für die Antwort. Der Server speichert es nicht. Pro Aufruf von `/api/compare` schreibt das Programm höchstens eine Logzeile mit Status und Client-Adresse, ohne Szenario-Inhalt, ohne Gehalt, ohne Geburtsdatum und ohne Namen.
+
+Der Schalter Kirchensteuer betrifft Religionszugehörigkeit (Art. 9 DSGVO). Die Erklärung auf der Seite sagt, dass der Schalter allein keine ausdrückliche Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO ist.
+
+Beim Aufruf sehen Betreiber-Infrastruktur (Mini-PC, Fritz!Box) die Verbindung, insbesondere die IP-Adresse. Über HTTPS ist der Seitenname sichtbar, nicht der Inhalt des Formulars. Eine feste Löschfrist für Verbindungslogs ist nicht festgelegt; Anfragen an die genannte Adresse gelten dem Log, falls vorhanden, und der Kopie im Browser.

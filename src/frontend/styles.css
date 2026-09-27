@@ -748,6 +748,8 @@ summary { cursor: pointer; font-weight: 650; }
 .advice .source-link { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
 .advice .source-link:hover { color: var(--ink); }
 .privacy-notice { margin: 0.5rem 0 0; max-width: 40rem; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.privacy-notice p { margin: 0.45rem 0 0; }
+.privacy-notice p:first-child { margin-top: 0; }
 .privacy-notice a { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
 .privacy-notice a:hover { color: var(--ink); }
 .banner {

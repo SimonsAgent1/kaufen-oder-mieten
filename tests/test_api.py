@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 from datetime import date
 
 import pytest
@@ -209,3 +210,25 @@ dwelling:
     assert response.status_code == 200
     assert response.json()["adults"][0]["gross_salary"] == 42000
     assert date.fromisoformat(response.json()["as_of"])
+
+
+def test_compare_log_line_omits_scenario_body(monkeypatch, caplog):
+    monkeypatch.setattr(
+        "buy_vs_rent.api.fetch_market_rate",
+        lambda years: MarketRate(0.03, "2026-08", "series", "bundesbank"),
+    )
+    body = _body()
+    body["adults"][0]["label"] = "Fiktiv"
+    body["adults"][0]["gross_salary"] = 65_000
+    with caplog.at_level(logging.INFO, logger="buy_vs_rent.access"):
+        response = client.post("/api/compare", json=body)
+    assert response.status_code == 200
+    compare_logs = [r for r in caplog.records if r.name == "buy_vs_rent.access"]
+    assert len(compare_logs) == 1
+    message = compare_logs[0].getMessage()
+    assert "compare status=200" in message
+    assert "Fiktiv" not in message
+    assert "1990" not in message
+    assert "65000" not in message
+    assert "gross_salary" not in message
+    assert json.dumps(body) not in message
