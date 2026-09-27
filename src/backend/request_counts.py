@@ -111,11 +111,13 @@ def render_zahlen_html(frontend_dir: Path) -> str:
     return template.replace("<!--ROWS-->", "\n        ".join(rows) if rows else "")
 
 
-def zahlen_allowed(host_header: str | None) -> bool:
+def zahlen_allowed(host_header: str | None, forwarded_host: str | None = None) -> bool:
     """True only for the home/LAN host name the browser asked for, not the public site."""
-    if not host_header:
+    # Prefer the name the browser used (Caddy sets X-Forwarded-Host; upstream Host may be 127.0.0.1).
+    effective = forwarded_host or host_header
+    if not effective:
         return False
-    host = host_header.split(":")[0].strip().lower().rstrip(".")
+    host = effective.split(",")[0].split(":")[0].strip().lower().rstrip(".")
     if not host:
         return False
     if host in PUBLIC_HOSTS:

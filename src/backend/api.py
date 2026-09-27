@@ -178,7 +178,10 @@ def index() -> FileResponse:
 
 @app.get("/zahlen", response_class=HTMLResponse)
 def zahlen_page(request: Request) -> HTMLResponse:
-    if not zahlen_allowed(request.headers.get("host")):
+    if not zahlen_allowed(
+        request.headers.get("host"),
+        request.headers.get("x-forwarded-host"),
+    ):
         raise HTTPException(status_code=404, detail="Not Found")
     return HTMLResponse(render_zahlen_html(_frontend_dir()))
 

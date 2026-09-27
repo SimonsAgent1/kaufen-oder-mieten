@@ -48,6 +48,19 @@ def test_zahlen_404_on_public_host(tmp_path, monkeypatch):
     assert response.status_code == 404
 
 
+def test_zahlen_404_when_caddy_forwards_public_name(tmp_path, monkeypatch):
+    monkeypatch.setenv("BUY_VS_RENT_COUNTS_FILE", str(tmp_path / "counts.json"))
+    client = TestClient(app)
+    response = client.get(
+        "/zahlen",
+        headers={
+            "Host": "127.0.0.1:8000",
+            "X-Forwarded-Host": "kauf-oder-mieten.de",
+        },
+    )
+    assert response.status_code == 404
+
+
 def test_zahlen_ok_on_lan_host(tmp_path, monkeypatch):
     monkeypatch.setenv("BUY_VS_RENT_COUNTS_FILE", str(tmp_path / "counts.json"))
     client = TestClient(app)

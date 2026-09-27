@@ -21,6 +21,8 @@ Wi-Fi dev URL: `https://192.168.178.10:8000`. Internet URL: `https://kauf-oder-m
 
 `BUY_VS_RENT_PROFILE` must stay **unset** on the mini so `/api/profile` is **404**.
 
+Daily request totals (no IP): `~/.local/state/buy-vs-rent/daily-counts.json`. Dashboard **`/zahlen`** only when the browser `Host` is the LAN address (e.g. `192.168.178.10:8000`), not `kauf-oder-mieten.de`.
+
 ## After `scripts/publish.sh` (engineer)
 
 `git pull` alone is **not** enough when `pyproject.toml` version changes.
