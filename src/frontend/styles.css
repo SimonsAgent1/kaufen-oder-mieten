@@ -753,6 +753,9 @@ summary { cursor: pointer; font-weight: 650; }
 .advice .source-link { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
 .advice .source-link:hover { color: var(--ink); }
 .site-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   margin: 2rem 0 1.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--line);
@@ -760,14 +763,13 @@ summary { cursor: pointer; font-weight: 650; }
 }
 .site-footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 0.12em; }
 .site-footer a:hover { color: var(--ink); }
-.advice .github-mark {
+.site-footer .github-mark {
   display: inline-flex;
-  vertical-align: middle;
-  margin-left: 0.35rem;
+  margin-left: auto;
   color: var(--muted);
   text-decoration: none;
 }
-.advice .github-mark:hover { color: var(--ink); }
+.site-footer .github-mark:hover { color: var(--ink); }
 .legal-page { max-width: 40rem; margin: 0 auto; padding: 1rem 1.1rem 2rem; }
 .legal-header h1 { margin-bottom: 0.35rem; }
 .legal-body { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
