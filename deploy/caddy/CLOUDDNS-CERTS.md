@@ -47,3 +47,26 @@ certbot renew --manual --preferred-challenges dns \
 Repeat TXT steps in CloudDNS, then copy `fullchain.pem` / `privkey.pem` again and `systemctl --user restart caddy.service`.
 
 When Netcup documents a CloudDNS API for arbitrary TXT records, we can automate this again.
+
+## DynDNS (A records when the home IP changes)
+
+CloudDNS has no separate DynDNS token in the zone UI. Use an **API-Key** from CCP **Stammdaten → API → API-Keys** as `NETCUP_CLOUDDNS_TOKEN` (see `clouddns.env.example`). Official update URL: [Dynamic DNS](https://www.netcup.com/de/helpcenter/dokumentation/domain/dyn-dns).
+
+On the mini (or any host that should publish the current WAN IP):
+
+```bash
+cp deploy/caddy/clouddns.env.example ~/.config/buy-vs-rent/clouddns.env
+chmod 600 ~/.config/buy-vs-rent/clouddns.env
+# edit token, then:
+./scripts/netcup-clouddns-ddns.sh
+```
+
+Optional: Fritz custom DynDNS with `scripts/fritz-netcup-ddns.py` (reads the same `clouddns.env` plus `fritz.env`). Use either a cron/timer on the script **or** Fritz, not both unless you want redundancy.
+
+Example cron on the mini (repo checkout path as needed):
+
+```cron
+*/30 * * * * /home/privat/coding/buy-vs-rent/scripts/netcup-clouddns-ddns.sh >> ~/.local/state/netcup-ddns.log 2>&1
+```
+
+Keep **both** `kauf-oder-mieten.de` and `www.kauf-oder-mieten.de` A records updated; the script updates both.
