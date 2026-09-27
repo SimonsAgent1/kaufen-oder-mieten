@@ -462,7 +462,11 @@ function forward(step) {
     if (note) note.textContent = error;
     return;
   }
-  chat.cursor += 1;
+  if (step.id === "path") {
+    chat.cursor = 0;
+  } else {
+    chat.cursor += 1;
+  }
   const sequence = steps();
   if (chat.cursor >= sequence.length) chat.cursor = sequence.length - 1;
   if (sequence[chat.cursor].id === "recap" && chat.cursor === sequence.length - 1 && host().querySelector("[data-run]")) {
