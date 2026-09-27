@@ -7,8 +7,13 @@
 }
 
 kauf-oder-mieten.de, www.kauf-oder-mieten.de {
-	# CloudDNS: Legacy DNS API cannot edit the zone. Certs from certbot (see CLOUDDNS-CERTS.md).
-	tls /home/simon-mini/.config/caddy/certs/fullchain.pem /home/simon-mini/.config/caddy/certs/privkey.pem
+	# Let's Encrypt TLS-ALPN-01 on LAN 8443 (WAN 443 is forwarded). No DNS TXT. See CLOUDDNS-CERTS.md.
+	tls {
+		issuer acme {
+			disable_http_challenge
+			alt_tlsalpn_port 8443
+		}
+	}
 
 	reverse_proxy https://127.0.0.1:8000 {
 		transport http {

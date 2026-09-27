@@ -1,72 +1,47 @@
 # TLS with Netcup CloudDNS
 
-Caddy’s Netcup DNS module uses the **Legacy DNS API**. If the domain only has a **CloudDNS** tab in CCP, that API cannot see your zone (`5029` / zone not found). Use **certbot** with a **manual** DNS challenge and TXT records in the CloudDNS UI.
+Public HTTPS terminates on **Caddy** on the mini (LAN **8443**, Fritz WAN **443** → **8443**). Port **80** stays AdGuard Home.
 
-Certs live under `~/.config/caddy/certs/` on the mini (no `/etc/letsencrypt` required).
+## Automatic certificates (TLS-ALPN-01)
 
-## One-time issue (on the mini)
+Caddy obtains and renews Let's Encrypt certs without DNS TXT. The ACME validator connects to **port 443** on your WAN IP; the Fritz!Box forwards to Caddy on **8443**. The site block uses `alt_tlsalpn_port 8443` and disables the HTTP challenge (port 80 is not the app).
 
-```bash
-mkdir -p ~/.config/caddy/certs
-sudo apt install -y certbot   # if needed
-
-certbot certonly --manual --preferred-challenges dns \
-  --config-dir ~/.config/letsencrypt \
-  --work-dir ~/.config/letsencrypt-work \
-  --logs-dir ~/.config/letsencrypt-logs \
-  -d kauf-oder-mieten.de -d www.kauf-oder-mieten.de \
-  --agree-tos -m simon.muchau@freenet.de
-```
-
-Certbot prints one or more **TXT** challenges. For each:
-
-1. CCP → domain → **CloudDNS** → add **TXT** with the exact name and value Certbot shows.
-2. Wait 2–5 minutes. Check: `dig +short TXT _acme-challenge.kauf-oder-mieten.de @8.8.8.8`
-3. Press Enter in Certbot only when the TXT is visible.
-
-Then install certs for Caddy:
+Config: `deploy/caddy/Caddyfile` on the mini at `~/.config/caddy/Caddyfile`.
 
 ```bash
-cp ~/.config/letsencrypt/live/kauf-oder-mieten.de/fullchain.pem ~/.config/caddy/certs/fullchain.pem
-cp ~/.config/letsencrypt/live/kauf-oder-mieten.de/privkey.pem ~/.config/caddy/certs/privkey.pem
-chmod 600 ~/.config/caddy/certs/privkey.pem
-systemctl --user restart caddy.service
+scp deploy/caddy/Caddyfile mini:.config/caddy/Caddyfile
+ssh mini '~/bin/caddy validate --config ~/.config/caddy/Caddyfile --adapter caddyfile && systemctl --user restart caddy.service'
 ```
 
-Pull the repo Caddyfile (or copy `deploy/caddy/Caddyfile`) to `~/.config/caddy/Caddyfile` before restart.
-
-## Renewal (~every 90 days)
+Certs are stored in Caddy’s data directory (typically under `~/.local/share/caddy/`). After a config change, check:
 
 ```bash
-certbot renew --manual --preferred-challenges dns \
-  --config-dir ~/.config/letsencrypt \
-  --work-dir ~/.config/letsencrypt-work \
-  --logs-dir ~/.config/letsencrypt-logs
+ssh mini 'journalctl --user -u caddy.service -n 30 --no-pager'
+curl -fsSI https://kauf-oder-mieten.de/ | grep -i expire
 ```
 
-Repeat TXT steps in CloudDNS, then copy `fullchain.pem` / `privkey.pem` again and `systemctl --user restart caddy.service`.
+## Fallback: manual certbot + DNS TXT
 
-As of 2026-09-27, `scripts/netcup-txt-probe.py` on the mini could not log in to the legacy JSON API (4013) with legacy or CloudDNS API keys, so automated TXT for renewal is not available yet. Renewal stays manual TXT in the UI before expiry. Re-run the probe after Netcup or credential changes; do not use fake IPs against `wsDynDns.php`.
+Use this only if TLS-ALPN renewal fails (firewall, Fritz rule, or Caddy down during renew).
+
+Caddy’s Netcup DNS module uses the **legacy** DNS API. CloudDNS-only zones cannot use it (`5029`). `scripts/netcup-txt-probe.py` could not log in to the JSON DNS API (4013) with keys on the mini.
+
+Manual issue with certbot, TXT in the CloudDNS UI, then point Caddy at files under `~/.config/caddy/certs/` (see git history of `Caddyfile` before TLS-ALPN).
 
 ## DynDNS (A records when the home IP changes)
 
 CloudDNS has no separate DynDNS token in the zone UI. Use an **API-Key** from CCP **Stammdaten → API → API-Keys** as `NETCUP_CLOUDDNS_TOKEN` (see `clouddns.env.example`). Official update URL: [Dynamic DNS](https://www.netcup.com/de/helpcenter/dokumentation/domain/dyn-dns).
 
-On the mini (or any host that should publish the current WAN IP):
+On the mini:
 
 ```bash
 cp deploy/caddy/clouddns.env.example ~/.config/buy-vs-rent/clouddns.env
 chmod 600 ~/.config/buy-vs-rent/clouddns.env
-# edit token, then:
 ./scripts/netcup-clouddns-ddns.sh
 ```
 
-**Fritz (on IP change):** from the laptop on the home LAN, `scripts/fritz-netcup-ddns.py` with `fritz.env` and `clouddns.env`. Set `NETCUP_CUSTOMER_NUMBER` in `fritz.env`. Fritz updates the **apex** when the WAN address changes; provider password for Netcup stays empty (`NETCUP_DDNS_PASSWORD` only if Netcup asks for one).
+**Fritz (on IP change):** `scripts/fritz-netcup-ddns.py` from the home LAN with `fritz.env` and `clouddns.env`.
 
-**Cron (apex + www):** on the mini, every five minutes:
+**Cron (apex + www):** `*/5 * * * *` … `netcup-clouddns-ddns.sh` (see `deploy/mini-pc.md`).
 
-```cron
-*/5 * * * * /home/simon-mini/kaufen-oder-mieten/scripts/netcup-clouddns-ddns.sh >> ~/.local/state/netcup-ddns.log 2>&1
-```
-
-Running **both** is fine: Fritz is fast on reconnect; cron keeps **www** in sync and catches missed Fritz updates.
+Do not probe `wsDynDns.php` with fake IPs.

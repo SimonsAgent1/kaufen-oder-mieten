@@ -51,7 +51,7 @@ Some laptops use DNS that still **NXDOMAIN** `www` while `dig @8.8.8.8` is corre
 
 ## TLS certificate
 
-Let's Encrypt via **certbot manual DNS** (TXT in CloudDNS). Paths and renewal steps: `deploy/caddy/CLOUDDNS-CERTS.md`. Current cert expiry is tracked in `PLAN.md` (private); renew before that date with new TXT records.
+**Caddy** obtains and renews Let's Encrypt certs via **TLS-ALPN-01** on `:8443` (WAN 443 forwarded). No CloudDNS TXT for normal operation. Details: `deploy/caddy/CLOUDDNS-CERTS.md`. Manual certbot TXT remains the documented fallback.
 
 ## Config files (mini only, chmod 600)
 
