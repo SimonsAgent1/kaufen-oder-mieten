@@ -88,6 +88,7 @@ def test_release_version_bumps_once_and_retry_skips():
         shutil.copy(ROOT / "scripts" / "release-version.sh", scripts / "release-version.sh")
         (tmp / "pyproject.toml").write_text('version = "0.1.0"\n', encoding="utf-8")
         env = _git_env()
+        env.pop("BUY_VS_RENT_RELEASE_BUMP", None)
         subprocess.run(["git", "add", "pyproject.toml"], cwd=tmp, check=True, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "feat: fixture"],
@@ -96,7 +97,7 @@ def test_release_version_bumps_once_and_retry_skips():
             capture_output=True,
             env=env,
         )
-        subprocess.run(["bash", "scripts/release-version.sh"], cwd=tmp, check=True)
+        subprocess.run(["bash", "scripts/release-version.sh"], cwd=tmp, check=True, env=env)
         text = (tmp / "pyproject.toml").read_text(encoding="utf-8")
         assert 'version = "0.1.1"' in text
         log = subprocess.check_output(["git", "log", "-1", "--format=%s"], cwd=tmp, text=True).strip()
