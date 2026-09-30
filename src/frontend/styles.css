@@ -657,6 +657,31 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .beliefs-panel .etf-choices { margin-top: 0.15rem; }
 .beliefs-panel .control-label { display: inline-flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+.beliefs-search-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.beliefs-search-wrap input[type="search"] {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid #d5dde6;
+  border-radius: 0.45rem;
+  background: #fff;
+  color: var(--ink);
+}
+.beliefs-search-hint { margin: 0 0 0.5rem; }
+.beliefs-panel .control.belief-search-hit {
+  outline: 2px solid var(--buy);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
 .export-hint {
   flex: 1 1 11rem;
   margin: 0;

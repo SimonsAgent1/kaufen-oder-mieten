@@ -74,6 +74,11 @@
     </section>
     <section class="beliefs-panel" aria-labelledby="beliefs-heading">
       <h2 id="beliefs-heading" class="card-title">Annahmen ändern <a class="rules-inline" href="/regeln">Rechenregeln</a></h2>
+      <p class="beliefs-search-wrap">
+        <label for="beliefs-search">Feld suchen</label>
+        <input type="search" id="beliefs-search" name="beliefs-search" autocomplete="off" enterkeyhint="search" placeholder="Name des Schiebereglers">
+      </p>
+      <p id="beliefs-search-hint" class="beliefs-search-hint note" hidden></p>
       <div id="beliefs"></div>
     </section>
     <ul id="warnings"></ul>
@@ -130,6 +135,7 @@
 
   <script src="/static/scenario.js"></script>
   <script src="/static/bounds.js"></script>
+  <script src="/static/belief-search.js"></script>
   <script src="/static/app.js"></script>
   <script src="/static/chat.js"></script>
   <script>mountAppVersion();</script>

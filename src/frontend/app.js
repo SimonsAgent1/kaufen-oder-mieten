@@ -824,6 +824,46 @@ document.getElementById("import")?.addEventListener("change", async (event) => {
 });
 document.getElementById("real")?.addEventListener("change", () => latest && renderResult(latest));
 
+let beliefSearchFlashTimer = 0;
+
+function runBeliefSearch() {
+  const input = document.getElementById("beliefs-search");
+  const hint = document.getElementById("beliefs-search-hint");
+  const beliefsRoot = document.getElementById("beliefs");
+  if (!input || !beliefsRoot || !window.BeliefSearch) return;
+  const query = input.value;
+  document.querySelectorAll("#beliefs .control.belief-search-hit").forEach((node) => {
+    node.classList.remove("belief-search-hit");
+  });
+  const control = window.BeliefSearch.findBeliefControl(beliefsRoot, query);
+  if (!control) {
+    if (hint) {
+      hint.hidden = !query.trim();
+      hint.textContent = query.trim() ? "Kein passender Schieberegler." : "";
+    }
+    return;
+  }
+  if (hint) {
+    hint.hidden = true;
+    hint.textContent = "";
+  }
+  control.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  control.classList.add("belief-search-hit");
+  const range = control.querySelector('input[type="range"]');
+  range?.focus({ preventScroll: true });
+  clearTimeout(beliefSearchFlashTimer);
+  beliefSearchFlashTimer = window.setTimeout(() => control.classList.remove("belief-search-hit"), 2400);
+}
+
+document.getElementById("beliefs-search")?.addEventListener("search", runBeliefSearch);
+document.getElementById("beliefs-search")?.addEventListener("change", runBeliefSearch);
+document.getElementById("beliefs-search")?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    runBeliefSearch();
+  }
+});
+
 function syncPathViewUi() {
   const results = document.getElementById("results");
   if (results) results.dataset.pathView = pathView;

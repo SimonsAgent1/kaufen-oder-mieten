@@ -1,0 +1,46 @@
+"""Belief search synonyms (client-only, mirrors belief-search.js)."""
+
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+SYNONYMS = {
+    "gehalt": "gross",
+    "einkommen": "gross",
+    "lohn": "gross",
+    "hausgeld": "owner_costs",
+    "miete": "kaltmiete",
+    "zins": "sollzins",
+    "depot": "etf_return",
+}
+
+
+def normalize_query(query: str) -> str:
+    text = query.strip().lower().replace("ß", "ss")
+    return text
+
+
+def synonym_target(query: str) -> str | None:
+    normalized = normalize_query(query)
+    if not normalized or re.fullmatch(r"\d+([.,]\d+)?", normalized):
+        return None
+    return SYNONYMS.get(normalized)
+
+
+def test_synonym_maps_match_js_catalog():
+    js = (ROOT / "src" / "frontend" / "belief-search.js").read_text(encoding="utf-8")
+    for key, target in SYNONYMS.items():
+        assert f"{key}: \"{target}\"" in js or f"{key}: '{target}'" in js
+
+
+def test_synonym_maps_gehalt_to_gross():
+    assert synonym_target("Gehalt") == "gross"
+
+
+def test_synonym_depot_maps_to_etf_return():
+    assert synonym_target("depot") == "etf_return"
+
+
+def test_numeric_query_is_not_a_synonym():
+    assert synonym_target("1200000") is None

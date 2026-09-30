@@ -385,12 +385,14 @@ def test_compare_burst_limit_returns_german_429(monkeypatch, tmp_path):
     blocked = client.post("/api/compare", json=body)
     assert blocked.status_code == 429
     assert "Moment warten" in blocked.json()["detail"]
-    from buy_vs_rent.request_counts import recent_days
+    from buy_vs_rent.request_counts import recent_days, today_key
     from datetime import datetime
     from zoneinfo import ZoneInfo
 
     Berlin = ZoneInfo("Europe/Berlin")
-    when = datetime(2026, 9, 27, 12, 0, tzinfo=Berlin)
+    when = datetime.now(Berlin)
     rows = recent_days(last=1, anchor=when.date())
-    assert rows[0][1]["compare_ok"] == 2
-    assert rows[0][1]["compare_reject"] == 0
+    day = rows[0][1]
+    assert day["compare_ok"] == 2
+    assert day["compare_reject"] == 0
+    assert rows[0][0] == today_key(when)
