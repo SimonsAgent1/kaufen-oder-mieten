@@ -594,6 +594,41 @@ def test_empty_depot_warns_before_the_horizon():
     assert any("leer" in line for line in result.warnings)
 
 
+def test_altersvorsorgedepot_grows_above_starting_balance():
+    from datetime import date as d
+
+    adult = _adult(
+        depot=200_000,
+        sparrate=0,
+        kaltmiete=800,
+        birth=d(1990, 1, 1),
+        pots={
+            "altersvorsorgedepot": True,
+            "altersvorsorgedepot_balance": 10_000,
+            "altersvorsorgedepot_contribution_yearly": 0,
+        },
+    )
+    flat = compare(
+        _scenario(
+            as_of=d(2027, 2, 1),
+            adults=[adult],
+            dwelling={"purchase_price": 400_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "ter": 0, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 68},
+        )
+    )
+    growing = compare(
+        _scenario(
+            as_of=d(2027, 2, 1),
+            adults=[adult],
+            dwelling={"purchase_price": 400_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0.12, "ter": 0.02, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 68},
+        )
+    )
+    assert growing.buy_final_nominal > flat.buy_final_nominal
+
+
 def test_pots_off_leave_compare_unchanged():
     adult = _adult(depot=50_000, sparrate=500, kaltmiete=1_000)
     dwelling = {"purchase_price": 400_000, "min_equity": False, "owner_costs": 0}

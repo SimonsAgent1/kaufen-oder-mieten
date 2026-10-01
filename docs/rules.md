@@ -260,6 +260,14 @@ Quelle: Modellwahl.
 
 Probe: 400.000 € mal 15 % sind 60.000 €.
 
+## Wachstum Altersvorsorgedepot
+
+Der Stand wird jeden Monat mit der nominalen ETF-Rendite aus dem Schieberegler fortgeschrieben, ohne TER und ohne Vorabpauschale.
+
+Quelle: Modellwahl.
+
+Probe: 8,7 % im Jahr → Faktor (1,087)^(1/12) pro Monat.
+
 ## Grundzulage Altersvorsorgedepot
 
 50 % der eigenen Beiträge bis 360 €, danach 25 % bis 1.800 €, höchstens 540 € im Jahr.

@@ -8,6 +8,11 @@ from buy_vs_rent.law.de_2026 import income_levy, solidarity
 
 RIESTER_GRUNDZULAGE_2026 = 175.0
 ALTERSVORSORGEDEPOT_START = date(2027, 1, 1)
+
+
+def avd_monthly_growth_factor(annual_etf_return: float) -> float:
+    """Nominal ETF return per month, without TER and without Vorabpauschale."""
+    return (1 + annual_etf_return) ** (1 / 12)
 PRIVATE_ANNUITY_TAXABLE_SHARE_FROM_67 = 0.17
 CAPITAL_GAINS_FLAT = 0.25
 

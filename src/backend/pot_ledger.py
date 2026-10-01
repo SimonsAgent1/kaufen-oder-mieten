@@ -8,6 +8,7 @@ from datetime import date
 from buy_vs_rent.pots import (
     ALTERSVORSORGEDEPOT_START,
     RIESTER_GRUNDZULAGE_2026,
+    avd_monthly_growth_factor,
     grundzulage_altersvorsorgedepot,
     kinderzulage_total,
     lump_insurance_gain,
@@ -106,6 +107,24 @@ def january_contributions(
             ledger.avd_balance += own + zulage + kinder
             deduct += own
     return deduct
+
+
+def grow_avd_balances(
+    scenario: Scenario,
+    ledgers: dict[str, AdultPotLedger],
+    month: date,
+    annual_etf_return: float,
+) -> None:
+    if month < ALTERSVORSORGEDEPOT_START:
+        return
+    factor = avd_monthly_growth_factor(annual_etf_return)
+    for adult in scenario.adults:
+        if not adult.pots.altersvorsorgedepot:
+            continue
+        ledger = ledgers[adult.id]
+        if ledger.avd_paid:
+            continue
+        ledger.avd_balance *= factor
 
 
 def retire_payouts(

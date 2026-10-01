@@ -300,6 +300,14 @@ ENTRIES: tuple[Rule, ...] = (
         assumption=None,
     ),
     Rule(
+        "avd-monthly-growth",
+        "pots.avd_monthly_growth_factor",
+        "Wachstum Altersvorsorgedepot",
+        "Der Stand wird jeden Monat mit der nominalen ETF-Rendite aus dem Schieberegler fortgeschrieben, ohne TER und ohne Vorabpauschale.",
+        "Modellwahl",
+        "8,7 % im Jahr → Faktor (1,087)^(1/12) pro Monat.",
+    ),
+    Rule(
         "avd-grundzulage",
         "pots.grundzulage_altersvorsorgedepot",
         "Grundzulage Altersvorsorgedepot",

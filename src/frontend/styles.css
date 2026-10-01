@@ -224,6 +224,10 @@ form > fieldset { margin-top: 0.8rem; }
   grid-template-columns: minmax(7rem, 9.5rem) minmax(0, 1fr);
 }
 
+.control[hidden] {
+  display: none !important;
+}
+
 .control {
   display: grid;
   grid-template-columns: minmax(8.5rem, 11rem) minmax(4rem, 1fr) auto;

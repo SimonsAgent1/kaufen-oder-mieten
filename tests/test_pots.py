@@ -1,6 +1,7 @@
 """Hand-worked checks for retirement pot formulas."""
 
 from buy_vs_rent.pots import (
+    avd_monthly_growth_factor,
     grundzulage_altersvorsorgedepot,
     kinderzulage_altersvorsorgedepot,
     lump_insurance_gain,
@@ -8,6 +9,11 @@ from buy_vs_rent.pots import (
     private_annuity_taxable_annual,
     promoted_payout_tax,
 )
+
+
+def test_avd_monthly_growth_uses_etf_return_without_ter():
+    assert avd_monthly_growth_factor(0.087) > 1.0
+    assert avd_monthly_growth_factor(0.0) == 1.0
 
 
 def test_grundzulage_at_1200_own_contribution():

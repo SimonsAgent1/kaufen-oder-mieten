@@ -46,6 +46,7 @@ from buy_vs_rent.law.de_2026 import (
 from buy_vs_rent.mortgage import initial_payment, payment_to_clear, step_month
 from buy_vs_rent.pot_ledger import (
     annuity_january_net,
+    grow_avd_balances,
     january_contributions,
     ledger_from_adult,
     retire_payouts,
@@ -537,6 +538,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         pot_deduct = january_contributions(
             scenario, pot_ledgers, month, inflation_factor, here.children
         )
+        grow_avd_balances(scenario, pot_ledgers, month, beliefs.etf_return)
         other_zve, splitting = income_at_sale(month, inflation_factor)
         pot_inflow = 0.0
         for adult in scenario.adults:

@@ -471,7 +471,7 @@ function mountEtfChoice(buckets) {
 }
 
 const AVD_POT_INFO =
-  "Aus, bis der Schalter an ist. Dann 1.800 € eigene Beiträge im Jahr. Das holt die volle Grundzulage von 540 €. Die Kinderzulage ist darin schon bei 300 € je Kind voll.";
+  "Aus, bis der Schalter an ist. Dann 1.800 € eigene Beiträge im Jahr. Das holt die volle Grundzulage von 540 €. Die Kinderzulage ist darin schon bei 300 € je Kind voll. Der Stand wächst mit der ETF-Rendite. In der Sparphase keine Vorabpauschale.";
 
 function ensureAdultPots(adult) {
   if (!adult.pots) adult.pots = {};
