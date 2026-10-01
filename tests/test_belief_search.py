@@ -44,3 +44,16 @@ def test_synonym_depot_maps_to_etf_return():
 
 def test_numeric_query_is_not_a_synonym():
     assert synonym_target("1200000") is None
+
+
+def test_synonym_search_collects_all_matching_controls():
+    js = (ROOT / "src" / "frontend" / "belief-search.js").read_text(encoding="utf-8")
+    assert "function findBeliefControls" in js
+    assert "function controlsForTarget" in js
+    assert "return controls.filter((control) => match(control.dataset.controlName" in js
+
+
+def test_belief_search_opens_collapsed_slider_groups():
+    app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
+    assert "findBeliefControls" in app
+    assert 'closest("details.slider-group")?.setAttribute("open", "")' in app

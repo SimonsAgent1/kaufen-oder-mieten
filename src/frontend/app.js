@@ -835,8 +835,8 @@ function runBeliefSearch() {
   document.querySelectorAll("#beliefs .control.belief-search-hit").forEach((node) => {
     node.classList.remove("belief-search-hit");
   });
-  const control = window.BeliefSearch.findBeliefControl(beliefsRoot, query);
-  if (!control) {
+  const controls = window.BeliefSearch.findBeliefControls(beliefsRoot, query);
+  if (!controls.length) {
     if (hint) {
       hint.hidden = !query.trim();
       hint.textContent = query.trim() ? "Kein passender Schieberegler." : "";
@@ -847,12 +847,19 @@ function runBeliefSearch() {
     hint.hidden = true;
     hint.textContent = "";
   }
-  control.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  control.classList.add("belief-search-hit");
-  const range = control.querySelector('input[type="range"]');
+  for (const control of controls) {
+    control.closest("details.slider-group")?.setAttribute("open", "");
+    control.classList.add("belief-search-hit");
+  }
+  controls[0].scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const range = controls[0].querySelector('input[type="range"]');
   range?.focus({ preventScroll: true });
   clearTimeout(beliefSearchFlashTimer);
-  beliefSearchFlashTimer = window.setTimeout(() => control.classList.remove("belief-search-hit"), 2400);
+  beliefSearchFlashTimer = window.setTimeout(() => {
+    document.querySelectorAll("#beliefs .control.belief-search-hit").forEach((node) => {
+      node.classList.remove("belief-search-hit");
+    });
+  }, 2400);
 }
 
 document.getElementById("beliefs-search")?.addEventListener("search", runBeliefSearch);

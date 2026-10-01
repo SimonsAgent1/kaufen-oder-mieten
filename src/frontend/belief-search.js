@@ -38,34 +38,37 @@
     return normalizeQuery(caption.childNodes[0]?.textContent || caption.textContent);
   }
 
-  function controlForTarget(controls, target) {
+  function controlsForTarget(controls, target) {
     const match = TARGET_MATCHERS[target];
-    if (!match) return null;
-    return controls.find((control) => match(control.dataset.controlName || ""));
+    if (!match) return [];
+    return controls.filter((control) => match(control.dataset.controlName || ""));
   }
 
-  function findBeliefControl(beliefsRoot, rawQuery) {
-    if (!beliefsRoot) return null;
+  function findBeliefControls(beliefsRoot, rawQuery) {
+    if (!beliefsRoot) return [];
     const normalized = normalizeQuery(rawQuery);
-    if (!normalized) return null;
+    if (!normalized) return [];
     const controls = [...beliefsRoot.querySelectorAll(".control[data-control-name]")];
     const target = synonymTarget(normalized);
     if (target) {
-      const hit = controlForTarget(controls, target);
-      if (hit) return hit;
+      const hits = controlsForTarget(controls, target);
+      if (hits.length) return hits;
     }
-    return (
-      controls.find((control) => {
-        const label = labelText(control);
-        return label && label.includes(normalized);
-      }) || null
-    );
+    return controls.filter((control) => {
+      const label = labelText(control);
+      return label && label.includes(normalized);
+    });
+  }
+
+  function findBeliefControl(beliefsRoot, rawQuery) {
+    return findBeliefControls(beliefsRoot, rawQuery)[0] || null;
   }
 
   const api = {
     normalizeQuery,
     synonymTarget,
     findBeliefControl,
+    findBeliefControls,
     SYNONYMS,
   };
 
