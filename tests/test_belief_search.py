@@ -9,7 +9,7 @@ SYNONYMS = {
     "gehalt": "gross",
     "einkommen": "gross",
     "lohn": "gross",
-    "hausgeld": "owner_costs",
+    "hausgeld": "owner_costs_rate",
     "miete": "kaltmiete",
     "zins": "sollzins",
     "depot": "etf_return",

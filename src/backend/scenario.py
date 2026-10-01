@@ -104,7 +104,18 @@ class Dwelling(BaseModel):
     owner_cost_growth: float = Field(default=0.02, ge=-0.05, le=0.15)
     appreciation: float = Field(default=0.025, ge=-0.05, le=0.15)
     min_equity: bool = True
+    min_equity_share: float = Field(default=0.15, ge=0, le=0.5)
     move_in_cost_2026: float = Field(default=0, ge=0, le=500_000)
+
+    @model_validator(mode="after")
+    def _sync_owner_costs_from_rate(self) -> Dwelling:
+        price = self.purchase_price
+        if price is None or price <= 0:
+            return self
+        if self.owner_costs_rate is None:
+            self.owner_costs_rate = (self.owner_costs * 12) / price
+        self.owner_costs = price * self.owner_costs_rate / 12
+        return self
 
 
 class Beliefs(BaseModel):

@@ -36,6 +36,11 @@ def monthly_owner_costs(price: float, rate: float) -> float:
     return price * rate / 12
 
 
+def extra_equity_from_price(purchase_price: float, share: float) -> float:
+    """Extra equity as a share of the purchase price, not Nebenkosten."""
+    return purchase_price * share
+
+
 def sale_gain(sale_price: float, selling_cost_rate: float, purchase_price: float, nebenkosten: float) -> float:
     return sale_price * (1 - selling_cost_rate) - purchase_price - nebenkosten
 

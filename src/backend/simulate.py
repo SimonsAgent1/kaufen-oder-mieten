@@ -9,6 +9,7 @@ from buy_vs_rent.catalog import result_sentences
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
 from buy_vs_rent.house import (
     house_sale_tax,
+    extra_equity_from_price,
     monthly_owner_costs,
     owner_occupied_exemption,
     price_to_rent,
@@ -59,7 +60,6 @@ from buy_vs_rent.scenario import (
 from buy_vs_rent.tax_rates import purchase_costs, transfer_tax_rate
 
 REAL_ETF_GROWTH = 0.005
-DOWN_PAYMENT = 0.15
 @dataclass
 class Marker:
     date: str
@@ -150,6 +150,13 @@ class Result:
 
 def euro_de(amount: float) -> str:
     return f"{amount:,.0f}".replace(",", ".")
+
+
+def _percent_de(share: float) -> str:
+    pct = share * 100
+    if abs(pct - round(pct)) < 1e-6:
+        return f"{int(round(pct))} Prozent"
+    return f"{pct:.1f}".replace(".", ",") + " Prozent"
 
 
 def _de_date(value: date) -> str:
@@ -318,6 +325,15 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     end = calendar.end
     planned_care = calendar.care_on
     owner_base = dwelling.owner_costs
+    equity_share = dwelling.min_equity_share if dwelling.min_equity else 0.0
+
+    def extra_equity_at(price: float) -> float:
+        if not dwelling.min_equity:
+            return 0.0
+        return extra_equity_from_price(price, equity_share)
+
+    def equity_warning_floor(price: float) -> float:
+        return extra_equity_from_price(price, dwelling.min_equity_share)
     sollzins = beliefs.sollzins if beliefs.sollzins is not None else 0.035
     anschlusszins = beliefs.anschlusszins if beliefs.anschlusszins is not None else sollzins
     transfer = dwelling.transfer_tax if dwelling.transfer_tax is not None else transfer_tax_rate(dwelling.bundesland)
@@ -436,11 +452,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     warnings: list[str] = []
     ready_today = opening + scenario.equity_cash
     move_in_today = dwelling.move_in_cost_2026
-    needed_today = nebenkosten_paid + move_in_today + (DOWN_PAYMENT * dwelling.purchase_price if dwelling.min_equity else 0.0)
+    needed_today = nebenkosten_paid + move_in_today + extra_equity_at(dwelling.purchase_price)
+    equity_pct = _percent_de(equity_share)
     if ready_today + 1e-6 < needed_today:
         if dwelling.min_equity:
             warnings.append(
-                f"Heute fehlen {euro_de(needed_today - ready_today)} € für Nebenkosten plus 15 Prozent des Kaufpreises. "
+                f"Heute fehlen {euro_de(needed_today - ready_today)} € für Nebenkosten plus {equity_pct} des Kaufpreises. "
                 "Gekauft wird im ersten Monat, in dem Depot und zusätzliches Eigenkapital das erreichen."
             )
         else:
@@ -527,7 +544,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         rent.grow_month()
 
         move_in = dwelling.move_in_cost_2026 * inflation_factor
-        needed = nebenkosten + move_in + (DOWN_PAYMENT * price_now if dwelling.min_equity else 0.0)
+        needed = nebenkosten + move_in + extra_equity_at(price_now)
         if not here.in_care and mortgage is None and buy.value + scenario.equity_cash + 1e-6 >= needed:
             tax, proceeds = buy.liquidation()
             equity_cash = proceeds + scenario.equity_cash
@@ -553,7 +570,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     payment=payment_at_purchase,
                     months_left_in_fixation=beliefs.zinsbindung_years * 12,
                 )
-                warning_20 = equity_cash < nebenkosten + move_in + DOWN_PAYMENT * price_now
+                warning_20 = equity_cash < nebenkosten + move_in + equity_warning_floor(price_now)
 
         buy_still_renting = mortgage is None
         buy_extra = 0.0 if here.in_care else extra_rent(calendar, month, buy_still_renting) * inflation_factor
@@ -814,7 +831,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_final = buy_net + scenario.equity_cash
         if dwelling.min_equity:
             warnings.append(
-                "Innerhalb des Horizonts reichen Depot und zusätzliches Eigenkapital nicht für Nebenkosten plus 15 Prozent des Kaufpreises. Beide Linien bleiben Miete."
+                f"Innerhalb des Horizonts reichen Depot und zusätzliches Eigenkapital nicht für Nebenkosten plus {equity_pct} des Kaufpreises. Beide Linien bleiben Miete."
             )
         else:
             warnings.append(
@@ -841,7 +858,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             break
 
     if warning_20 and purchase is not None:
-        warnings.append("Beim Kauf liegt das Eigenkapital unter den Nebenkosten plus 15 Prozent des Kaufpreises.")
+        warnings.append(
+            f"Beim Kauf liegt das Eigenkapital unter den Nebenkosten plus {equity_pct} des Kaufpreises."
+        )
     if not eligible(scenario.as_of, 1.0):
         warnings.append("Das zu versteuernde Einkommen liegt über 175.000 €. Dann gibt es kein Elterngeld.")
     if depot_empty:
@@ -968,19 +987,11 @@ def _assumptions(
         f"Die Inflation liegt bei {beliefs.inflation * 100:.1f} % pro Jahr.",
     ]
     if not rent_only:
-        if dwelling.owner_costs_rate is not None:
-            rate_text = f"{dwelling.owner_costs_rate * 100:.2f}".replace(".", ",")
-            owner_euro = (
-                f"Eigentümerkosten sind {rate_text} % des Kaufpreises im Jahr, "
-                f"also {euro_de(dwelling.owner_costs)} € im Monat."
-            )
-        else:
-            rate_yearly = (dwelling.owner_costs * 12 / dwelling.purchase_price) if dwelling.purchase_price else 0.0
-            rate_text = f"{rate_yearly * 100:.2f}".replace(".", ",")
-            owner_euro = (
-                f"Eigentümerkosten starten bei {euro_de(dwelling.owner_costs)} € im Monat "
-                f"({rate_text} % des Kaufpreises im Jahr)."
-            )
+        rate_text = f"{dwelling.owner_costs_rate * 100:.2f}".replace(".", ",")
+        owner_euro = (
+            f"Eigentümerkosten sind {rate_text} % des Kaufpreises im Jahr, "
+            f"also {euro_de(dwelling.owner_costs)} € im Monat."
+        )
         lines.extend(
             [
                 f"Die Wertsteigerung von Haus oder Wohnung liegt bei {dwelling.appreciation * 100:.1f} % pro Jahr. "
@@ -993,8 +1004,9 @@ def _assumptions(
             ]
         )
         if dwelling.min_equity:
+            pct = _percent_de(dwelling.min_equity_share)
             lines.append(
-                "Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital die Nebenkosten plus 15 Prozent des Kaufpreises decken."
+                f"Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital die Nebenkosten plus {pct} des Kaufpreises decken."
             )
         else:
             lines.append("Gekauft wird, sobald Depot und zusätzliches Eigenkapital die Nebenkosten decken.")

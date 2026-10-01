@@ -7,7 +7,13 @@ import pytest
 from buy_vs_rent import etf, house, mortgage
 from buy_vs_rent.catalog import by_function, render_rules
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
-from buy_vs_rent.house import comparison_cold_rent_monthly, monthly_owner_costs, owner_occupied_exemption, price_to_rent_band
+from buy_vs_rent.house import (
+    comparison_cold_rent_monthly,
+    extra_equity_from_price,
+    monthly_owner_costs,
+    owner_occupied_exemption,
+    price_to_rent_band,
+)
 from buy_vs_rent.scenario import Scenario
 from buy_vs_rent.law import de_2026
 from buy_vs_rent.law.de_2026 import (
@@ -68,6 +74,7 @@ def test_worked_examples_match_the_functions():
     assert initial_payment(120_000, 0.03, 0.02) == 500
     assert step_month(120_000, 0.03, 500)[0] == 300
     assert monthly_owner_costs(400_000, 0.0075) == 250
+    assert extra_equity_from_price(400_000, 0.15) == 60_000
     assert comparison_cold_rent_monthly(
         Scenario.model_validate(
             {

@@ -594,21 +594,40 @@ def test_empty_depot_warns_before_the_horizon():
     assert any("leer" in line for line in result.warnings)
 
 
-def test_owner_cost_months_follow_the_euro_amount_not_the_rate_field():
-    with_rate = compare(
+def test_owner_costs_follow_yearly_rate_after_load():
+    result = compare(
         _scenario(
             adults=[_adult(depot=200_000, kaltmiete=1000)],
             dwelling={"purchase_price": 400_000, "owner_costs": 100, "owner_costs_rate": 0.0075, "min_equity": False},
         )
     )
-    without_rate = compare(
+    assert any("250 €" in line for line in result.assumptions)
+
+
+def test_saved_euros_without_rate_become_yearly_share_once():
+    from buy_vs_rent.scenario import Dwelling
+
+    dwelling = Dwelling.model_validate(
+        {"bundesland": "Hessen", "purchase_price": 400_000, "owner_costs": 200}
+    )
+    assert abs(dwelling.owner_costs_rate - 0.006) < 1e-9
+    assert dwelling.owner_costs == 200
+
+
+def test_min_equity_share_changes_purchase_threshold():
+    low = compare(
         _scenario(
-            adults=[_adult(depot=200_000, kaltmiete=1000)],
-            dwelling={"purchase_price": 400_000, "owner_costs": 100, "min_equity": False},
+            adults=[_adult(depot=50_000, kaltmiete=1000)],
+            dwelling={"purchase_price": 400_000, "min_equity": True, "min_equity_share": 0.10, "owner_costs": 0},
         )
     )
-    assert with_rate.interest_paid == without_rate.interest_paid
-    assert any("100 €" in line for line in with_rate.assumptions)
+    high = compare(
+        _scenario(
+            adults=[_adult(depot=50_000, kaltmiete=1000)],
+            dwelling={"purchase_price": 400_000, "min_equity": True, "min_equity_share": 0.20, "owner_costs": 0},
+        )
+    )
+    assert low.equity_shortfall_today < high.equity_shortfall_today
 
 
 def test_a_path_that_stays_ahead_has_no_break_even_year():

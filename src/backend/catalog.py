@@ -282,13 +282,22 @@ ENTRIES: tuple[Rule, ...] = (
         "owner-costs",
         "house.monthly_owner_costs",
         "Eigentümerkosten als Prozent",
-        "Kaufpreis mal Satz im Jahr, geteilt durch 12. Der Eurobetrag im Szenario ist maßgeblich; der Prozentsatz folgt diesem Betrag.",
+        "Kaufpreis mal Jahresanteil, geteilt durch 12. Der Jahresanteil steht im Szenario; die Monats-Euro folgen dem Kaufpreis.",
         "Modellwahl",
         "400.000 € mal 0,75 % im Jahr sind 250 € im Monat.",
         assumption=(
-            "Eigentümerkosten im Monat sind der Eurobetrag aus dem Szenario. "
-            "Der Prozentsatz ist Anteil des Kaufpreises im Jahr und folgt dem Eurobetrag."
+            "Eigentümerkosten sind Anteil des Kaufpreises im Jahr. "
+            "Die Monats-Euro sind Kaufpreis mal Anteil, geteilt durch 12."
         ),
+    ),
+    Rule(
+        "min-equity-share",
+        "house.extra_equity_from_price",
+        "Eigenkapitalanteil vor dem Kauf",
+        "Zusätzliches Eigenkapital als Anteil des Kaufpreises, nur wenn die Wartebedingung an ist. Nebenkosten und Einzugskosten kommen dazu.",
+        "Modellwahl",
+        "400.000 € mal 15 % sind 60.000 €.",
+        assumption=None,
     ),
     Rule(
         "comparison-cold-rent",

@@ -128,20 +128,25 @@ function mountSliderGroups(host, buckets) {
   }
 }
 
-function ownerCostsRateFromEuros() {
+function defaultOwnerCostsRate() {
   const price = scenario.dwelling.purchase_price;
-  if (!price) return 0;
-  return (scenario.dwelling.owner_costs * 12) / price;
+  if (!price) return 0.0075;
+  const rate = scenario.dwelling.owner_costs_rate;
+  if (Number.isFinite(rate)) return rate;
+  const euros = scenario.dwelling.owner_costs;
+  if (Number.isFinite(euros) && euros > 0) return (euros * 12) / price;
+  return 0.0075;
 }
 
 function syncOwnerCostsFromRate(rate) {
+  const price = scenario.dwelling.purchase_price;
   scenario.dwelling.owner_costs_rate = rate;
-  scenario.dwelling.owner_costs = (scenario.dwelling.purchase_price * rate) / 12;
+  if (price) scenario.dwelling.owner_costs = (price * rate) / 12;
 }
 
-function syncOwnerRateFromEuros() {
-  const rate = ownerCostsRateFromEuros();
-  scenario.dwelling.owner_costs_rate = rate;
+function ensureOwnerCostsRate() {
+  const rate = defaultOwnerCostsRate();
+  syncOwnerCostsFromRate(rate);
   return rate;
 }
 
@@ -225,8 +230,8 @@ function syncAssumptionInfos() {
     ["Notar", "Notar und Grundbuch"],
     ["Makler", "Makler, Käuferanteil"],
     ["Einmalige Einzugskosten", "Einmalige Einzugskosten"],
-    ["Eigentümerkosten im Monat", "Eigentümerkosten"],
-    ["Anteil des Kaufpreises", "Ein niedrigerer Anteil"],
+    ["Hausgeld", "Eigentümerkosten"],
+    ["Eigenkapital vom Kaufpreis", "Gekauft wird erst"],
     ["Zuschlag größere", "Solange ein Weg noch mietet"],
     ["Eigenanteil Pflege", "Heiz- und andere Kosten"],
     ["Restvermögen am Horizont", "Bei vollem Verzehr"],
@@ -307,6 +312,8 @@ function normalizeSliderScenario() {
   if (scenario.adults.length === 2 && !Number.isFinite(Number(scenario.shared_kaltmiete))) {
     scenario.shared_kaltmiete = 0;
   }
+  if (!Number.isFinite(Number(d.min_equity_share))) d.min_equity_share = 0.15;
+  ensureOwnerCostsRate();
   scenario.adults.forEach((adult) => {
     if (!Number.isFinite(Number(adult.gross_salary))) adult.gross_salary = 0;
     if (!Number.isFinite(Number(adult.depot))) adult.depot = 0;
@@ -475,12 +482,11 @@ function mountBeliefs() {
   }
   const buckets = emptySliderBuckets();
   const d = scenario.dwelling;
-  const ownerRateShown = syncOwnerRateFromEuros();
+  const ownerRateShown = ensureOwnerCostsRate();
   buckets.Wohnen.push(
     slider("purchase_price", "Kaufpreis", 50_000, 2_000_000, 5_000, d.purchase_price, "€", (value) => {
       d.purchase_price = value;
-      const rate = syncOwnerRateFromEuros();
-      setControlDisplay("Eigentümerkosten, Anteil des Kaufpreises im Jahr", rate, "%", 0.0005);
+      syncOwnerCostsFromRate(d.owner_costs_rate ?? ownerRateShown);
     }),
     mountBundeslandRow(),
     slider("notary_rate", "Notar und Grundbuch", 0, 0.1, 0.001, d.notary_rate, "%", (value) => {
@@ -495,24 +501,16 @@ function mountBeliefs() {
     slider("move_in_cost_2026", "Einmalige Einzugskosten", 0, 200_000, 500, d.move_in_cost_2026 || 0, "€", (value) => {
       d.move_in_cost_2026 = value;
     }, assumptionLine("Einmalige Einzugskosten")),
-    slider("owner_costs", "Eigentümerkosten im Monat", 0, 2_000, 10, d.owner_costs, "€", (value) => {
-      d.owner_costs = value;
-      const rate = syncOwnerRateFromEuros();
-      setControlDisplay("Eigentümerkosten, Anteil des Kaufpreises im Jahr", rate, "%", 0.0005);
-    }, assumptionLine("Eigentümerkosten")),
     slider(
       "owner_costs_rate",
-      "Eigentümerkosten, Anteil des Kaufpreises im Jahr",
+      "Hausgeld, Anteil des Kaufpreises im Jahr",
       0,
       0.03,
       0.0005,
       ownerRateShown,
       "%",
-      (value) => {
-        syncOwnerCostsFromRate(value);
-        setControlDisplay("Eigentümerkosten im Monat", scenario.dwelling.owner_costs, "€", 10);
-      },
-      assumptionLine("Ein niedrigerer Anteil"),
+      (value) => syncOwnerCostsFromRate(value),
+      assumptionLine("Eigentümerkosten"),
     ),
   );
   for (const [name, label, min, max, step, unit] of BELIEFS) {
@@ -645,12 +643,27 @@ function mountBeliefs() {
   }
   const equity = document.createElement("label");
   equity.className = "switch belief-switch";
-  equity.innerHTML = `<input type="checkbox" ${scenario.dwelling.min_equity ? "checked" : ""}><span class="track"></span><span class="switch-text">Erst bei 15 % inklusive Nebenkosten kaufen</span>`;
+  equity.innerHTML = `<input type="checkbox" ${scenario.dwelling.min_equity ? "checked" : ""}><span class="track"></span><span class="switch-text">Erst kaufen, wenn Nebenkosten und Eigenkapitalanteil gedeckt sind</span>`;
   equity.querySelector("input").addEventListener("change", (event) => {
     scenario.dwelling.min_equity = event.target.checked;
     schedule();
   });
   buckets.Wohnen.push(equity);
+  buckets.Wohnen.push(
+    slider(
+      "min_equity_share",
+      "Eigenkapital vom Kaufpreis vor dem Kauf",
+      0,
+      0.5,
+      0.01,
+      d.min_equity_share ?? 0.15,
+      "%",
+      (value) => {
+        d.min_equity_share = value;
+      },
+      assumptionLine("Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital"),
+    ),
+  );
   buckets.Pflege.push(
     slider(
       "care_copay",

@@ -246,11 +246,19 @@ Probe: Die Kopie hat denselben Kurswert.
 
 ## Eigentümerkosten als Prozent
 
-Kaufpreis mal Satz im Jahr, geteilt durch 12. Der Eurobetrag im Szenario ist maßgeblich; der Prozentsatz folgt diesem Betrag.
+Kaufpreis mal Jahresanteil, geteilt durch 12. Der Jahresanteil steht im Szenario; die Monats-Euro folgen dem Kaufpreis.
 
 Quelle: Modellwahl.
 
 Probe: 400.000 € mal 0,75 % im Jahr sind 250 € im Monat.
+
+## Eigenkapitalanteil vor dem Kauf
+
+Zusätzliches Eigenkapital als Anteil des Kaufpreises, nur wenn die Wartebedingung an ist. Nebenkosten und Einzugskosten kommen dazu.
+
+Quelle: Modellwahl.
+
+Probe: 400.000 € mal 15 % sind 60.000 €.
 
 ## Vergleichskaltmiete für den Kaufpreisfaktor
 

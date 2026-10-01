@@ -4,7 +4,7 @@
     gehalt: "gross",
     einkommen: "gross",
     lohn: "gross",
-    hausgeld: "owner_costs",
+    hausgeld: "owner_costs_rate",
     miete: "kaltmiete",
     zins: "sollzins",
     depot: "etf_return",
@@ -12,7 +12,7 @@
 
   const TARGET_MATCHERS = {
     gross: (name) => name.startsWith("gross-"),
-    owner_costs: (name) => name === "owner_costs",
+    owner_costs_rate: (name) => name === "owner_costs_rate",
     kaltmiete: (name) => name.startsWith("rent-") || name === "shared_kaltmiete",
     sollzins: (name) => name === "sollzins",
     etf_return: (name) => name === "etf_return",
