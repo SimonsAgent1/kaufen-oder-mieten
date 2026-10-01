@@ -6,6 +6,8 @@ import html
 import re
 from pathlib import Path
 
+from buy_vs_rent.static_urls import with_versioned_static_urls
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -37,7 +39,7 @@ def render_model_html() -> str:
             paragraphs.append(f"<p>{_inline_md(block)}</p>")
     body_html = "\n    ".join(paragraphs)
     esc_title = html.escape(title)
-    return f"""<!DOCTYPE html>
+    page = f"""<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -71,3 +73,4 @@ def render_model_html() -> str:
   <script>mountAppVersion();</script>
 </body>
 </html>"""
+    return with_versioned_static_urls(page)

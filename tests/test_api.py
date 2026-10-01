@@ -278,6 +278,16 @@ def test_impressum_page_is_served():
     assert "löscht diese Kopie" not in response.text
 
 
+def test_served_html_static_assets_use_release_version_query():
+    ver = client.get("/api/version").json()["version"]
+    index = client.get("/")
+    assert index.status_code == 200
+    assert f'src="/static/scenario.js?v={ver}"' in index.text
+    assert f'src="/static/app.js?v={ver}"' in index.text
+    impressum = client.get("/impressum")
+    assert f'href="/static/styles.css?v={ver}"' in impressum.text
+
+
 def test_rent_path_scope_without_purchase_price_is_200(monkeypatch):
     monkeypatch.setattr(
         "buy_vs_rent.api.fetch_market_rate",

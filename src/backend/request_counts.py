@@ -141,8 +141,11 @@ def render_zahlen_html(frontend_dir: Path) -> str:
             f"<td>{totals['compare_reject']}</td>"
             "</tr>"
         )
+    from buy_vs_rent.static_urls import with_versioned_static_urls
+
     template = (frontend_dir / "zahlen.html").read_text(encoding="utf-8")
-    return template.replace("<!--ROWS-->", "\n        ".join(rows) if rows else "")
+    filled = template.replace("<!--ROWS-->", "\n        ".join(rows) if rows else "")
+    return with_versioned_static_urls(filled)
 
 
 def zahlen_allowed(host_header: str | None, forwarded_host: str | None = None) -> bool:

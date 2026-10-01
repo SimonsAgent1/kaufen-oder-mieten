@@ -6,7 +6,6 @@ import base64
 import binascii
 import json
 import logging
-from importlib.metadata import version
 from importlib.resources import files
 from pathlib import Path
 
@@ -31,6 +30,7 @@ from buy_vs_rent.request_counts import (
     zahlen_allowed,
 )
 from buy_vs_rent.simulate import compare
+from buy_vs_rent.static_urls import app_release_version, read_versioned_html
 from buy_vs_rent.tax_rates import TRANSFER_TAX
 
 FRONTEND = Path(str(files("buy_vs_rent").joinpath("frontend")))
@@ -208,10 +208,10 @@ def sitemap_xml() -> FileResponse:
     return FileResponse(_frontend_dir() / "sitemap.xml", media_type="application/xml")
 
 
-@app.get("/")
-def index() -> FileResponse:
+@app.get("/", response_class=HTMLResponse)
+def index() -> HTMLResponse:
     record_page_load()
-    return FileResponse(_frontend_dir() / "index.html")
+    return HTMLResponse(read_versioned_html(_frontend_dir() / "index.html"))
 
 
 @app.get("/zahlen", response_class=HTMLResponse)
@@ -224,9 +224,9 @@ def zahlen_page(request: Request) -> HTMLResponse:
     return HTMLResponse(render_zahlen_html(_frontend_dir()))
 
 
-@app.get("/impressum")
-def impressum_page() -> FileResponse:
-    return FileResponse(_frontend_dir() / "impressum.html")
+@app.get("/impressum", response_class=HTMLResponse)
+def impressum_page() -> HTMLResponse:
+    return HTMLResponse(read_versioned_html(_frontend_dir() / "impressum.html"))
 
 
 @app.get("/regeln", response_class=HTMLResponse)
@@ -240,7 +240,7 @@ def model_page() -> str:
 
 
 def app_version() -> str:
-    return version("buy-vs-rent")
+    return app_release_version()
 
 
 @app.get("/api/version")
