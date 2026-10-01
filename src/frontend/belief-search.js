@@ -5,9 +5,16 @@
     einkommen: "gross",
     lohn: "gross",
     hausgeld: "owner_costs_rate",
+    instandhaltung: "owner_costs_rate",
     miete: "kaltmiete",
     zins: "sollzins",
-    depot: "etf_return",
+    zinssatz: "sollzins",
+    kredit: "sollzins",
+    darlehen: "sollzins",
+    depot: "depot",
+    aktien: "etf_return",
+    sparen: "spar",
+    sparplan: "spar",
   };
 
   const TARGET_MATCHERS = {
@@ -16,6 +23,8 @@
     kaltmiete: (name) => name.startsWith("rent-") || name === "shared_kaltmiete",
     sollzins: (name) => name === "sollzins",
     etf_return: (name) => name === "etf_return",
+    depot: (name) => name.startsWith("depot-"),
+    spar: (name) => name.startsWith("spar-"),
   };
 
   function normalizeQuery(query) {

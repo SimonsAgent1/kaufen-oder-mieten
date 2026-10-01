@@ -42,6 +42,33 @@ class Leave(BaseModel):
     months: int = Field(ge=0, le=12)
 
 
+class MorePots(BaseModel):
+    """Optional retirement wrappers besides the ETF depot. Off by default."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capital_life: bool = False
+    capital_life_balance: float = Field(default=0, ge=0, le=5_000_000)
+    capital_life_premiums: float = Field(default=0, ge=0, le=5_000_000)
+    capital_life_start: date | None = None
+
+    private_lump: bool = False
+    private_lump_balance: float = Field(default=0, ge=0, le=5_000_000)
+    private_lump_premiums: float = Field(default=0, ge=0, le=5_000_000)
+    private_lump_start: date | None = None
+
+    private_annuity: bool = False
+    private_annuity_balance: float = Field(default=0, ge=0, le=5_000_000)
+    private_annuity_yearly: float = Field(default=0, ge=0, le=200_000)
+
+    riester: bool = False
+    riester_balance: float = Field(default=0, ge=0, le=5_000_000)
+
+    altersvorsorgedepot: bool = False
+    altersvorsorgedepot_balance: float = Field(default=0, ge=0, le=5_000_000)
+    altersvorsorgedepot_contribution_yearly: float = Field(default=1_800, ge=0, le=10_000)
+
+
 class Adult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -59,6 +86,7 @@ class Adult(BaseModel):
     kaltmiete: float = Field(ge=0, le=20_000)
     church_tax: bool = False
     church_tax_consent: bool = False
+    pots: MorePots = Field(default_factory=MorePots)
 
 
 class Child(BaseModel):

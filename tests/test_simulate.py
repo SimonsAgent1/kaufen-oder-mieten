@@ -594,6 +594,15 @@ def test_empty_depot_warns_before_the_horizon():
     assert any("leer" in line for line in result.warnings)
 
 
+def test_pots_off_leave_compare_unchanged():
+    adult = _adult(depot=50_000, sparrate=500, kaltmiete=1_000)
+    dwelling = {"purchase_price": 400_000, "min_equity": False, "owner_costs": 0}
+    without = compare(_scenario(adults=[adult], dwelling=dwelling))
+    with_default_pots = compare(_scenario(adults=[{**adult, "pots": {}}], dwelling=dwelling))
+    assert without.buy_final_nominal == with_default_pots.buy_final_nominal
+    assert without.rent_final_nominal == with_default_pots.rent_final_nominal
+
+
 def test_owner_costs_follow_yearly_rate_after_load():
     result = compare(
         _scenario(

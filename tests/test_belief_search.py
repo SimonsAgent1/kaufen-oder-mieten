@@ -10,9 +10,16 @@ SYNONYMS = {
     "einkommen": "gross",
     "lohn": "gross",
     "hausgeld": "owner_costs_rate",
+    "instandhaltung": "owner_costs_rate",
     "miete": "kaltmiete",
     "zins": "sollzins",
-    "depot": "etf_return",
+    "zinssatz": "sollzins",
+    "kredit": "sollzins",
+    "darlehen": "sollzins",
+    "depot": "depot",
+    "aktien": "etf_return",
+    "sparen": "spar",
+    "sparplan": "spar",
 }
 
 
@@ -38,8 +45,17 @@ def test_synonym_maps_gehalt_to_gross():
     assert synonym_target("Gehalt") == "gross"
 
 
-def test_synonym_depot_maps_to_etf_return():
-    assert synonym_target("depot") == "etf_return"
+def test_synonym_depot_maps_to_depot_balance():
+    assert synonym_target("depot") == "depot"
+
+
+def test_synonym_aktien_maps_to_etf_return():
+    assert synonym_target("Aktien") == "etf_return"
+
+
+def test_synonym_sparen_and_kredit():
+    assert synonym_target("Sparen") == "spar"
+    assert synonym_target("Kredit") == "sollzins"
 
 
 def test_numeric_query_is_not_a_synonym():

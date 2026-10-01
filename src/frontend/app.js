@@ -470,6 +470,135 @@ function mountEtfChoice(buckets) {
   }
 }
 
+const AVD_POT_INFO =
+  "Aus, bis der Schalter an ist. Dann 1.800 € eigene Beiträge im Jahr. Das holt die volle Grundzulage von 540 €. Die Kinderzulage ist darin schon bei 300 € je Kind voll.";
+
+function ensureAdultPots(adult) {
+  if (!adult.pots) adult.pots = {};
+  const base = {
+    capital_life: false,
+    capital_life_balance: 0,
+    capital_life_premiums: 0,
+    private_lump: false,
+    private_lump_balance: 0,
+    private_lump_premiums: 0,
+    private_annuity: false,
+    private_annuity_balance: 0,
+    private_annuity_yearly: 0,
+    riester: false,
+    riester_balance: 0,
+    altersvorsorgedepot: false,
+    altersvorsorgedepot_balance: 0,
+    altersvorsorgedepot_contribution_yearly: 1800,
+  };
+  for (const [key, value] of Object.entries(base)) {
+    if (adult.pots[key] === undefined) adult.pots[key] = value;
+  }
+}
+
+function mountPotSwitch(buckets, adult, name, field, label, infoText) {
+  ensureAdultPots(adult);
+  const row = document.createElement("label");
+  row.className = "switch belief-switch";
+  const caption = document.createElement("span");
+  caption.className = "switch-text";
+  caption.textContent = `${label}: ${name}`;
+  if (infoText) caption.append(infoButton(infoText));
+  row.innerHTML = `<input type="checkbox" ${adult.pots[field] ? "checked" : ""}><span class="track"></span>`;
+  row.append(caption);
+  row.querySelector("input").addEventListener("change", (event) => {
+    adult.pots[field] = event.target.checked;
+    schedule();
+  });
+  buckets.Vermögen.push(row);
+}
+
+function mountAdultPots(buckets, adult, name) {
+  ensureAdultPots(adult);
+  const on = (field) => Boolean(adult.pots[field]);
+  mountPotSwitch(buckets, adult, name, "capital_life", "Kapitallebensversicherung");
+  buckets.Vermögen.push(
+    slider(
+      `pot-${adult.id}-capital_life_balance`,
+      `${name}: Rückkaufswert Kapitallebensversicherung`,
+      0,
+      2_000_000,
+      1_000,
+      adult.pots.capital_life_balance,
+      "€",
+      (value) => {
+        adult.pots.capital_life_balance = value;
+      },
+      null,
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("capital_life");
+  buckets.Vermögen.push(
+    slider(
+      `pot-${adult.id}-capital_life_premiums`,
+      `${name}: Beiträge Kapitallebensversicherung`,
+      0,
+      2_000_000,
+      1_000,
+      adult.pots.capital_life_premiums,
+      "€",
+      (value) => {
+        adult.pots.capital_life_premiums = value;
+      },
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("capital_life");
+  mountPotSwitch(buckets, adult, name, "private_lump", "Private Einmalrente");
+  buckets.Vermögen.push(
+    slider(`pot-${adult.id}-private_lump_balance`, `${name}: Rückkaufswert Einmalrente`, 0, 2_000_000, 1_000, adult.pots.private_lump_balance, "€", (v) => {
+      adult.pots.private_lump_balance = v;
+    }),
+    slider(`pot-${adult.id}-private_lump_premiums`, `${name}: Beiträge Einmalrente`, 0, 2_000_000, 1_000, adult.pots.private_lump_premiums, "€", (v) => {
+      adult.pots.private_lump_premiums = v;
+    }),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 2].hidden = !on("private_lump");
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("private_lump");
+  mountPotSwitch(buckets, adult, name, "private_annuity", "Private Leibrente");
+  buckets.Vermögen.push(
+    slider(`pot-${adult.id}-private_annuity_balance`, `${name}: Rückkaufswert Leibrente`, 0, 2_000_000, 1_000, adult.pots.private_annuity_balance, "€", (v) => {
+      adult.pots.private_annuity_balance = v;
+    }),
+    slider(`pot-${adult.id}-private_annuity_yearly`, `${name}: Leibrente im Jahr`, 0, 200_000, 100, adult.pots.private_annuity_yearly, "€", (v) => {
+      adult.pots.private_annuity_yearly = v;
+    }),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 2].hidden = !on("private_annuity");
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("private_annuity");
+  mountPotSwitch(buckets, adult, name, "riester", "Riester bis 2026");
+  buckets.Vermögen.push(
+    slider(`pot-${adult.id}-riester_balance`, `${name}: Riester Rückkaufswert`, 0, 2_000_000, 1_000, adult.pots.riester_balance, "€", (v) => {
+      adult.pots.riester_balance = v;
+    }),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("riester");
+  mountPotSwitch(buckets, adult, name, "altersvorsorgedepot", "Altersvorsorgedepot ab 2027", AVD_POT_INFO);
+  buckets.Vermögen.push(
+    slider(`pot-${adult.id}-avd_balance`, `${name}: Altersvorsorgedepot Stand`, 0, 2_000_000, 1_000, adult.pots.altersvorsorgedepot_balance, "€", (v) => {
+      adult.pots.altersvorsorgedepot_balance = v;
+    }),
+    slider(
+      `pot-${adult.id}-avd_contrib`,
+      `${name}: Eigene Beiträge Altersvorsorgedepot im Jahr`,
+      0,
+      10_000,
+      50,
+      adult.pots.altersvorsorgedepot_contribution_yearly,
+      "€",
+      (v) => {
+        adult.pots.altersvorsorgedepot_contribution_yearly = v;
+      },
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 2].hidden = !on("altersvorsorgedepot");
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("altersvorsorgedepot");
+}
+
 function mountBeliefs() {
   const host = document.getElementById("beliefs");
   host.innerHTML = "";
@@ -574,6 +703,7 @@ function mountBeliefs() {
         adult.pension_gross_today = value;
       }, assumptionLine("Die gesetzliche Rente")),
     );
+    mountAdultPots(buckets, adult, name);
   });
   buckets.Vermögen.push(
     slider("equity_cash", "Bargeld außerhalb des Depots", 0, 500_000, 1_000, scenario.equity_cash, "€", (value) => {

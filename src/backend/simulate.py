@@ -44,6 +44,13 @@ from buy_vs_rent.law.de_2026 import (
     kindergeld_until_age,
 )
 from buy_vs_rent.mortgage import initial_payment, payment_to_clear, step_month
+from buy_vs_rent.pot_ledger import (
+    annuity_january_net,
+    january_contributions,
+    ledger_from_adult,
+    retire_payouts,
+    surrender_value,
+)
 from buy_vs_rent.pension import estimate_points, pension_today_euros
 from buy_vs_rent.scenario import (
     Adult,
@@ -420,6 +427,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     cashflow: list[CashPoint] = []
     total_months = months_between(scenario.as_of, end)
     separate_base = sum(adult.kaltmiete for adult in scenario.adults)
+    pot_ledgers = {adult.id: ledger_from_adult(adult, scenario.as_of) for adult in scenario.adults}
 
     def flush_cash(when: date) -> None:
         if not cash_months:
@@ -526,13 +534,38 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 )
             else:
                 zve += taxable_income(gross, inflation_factor, pv)
+        pot_deduct = january_contributions(
+            scenario, pot_ledgers, month, inflation_factor, here.children
+        )
+        other_zve, splitting = income_at_sale(month, inflation_factor)
+        pot_inflow = 0.0
+        for adult in scenario.adults:
+            pot_inflow += retire_payouts(
+                adult,
+                pot_ledgers[adult.id],
+                month,
+                other_zve=other_zve,
+                inflation_factor=inflation_factor,
+                splitting=splitting,
+            )
+            pot_inflow += annuity_january_net(
+                adult,
+                pot_ledgers[adult.id],
+                month,
+                other_zve=other_zve,
+                inflation_factor=inflation_factor,
+                splitting=splitting,
+            )
         if here.all_retired:
             invest_base = 0.0
         else:
             housing_budget = separate_base * rent_factor
-            invest_base = saves + kindergeld + housing_budget - actual_rent
+            invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct
         drawdown = here.all_retired
         invest_rent = invest_base
+        if pot_inflow > 0:
+            etf_tax_rent += rent.deposit(pot_inflow, month.month)
+            etf_tax_buy += buy.deposit(pot_inflow, month.month)
         if abs(invest_rent) > 1e-9:
             etf_tax_rent += rent.deposit(invest_rent, month.month)
             if drawdown:
@@ -576,7 +609,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_extra = 0.0 if here.in_care else extra_rent(calendar, month, buy_still_renting) * inflation_factor
         buy_rent_flow = (care_copay * inflation_factor) if here.in_care and not buy_still_renting else 0.0
         if buy_still_renting:
-            buy_saving = 0.0 if here.all_retired else saves + kindergeld + separate_base * rent_factor - (lodging_rent + buy_extra)
+            buy_saving = (
+                0.0
+                if here.all_retired
+                else saves + kindergeld + separate_base * rent_factor - (lodging_rent + buy_extra) - pot_deduct
+            )
         else:
             buy_saving = invest_base if not here.in_care else (0.0 if here.all_retired else saves + kindergeld + separate_base * rent_factor - actual_rent)
         buy_interest_flow = 0.0
@@ -780,8 +817,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_equity = property_value * (1 - dwelling.selling_cost_rate) - (mortgage.balance if mortgage else 0.0)
             held_gift = 0.0 if mortgage else scenario.equity_cash
             buy_etf_net = buy.liquidation()[1]
-            buy_market = buy_etf_net + (buy_equity if mortgage else 0.0) + held_gift
-            rent_market = rent.liquidation()[1]
+            pots_market = sum(
+                surrender_value(adult, pot_ledgers[adult.id]) for adult in scenario.adults
+            )
+            buy_market = buy_etf_net + (buy_equity if mortgage else 0.0) + held_gift + pots_market
+            rent_market = rent.liquidation()[1] + pots_market
             series.append(
                 YearPoint(
                     date=month.isoformat(),
@@ -805,6 +845,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     buy_tax, buy_net = buy.liquidation()
     etf_tax_rent += rent_tax
     etf_tax_buy += buy_tax
+    final_pots = sum(surrender_value(adult, pot_ledgers[adult.id]) for adult in scenario.adults)
+    rent_net += final_pots
+    buy_net += final_pots
     if house_sold:
         buy_final = buy_net
     elif purchase is not None and mortgage is not None:

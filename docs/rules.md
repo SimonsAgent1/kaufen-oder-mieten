@@ -260,6 +260,78 @@ Quelle: Modellwahl.
 
 Probe: 400.000 € mal 15 % sind 60.000 €.
 
+## Grundzulage Altersvorsorgedepot
+
+50 % der eigenen Beiträge bis 360 €, danach 25 % bis 1.800 €, höchstens 540 € im Jahr.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 1.200 € eigene Beiträge → 390 € Zulage.
+
+## Kinderzulage je Kind
+
+100 % der eigenen Beiträge, höchstens 300 € je Kind im Jahr.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 500 € eigene Beiträge → 300 € je Kind.
+
+## Gewinn Kapitalversicherung
+
+Auszahlung minus eingezahlte Beiträge.
+
+Quelle: § 20 Abs. 1 Nr. 6 EStG.
+
+Probe: 60.000 € Auszahlung, 40.000 € Beiträge → 20.000 € Gewinn.
+
+## Steuer Kapital- oder Einmalrente
+
+Mindestens zwölf Jahre und Auszahlung ab 62: halber Gewinn mit persönlichem Satz. Sonst 25 % plus Soli auf den ganzen Gewinn.
+
+Quelle: § 20 Abs. 1 Nr. 6 EStG.
+
+Probe: 20.000 € Gewinn unter zwölf Jahren → 25 % plus Soli.
+
+## Ertragsanteil private Leibrente
+
+Ab 67 Jahren sind 17 % der Jahresrente steuerpflichtig.
+
+Quelle: § 22 Nr. 1 EStG.
+
+Probe: 12.000 € im Jahr → 2.040 € steuerpflichtig.
+
+## Steuer private Leibrente
+
+Der Ertragsanteil erhöht das zu versteuernde Einkommen; die zusätzliche Einkommensteuer plus Soli wird berechnet.
+
+Quelle: § 22 Nr. 1 EStG.
+
+Probe: 2.040 € Ertragsanteil erhöht die Steuerlast.
+
+## Steuer geförderter Auszahlung
+
+Die Auszahlung aus Riester oder Altersvorsorgedepot ist voll steuerpflichtig.
+
+Quelle: § 22 Nr. 5 EStG.
+
+Probe: 20.000 € Auszahlung erhöhen das zu versteuernde Einkommen um 20.000 €.
+
+## Rückkaufswerte der Töpfe
+
+Summe der eingetragenen Rückkaufswerte aktiver Töpfe bis zur Auszahlung.
+
+Quelle: Modellwahl.
+
+Probe: Zwei Töpfe mit 10.000 € und 5.000 € → 15.000 €.
+
+## Kinderzulage gesamt
+
+Kinderzulage je Kind mal Anzahl der Kinder unter 25 im Modell.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 300 € je Kind, zwei Kinder → 600 €.
+
 ## Vergleichskaltmiete für den Kaufpreisfaktor
 
 Bei einer Person die eigene Kaltmiete in Euro von heute. Bei zwei Personen die gemeinsame Kaltmiete, auch vor dem Zusammenziehen. Ein Zuschlag für eine größere Wohnung zählt nicht.
