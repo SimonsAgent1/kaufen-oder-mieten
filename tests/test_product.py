@@ -24,6 +24,12 @@ def test_profile_example_runs_in_the_page_and_terminal(monkeypatch):
     assert result["purchase_date"]
 
 
+def test_save_row_hidden_beats_result_action_button_display():
+    css = (ROOT / "src" / "frontend" / "styles.css").read_text(encoding="utf-8")
+    assert ".result-actions button[hidden]" in css
+    assert "display: none !important" in css.split(".result-actions button[hidden]")[1].split("}")[0]
+
+
 def test_git_tracks_no_plan_or_private_profile():
     tracked = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
     assert "PLAN.md" not in tracked
