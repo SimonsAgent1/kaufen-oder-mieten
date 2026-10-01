@@ -496,6 +496,29 @@ function ensureAdultPots(adult) {
   }
 }
 
+const POT_SLIDER_SUFFIXES = {
+  capital_life: ["capital_life_balance", "capital_life_premiums"],
+  private_lump: ["private_lump_balance", "private_lump_premiums"],
+  private_annuity: ["private_annuity_balance", "private_annuity_yearly"],
+  riester: ["riester_balance"],
+  altersvorsorgedepot: ["avd_balance", "avd_contrib"],
+};
+
+function syncPotSliderVisibility() {
+  if (!scenario?.adults) return;
+  for (const adult of scenario.adults) {
+    ensureAdultPots(adult);
+    for (const [field, suffixes] of Object.entries(POT_SLIDER_SUFFIXES)) {
+      const show = Boolean(adult.pots[field]);
+      for (const suffix of suffixes) {
+        const controlName = `pot-${adult.id}-${suffix}`;
+        const node = document.querySelector(`#beliefs .control[data-control-name="${controlName}"]`);
+        if (node) node.hidden = !show;
+      }
+    }
+  }
+}
+
 function mountPotSwitch(buckets, adult, name, field, label, infoText) {
   ensureAdultPots(adult);
   const row = document.createElement("label");
@@ -508,6 +531,7 @@ function mountPotSwitch(buckets, adult, name, field, label, infoText) {
   row.append(caption);
   row.querySelector("input").addEventListener("change", (event) => {
     adult.pots[field] = event.target.checked;
+    syncPotSliderVisibility();
     schedule();
   });
   buckets.Vermögen.push(row);
@@ -852,6 +876,7 @@ function mountBeliefs() {
     slider("basiszins", "Basiszins Vorabpauschale", 0, 0.06, 0.0001, beliefValue("basiszins"), "%", (value) => setBelief("basiszins", value)),
   );
   mountSliderGroups(host, buckets);
+  syncPotSliderVisibility();
 }
 
 function schedule() {

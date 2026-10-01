@@ -73,3 +73,9 @@ def test_belief_search_opens_collapsed_slider_groups():
     app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
     assert "findBeliefControls" in app
     assert 'closest("details.slider-group")?.setAttribute("open", "")' in app
+
+
+def test_pot_switch_updates_slider_visibility_without_remount():
+    app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
+    assert "function syncPotSliderVisibility" in app
+    assert "syncPotSliderVisibility();\n    schedule();" in app
