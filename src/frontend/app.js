@@ -7,7 +7,19 @@ let requestId = 0;
 let bundeslaender = ["Bayern"];
 let scenarioSnapshot = null;
 let touchedSnapshot = null;
-let captureResultSnapshot = false;
+function snapshotFromScenario() {
+  scenarioSnapshot = structuredClone(scenario);
+  touchedSnapshot = {
+    sollzins: touched.sollzins,
+    anschlusszins: touched.anschlusszins,
+    pensions: { ...touched.pensions },
+  };
+}
+
+function syncSaveRowButton() {
+  const button = document.getElementById("save-row");
+  if (button) button.hidden = !window.scenarioStore?.hasOpenRow?.();
+}
 let horizonMonthYear = null;
 let horizonMonthYearBound = false;
 let pathView = "both";
@@ -623,6 +635,95 @@ function mountAdultPots(buckets, adult, name) {
   buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !on("altersvorsorgedepot");
 }
 
+const CAREER_SLIDER_SUFFIXES = {
+  job_change: ["job-year", "job-month", "job-gross", "job-growth"],
+  unemployment: ["alg-year", "alg-month"],
+};
+
+function careerIsoStart(year, month) {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function parseCareerStart(iso) {
+  const text = String(iso || "2027-01-01").slice(0, 10);
+  const [year, month] = text.split("-").map((part) => Number(part));
+  return { year: year || 2027, month: month || 1 };
+}
+
+function syncCareerSliderVisibility(adult) {
+  if (!adult.job_changes) adult.job_changes = [];
+  if (!adult.unemployment) adult.unemployment = [];
+  for (const [field, suffixes] of Object.entries(CAREER_SLIDER_SUFFIXES)) {
+    const show = field === "job_change" ? adult.job_changes.length > 0 : adult.unemployment.length > 0;
+    for (const suffix of suffixes) {
+      const node = document.querySelector(`#beliefs .control[data-control-name="career-${adult.id}-${suffix}"]`);
+      if (node) node.hidden = !show;
+    }
+  }
+}
+
+function mountCareerControls(buckets, adult, name) {
+  if (!adult.job_changes) adult.job_changes = [];
+  if (!adult.unemployment) adult.unemployment = [];
+  const jobRow = document.createElement("label");
+  jobRow.className = "switch belief-switch";
+  jobRow.innerHTML = `<input type="checkbox" ${adult.job_changes.length ? "checked" : ""}><span class="track"></span><span class="switch-text">Jobwechsel: ${name}</span>`;
+  jobRow.querySelector("input").addEventListener("change", (event) => {
+    if (event.target.checked) {
+      const start = careerIsoStart(scenario.as_of?.slice(0, 4) ?? 2027, Number(scenario.as_of?.slice(5, 7)) || 1);
+      adult.job_changes = [{ start, gross_salary: adult.gross_salary, salary_growth: adult.salary_growth ?? 0.02 }];
+    } else adult.job_changes = [];
+    syncCareerSliderVisibility(adult);
+    schedule();
+  });
+  buckets.Zeit.push(jobRow);
+  const jobStart = parseCareerStart(adult.job_changes[0]?.start);
+  const jobGross = adult.job_changes[0]?.gross_salary ?? adult.gross_salary;
+  const jobGrowth = adult.job_changes[0]?.salary_growth ?? adult.salary_growth ?? 0.02;
+  buckets.Zeit.push(
+    slider(`career-${adult.id}-job-year`, `${name}: Jobwechsel Jahr`, 2000, 2100, 1, jobStart.year, "years", (value) => {
+      const parsed = parseCareerStart(adult.job_changes[0]?.start);
+      adult.job_changes = [{ start: careerIsoStart(Math.round(value), parsed.month), gross_salary: jobGross, salary_growth: jobGrowth }];
+    }),
+    slider(`career-${adult.id}-job-month`, `${name}: Jobwechsel Monat`, 1, 12, 1, jobStart.month, "years", (value) => {
+      const parsed = parseCareerStart(adult.job_changes[0]?.start);
+      adult.job_changes = [{ start: careerIsoStart(parsed.year, Math.round(value)), gross_salary: jobGross, salary_growth: jobGrowth }];
+    }),
+    slider(`career-${adult.id}-job-gross`, `${name}: Brutto nach Jobwechsel`, 0, 300_000, 1_000, jobGross, "€", (value) => {
+      const parsed = parseCareerStart(adult.job_changes[0]?.start);
+      adult.job_changes = [{ start: careerIsoStart(parsed.year, parsed.month), gross_salary: value, salary_growth: jobGrowth }];
+    }),
+    slider(`career-${adult.id}-job-growth`, `${name}: Wachstum nach Jobwechsel`, 0, 0.1, 0.001, jobGrowth, "%", (value) => {
+      const parsed = parseCareerStart(adult.job_changes[0]?.start);
+      adult.job_changes = [{ start: careerIsoStart(parsed.year, parsed.month), gross_salary: jobGross, salary_growth: value }];
+    }),
+  );
+  const algRow = document.createElement("label");
+  algRow.className = "switch belief-switch";
+  algRow.innerHTML = `<input type="checkbox" ${adult.unemployment.length ? "checked" : ""}><span class="track"></span><span class="switch-text">Arbeitslosigkeit: ${name}</span>`;
+  algRow.querySelector("input").addEventListener("change", (event) => {
+    if (event.target.checked) {
+      const start = careerIsoStart(scenario.as_of?.slice(0, 4) ?? 2027, Number(scenario.as_of?.slice(5, 7)) || 1);
+      adult.unemployment = [{ start }];
+    } else adult.unemployment = [];
+    syncCareerSliderVisibility(adult);
+    schedule();
+  });
+  buckets.Zeit.push(algRow);
+  const algStart = parseCareerStart(adult.unemployment[0]?.start);
+  buckets.Zeit.push(
+    slider(`career-${adult.id}-alg-year`, `${name}: Arbeitslos ab Jahr`, 2000, 2100, 1, algStart.year, "years", (value) => {
+      const parsed = parseCareerStart(adult.unemployment[0]?.start);
+      adult.unemployment = [{ start: careerIsoStart(Math.round(value), parsed.month) }];
+    }),
+    slider(`career-${adult.id}-alg-month`, `${name}: Arbeitslos ab Monat`, 1, 12, 1, algStart.month, "years", (value) => {
+      const parsed = parseCareerStart(adult.unemployment[0]?.start);
+      adult.unemployment = [{ start: careerIsoStart(parsed.year, Math.round(value)) }];
+    }),
+  );
+  syncCareerSliderVisibility(adult);
+}
+
 function mountBeliefs() {
   const host = document.getElementById("beliefs");
   host.innerHTML = "";
@@ -687,6 +788,7 @@ function mountBeliefs() {
         adult.care_age = Math.round(value);
       }),
     );
+    mountCareerControls(buckets, adult, name);
   });
   const horizonAge = scenario.horizon?.age ?? 100;
   buckets.Zeit.push(
@@ -911,16 +1013,8 @@ async function run() {
   }
   latest = await response.json();
   if (!touched.sollzins) scenario.beliefs.sollzins = null;
-  if (captureResultSnapshot) {
-    scenarioSnapshot = structuredClone(scenario);
-    touchedSnapshot = {
-      sollzins: touched.sollzins,
-      anschlusszins: touched.anschlusszins,
-      pensions: { ...touched.pensions },
-    };
-    captureResultSnapshot = false;
-  }
   renderResult(latest);
+  syncSaveRowButton();
   syncBeliefDisplays();
   syncHeaderAdvice();
   syncAssumptionInfos();
@@ -951,9 +1045,10 @@ async function showScenario(next, demo) {
   document.getElementById("results").hidden = false;
   window.syncStartScreen?.();
   await loadBundeslaender();
-  captureResultSnapshot = true;
+  snapshotFromScenario();
   horizonMonthYear = null;
   mountBeliefs();
+  syncSaveRowButton();
   run();
 }
 
@@ -971,6 +1066,10 @@ document.getElementById("gate-choice")?.addEventListener("click", () => {
   window.scenarioStore.saveOpenRow(body);
   document.getElementById("banner").hidden = true;
   window.showGate();
+});
+document.getElementById("save-row")?.addEventListener("click", () => {
+  if (!window.scenarioStore.saveOpenRow(scenario)) return;
+  snapshotFromScenario();
 });
 document.getElementById("reset")?.addEventListener("click", () => {
   if (!scenarioSnapshot) return;

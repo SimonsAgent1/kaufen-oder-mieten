@@ -12,6 +12,8 @@ Version 1. Unbekannte Felder werden abgelehnt. Die Datei ist YAML oder JSON.
 
 Jede Person hat `id`, `label`, `birth`, `work_start` (leer, wenn nie erwerbstätig), `retire_age` (67), `care_age` (75), `gross_salary`, `salary_growth` (0,02), `depot`, `sparrate`, `pension_gross_today` (leer heißt schätzen), `kaltmiete` für die Zeit vor dem gemeinsamen Haushalt, `church_tax` (aus) und `church_tax_consent` (aus). `church_tax` darf nur `true` sein, wenn `church_tax_consent` `true` ist. Ein altes `beliefs.church_tax` schaltet die Kirchensteuer nur für Erwachsene mit Einwilligung ein.
 
+Optional `job_changes` und `unemployment` je Person: Jobwechsel ab einem Monat mit neuem Brutto und eigenem Wachstum; Arbeitslosigkeit mit modelliertem Arbeitslosengeld und Dauer nach Alter. Leer bleibt ein Gehalt mit einem Wachstum.
+
 Optional `pots` je Person: Schalter und Rückkaufswerte für Kapitallebensversicherung, private Einmalrente, private Leibrente, Riester (175 € Grundzulage im Jahr) und Altersvorsorgedepot (eigene Beiträge ab 2027, Standard 1.800 € im Jahr). Alles aus, bis der Schalter an ist. Kein zweites ETF-Depot.
 
 Ein leeres Label wird „Du“ oder „Zweite Person“. Die Rechnung verwendet die `id`.

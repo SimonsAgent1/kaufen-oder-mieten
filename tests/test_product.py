@@ -84,6 +84,7 @@ def test_public_tree_has_no_personal_names():
             assert 'href="/regeln">Rechenregeln</a>' in text
             assert 'href="/modell">Modell</a>' in text
             assert 'id="beliefs-search"' in text
+            assert 'id="save-row"' in text
             assert "ausschließlicher Eigennutzung bis dahin" in text
             assert "nicht jede deutsche Vorschrift" in text
             assert "Welcher Haushalt" not in text

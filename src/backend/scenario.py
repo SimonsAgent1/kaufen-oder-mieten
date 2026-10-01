@@ -42,6 +42,30 @@ class Leave(BaseModel):
     months: int = Field(ge=0, le=12)
 
 
+class JobChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    start: date
+    gross_salary: float = Field(ge=0, le=1_000_000)
+    salary_growth: float = Field(default=0.02, ge=-0.05, le=0.2)
+
+    @field_validator("start")
+    @classmethod
+    def _month(cls, value: date) -> date:
+        return first_of_month(value)
+
+
+class UnemploymentStretch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    start: date
+
+    @field_validator("start")
+    @classmethod
+    def _month(cls, value: date) -> date:
+        return first_of_month(value)
+
+
 class MorePots(BaseModel):
     """Optional retirement wrappers besides the ETF depot. Off by default."""
 
@@ -87,6 +111,8 @@ class Adult(BaseModel):
     church_tax: bool = False
     church_tax_consent: bool = False
     pots: MorePots = Field(default_factory=MorePots)
+    job_changes: list[JobChange] = Field(default_factory=list, max_length=8)
+    unemployment: list[UnemploymentStretch] = Field(default_factory=list, max_length=8)
 
 
 class Child(BaseModel):

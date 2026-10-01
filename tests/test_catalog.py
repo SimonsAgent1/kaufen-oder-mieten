@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from buy_vs_rent import etf, house, mortgage, pots
+from buy_vs_rent import career, etf, house, mortgage, pots
 from buy_vs_rent.catalog import by_function, render_rules
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
 from buy_vs_rent.house import (
@@ -54,6 +54,7 @@ def test_every_public_formula_has_a_catalog_entry():
         + _public(etf, "etf")
         + _public(house, "house")
         + _public(pots, "pots")
+        + _public(career, "career")
     )
     covered = set(by_function())
     assert [name for name in needed if name not in covered] == []

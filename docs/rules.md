@@ -260,6 +260,46 @@ Quelle: Modellwahl.
 
 Probe: 400.000 € mal 15 % sind 60.000 €.
 
+## Satz Arbeitslosengeld
+
+60 % ohne Kind im Haushalt, 67 % mit Kind.
+
+Quelle: § 149 SGB III.
+
+Probe: Mit Kind → 0,67.
+
+## Einkommen im Monat mit Jobwechsel
+
+Jobsegmente, Arbeitslosigkeit mit Leistungsdauer, danach null bis zum nächsten Job.
+
+Quelle: Modellwahl.
+
+Probe: Ohne Zusatzangaben bleibt ein Gehalt mit Wachstum.
+
+## Brutto aus Jobsegmenten
+
+Erstes Segment ab work_start, weitere ab Jobwechsel mit eigenem Wachstum.
+
+Quelle: Modellwahl.
+
+Probe: Ab Jobwechsel gilt nur das neue Brutto und Wachstum.
+
+## Arbeitslosengeld im Modell
+
+60 % des modellierten Nettos vor dem Beginn, 67 % mit Kind im Haushalt.
+
+Quelle: § 149 SGB III, Modellwahl.
+
+Probe: 3.000 € Netto ohne Kind → 1.800 € im Monat.
+
+## Dauer Arbeitslosengeld
+
+12 Monate unter 50 Jahren, danach 15, 18 oder 24 Monate ab 50, 55 oder 58.
+
+Quelle: § 147 SGB III, Modellwahl.
+
+Probe: 49 Jahre → 12 Monate.
+
 ## Wachstum Altersvorsorgedepot
 
 Der Stand wird jeden Monat mit der nominalen ETF-Rendite aus dem Schieberegler fortgeschrieben, ohne TER und ohne Vorabpauschale.

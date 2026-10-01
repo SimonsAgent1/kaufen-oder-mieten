@@ -256,6 +256,10 @@ async function readScenarioFile(file) {
   return parseYaml(text);
 }
 
+function hasOpenRow() {
+  return Boolean(activeRowId);
+}
+
 window.scenarioStore = {
   LIST_KEY,
   LINK_FIELDS,
@@ -273,6 +277,7 @@ window.scenarioStore = {
   getRow,
   persistScenario,
   saveOpenRow,
+  hasOpenRow,
   mergeLinkDwelling,
   dwellingLinkUrl,
   downloadScenario,

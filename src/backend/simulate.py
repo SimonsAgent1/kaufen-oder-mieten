@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import date
 
+from buy_vs_rent.career import employment_for_month
 from buy_vs_rent.catalog import result_sentences
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
 from buy_vs_rent.house import (
@@ -513,11 +514,30 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         for adult in scenario.adults:
             retired = month >= calendar.retire[adult.id]
             growth = (1 + adult.salary_growth) ** years
-            gross = 0.0 if retired else adult.gross_salary * growth
             pv = pv_rate(calendar, month, adult.id)
             church = church_tax_rate(dwelling.bundesland) if adult.church_tax else 0.0
-            net = monthly_net(gross, inflation_factor, pv, church)
-            usual = monthly_net(0.0 if retired else adult.gross_salary * growth, inflation_factor, pv, church)
+            if retired:
+                gross = 0.0
+                net = 0.0
+                usual = 0.0
+            elif adult.job_changes or adult.unemployment:
+                emp = employment_for_month(
+                    adult,
+                    month,
+                    scenario,
+                    years_since_as_of=years,
+                    inflation_factor=inflation_factor,
+                    pv_rate=pv,
+                    church_rate=church,
+                    has_child_in_household=here.children > 0,
+                )
+                gross = emp.gross
+                net = emp.net
+                usual = net
+            else:
+                gross = adult.gross_salary * growth
+                net = monthly_net(gross, inflation_factor, pv, church)
+                usual = monthly_net(adult.gross_salary * growth, inflation_factor, pv, church)
             leave = 0.0 if retired else leave_fraction(calendar, month, adult.id)
             benefit = elterngeld_month(
                 usual,

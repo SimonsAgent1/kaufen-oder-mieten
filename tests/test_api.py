@@ -274,7 +274,7 @@ def test_impressum_page_is_served():
     assert "HTTPS" in response.text
     assert "[Name]" not in response.text
     assert "Zurücksetzen" in response.text
-    assert "letzten „Rechnen“" in response.text
+    assert "letzten „Speichern“" in response.text
     assert "löscht diese Kopie" not in response.text
 
 
