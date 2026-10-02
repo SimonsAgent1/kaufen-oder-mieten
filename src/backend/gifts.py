@@ -54,10 +54,17 @@ def parent_loan_interest_remaining(principal: float, annual_rate: float, months:
 
 
 def parent_loan_interest_monthly(principal: float, annual_rate: float) -> float:
-    """Yearly share of outstanding principal, paid in twelve equal monthly parts. Principal unchanged until horizon."""
+    """Yearly share of outstanding principal, paid in twelve equal monthly parts."""
     if principal <= 0 or annual_rate <= 0:
         return 0.0
     return principal * annual_rate / 12
+
+
+def parent_loan_principal_monthly(principal: float, annual_tilgung: float) -> float:
+    """Yearly repayment share of outstanding principal, in twelve equal monthly parts."""
+    if principal <= 0 or annual_tilgung <= 0:
+        return 0.0
+    return min(principal, principal * annual_tilgung / 12)
 
 
 def parent_support_cash(scenario: Scenario) -> tuple[float, float, float]:

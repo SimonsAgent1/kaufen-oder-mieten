@@ -1,7 +1,10 @@
+import pytest
+
 from buy_vs_rent.gifts import (
     gift_tax_parents,
     parent_loan_interest_monthly,
     parent_loan_interest_remaining,
+    parent_loan_principal_monthly,
     parent_support_cash,
 )
 from buy_vs_rent.scenario import Scenario
@@ -52,6 +55,11 @@ def test_parent_loan_interest_monthly_hand_worked():
     assert parent_loan_interest_monthly(50_000, 0) == 0.0
 
 
+def test_parent_loan_principal_monthly_hand_worked():
+    assert parent_loan_principal_monthly(100_000, 0.02) == pytest.approx(166.67, rel=0, abs=0.1)
+    assert parent_loan_principal_monthly(100_000, 0) == 0.0
+
+
 def test_parent_loan_rate_default_zero_in_saved_file():
     scenario = Scenario.model_validate(
         {
@@ -73,6 +81,7 @@ def test_parent_loan_rate_default_zero_in_saved_file():
         }
     )
     assert scenario.parent_loan_rate == 0.0
+    assert scenario.parent_loan_tilgung == 0.0
 
 
 def _loan_scenario(rate: float) -> Scenario:
@@ -112,6 +121,31 @@ def test_loan_chart_includes_parent_principal_and_interest():
     assert result.series
     mid = result.series[len(result.series) // 2]
     assert mid.loan_balance > 100_000
+
+
+def test_parent_loan_tilgung_raises_final_wealth():
+    no_pay = compare(_loan_scenario(0))
+    with_tilgung = compare(
+        Scenario.model_validate(
+            {**_loan_scenario(0).model_dump(mode="json"), "parent_loan_tilgung": 0.02}
+        )
+    )
+    assert with_tilgung.buy_final_nominal > no_pay.buy_final_nominal
+
+
+def test_parent_loan_tilgung_appears_in_buy_flow_chart():
+    result = compare(
+        Scenario.model_validate(
+            {**_loan_scenario(0.03).model_dump(mode="json"), "parent_loan_tilgung": 0.02}
+        )
+    )
+    assert result.purchase_date
+    after = [
+        point
+        for point in result.cashflow
+        if point.date >= result.purchase_date[:7] and point.buy_principal > 200
+    ]
+    assert after
 
 
 def test_parent_loan_rate_reduces_both_paths():

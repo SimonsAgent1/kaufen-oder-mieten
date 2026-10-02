@@ -34,7 +34,7 @@ Ein leeres Label wird „Du“ oder „Zweite Person“. Die Rechnung verwendet 
 
 `equity_cash` ist Bargeld außerhalb der Depots. Beim Kauf zahlt es Nebenkosten und senkt den Kredit. Auf dem Mietweg wird es im Startmonat angelegt.
 
-`parent_gift` und `parent_gift_amount` modellieren eine einmalige Schenkung der Eltern im Startmonat, hälftig je Elternteil mit je 400.000 € Freibetrag und Erwerbsteuer nach Steuerklasse I. `parent_loan`, `parent_loan_amount` und `parent_loan_rate` sind ein Darlehen der Eltern mit demselben Zeitpunkt; es bleibt als Schuld im Endvermögen. Der Zinssatz ist ein Jahresanteil der Restschuld, monatlich gezahlt, ohne Tilgung; fehlt er in einer Datei, gilt 0 %. Beides ist aus, bis der Schalter an ist. Das ist nicht die Bankfinanzierung.
+`parent_gift` und `parent_gift_amount` modellieren eine einmalige Schenkung der Eltern im Startmonat, hälftig je Elternteil mit je 400.000 € Freibetrag und Erwerbsteuer nach Steuerklasse I. `parent_loan`, `parent_loan_amount`, `parent_loan_rate` und `parent_loan_tilgung` sind ein Darlehen der Eltern mit demselben Zeitpunkt; es bleibt als Schuld im Endvermögen. Zins und Tilgung sind Jahresanteile der Restschuld, monatlich gezahlt; fehlen sie in einer Datei, gilt 0 %. Beides ist aus, bis der Schalter an ist. Das ist nicht die Bankfinanzierung.
 
 `horizon` ist `{adult_id, age}` und meint den Monat, in dem diese Person so alt wird. Fehlt das Feld, nimmt die Rechnung die jüngere Person mit 100.
 

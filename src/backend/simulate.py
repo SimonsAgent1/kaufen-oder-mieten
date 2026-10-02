@@ -11,6 +11,7 @@ from buy_vs_rent.etf import Portfolio, capital_gains_rate
 from buy_vs_rent.gifts import (
     parent_loan_interest_monthly,
     parent_loan_interest_remaining,
+    parent_loan_principal_monthly,
     parent_support_cash,
 )
 from buy_vs_rent.mortgage import MortgageSnapshot, bank_loan_obligation_chart_value
@@ -496,6 +497,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_rent = avg("buy_rent")
         buy_living = avg("buy_living_rent")
         buy_housing = buy_rent + avg("buy_interest") + avg("buy_principal") + avg("buy_owner")
+        pot_flow = avg("pot_inflow")
 
         cashflow.append(
             CashPoint(
@@ -505,7 +507,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 rent_housing=rent_housing,
                 rent_etf=rent_etf,
                 rent_draw=rent_draw,
-                rent_left=income - rent_housing - rent_etf + rent_draw,
+                rent_left=income + pot_flow - rent_housing - rent_etf + rent_draw,
                 buy_rent=buy_rent,
                 buy_living_rent=buy_living,
                 buy_interest=avg("buy_interest"),
@@ -513,7 +515,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_owner=avg("buy_owner"),
                 buy_etf=buy_etf,
                 buy_draw=buy_draw,
-                buy_left=income - buy_housing - buy_etf + buy_draw + buy_living,
+                buy_left=income + pot_flow - buy_housing - buy_etf + buy_draw + buy_living,
             )
         )
         cash_months.clear()
@@ -652,7 +654,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             parent_loan_balance,
             scenario.parent_loan_rate if scenario.parent_loan else 0.0,
         )
-        invest_rent = invest_base - parent_interest
+        parent_principal = parent_loan_principal_monthly(
+            parent_loan_balance,
+            scenario.parent_loan_tilgung if scenario.parent_loan else 0.0,
+        )
+        invest_rent = invest_base - parent_interest - parent_principal
         rent_month_net = pot_inflow + invest_rent
         buy_month_net = pot_inflow
         if invest_rent > 0 and drawdown:
@@ -830,8 +836,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_draw_total = months_between(month, end) + 1
             buy.grow_month()
 
-        if parent_interest > 0:
-            buy_month_net -= parent_interest
+        if scenario.parent_loan and parent_loan_balance > 0:
+            buy_interest_flow += parent_interest
+            buy_principal_flow += parent_principal
+        if parent_interest > 0 or parent_principal > 0:
+            buy_month_net -= parent_interest + parent_principal
+            parent_loan_balance = max(0.0, parent_loan_balance - parent_principal)
 
         if month.month == 12 and here.children > 0 and not drawdown:
             refund = kinder_freibetrag_refund(
@@ -933,10 +943,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             {
                 "inflation": inflation_factor,
                 "income": income,
+                "pot_inflow": pot_inflow,
                 "rent_housing": actual_rent,
                 "rent_etf": rent_etf_display,
                 "rent_draw": rent_draw_display,
-                "rent_left": income - actual_rent - rent_etf_display + rent_draw_display,
+                "rent_left": income + pot_inflow - actual_rent - rent_etf_display + rent_draw_display,
                 "buy_rent": buy_rent_flow,
                 "buy_living_rent": buy_living_display,
                 "buy_interest": buy_interest_flow,
@@ -945,6 +956,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "buy_etf": buy_etf_display,
                 "buy_draw": buy_draw_display,
                 "buy_left": income
+                + pot_inflow
                 - buy_housing
                 - buy_etf_display
                 + buy_draw_display

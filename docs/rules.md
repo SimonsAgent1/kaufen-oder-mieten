@@ -406,11 +406,19 @@ Probe: 100.000 €, 3 % im Jahr, 24 Monate → 6.000 €.
 
 ## Zins auf Darlehen der Eltern
 
-Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Die Schuld bleibt bis zum Horizont ungetilgt.
+Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen.
 
 Quelle: Modellwahl.
 
 Probe: 100.000 € Schuld und 3 % im Jahr → 250 € im Monat.
+
+## Tilgung, Darlehen der Eltern
+
+Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Zins und Tilgung erscheinen im Kaufweg unter Zinsen und Tilgung.
+
+Quelle: Modellwahl.
+
+Probe: 100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.
 
 ## Miete im eigenen Haus
 

@@ -622,6 +622,7 @@ function syncParentMoneyVisibility() {
   );
   const loanRateNode = document.querySelector(
     '#beliefs .control[data-control-name="parent_loan_rate"]',
+    '#beliefs .control[data-control-name="parent_loan_tilgung"]',
   );
   if (giftNode) giftNode.hidden = !giftShow;
   if (loanNode) loanNode.hidden = !loanShow;
@@ -1025,6 +1026,7 @@ function mountBeliefs() {
   if (scenario.parent_loan == null) scenario.parent_loan = false;
   if (scenario.parent_loan_amount == null) scenario.parent_loan_amount = 0;
   if (!Number.isFinite(Number(scenario.parent_loan_rate))) scenario.parent_loan_rate = 0;
+  if (!Number.isFinite(Number(scenario.parent_loan_tilgung))) scenario.parent_loan_tilgung = 0;
   const giftSwitch = document.createElement("label");
   giftSwitch.className = "switch belief-switch";
   giftSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_gift ? "checked" : ""}><span class="track"></span>`;
@@ -1094,6 +1096,22 @@ function mountBeliefs() {
         scenario.parent_loan_rate = value;
       },
       assumptionLine("Zins auf Darlehen der Eltern"),
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;
+  buckets.Vermögen.push(
+    slider(
+      "parent_loan_tilgung",
+      "Darlehen der Eltern, Tilgung im Jahr",
+      0,
+      0.1,
+      0.001,
+      scenario.parent_loan_tilgung,
+      "%",
+      (value) => {
+        scenario.parent_loan_tilgung = value;
+      },
+      assumptionLine("Tilgung, Darlehen der Eltern"),
     ),
   );
   buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;

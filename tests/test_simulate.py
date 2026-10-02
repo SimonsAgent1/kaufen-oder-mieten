@@ -1157,6 +1157,38 @@ def test_cashflow_etf_draw_stops_when_depot_is_empty():
     assert any(point.rent_left < -1_000 for point in late)
 
 
+def test_avd_payout_retirement_month_counts_in_ubrig_once():
+    from datetime import date as d
+
+    adult = _adult(
+        depot=50_000,
+        sparrate=0,
+        kaltmiete=800,
+        birth=d(1960, 1, 1),
+        retire_age=67,
+        gross_salary=60_000,
+        pension_gross_today=1_500,
+        pots={
+            "altersvorsorgedepot": True,
+            "altersvorsorgedepot_balance": 20_000,
+            "altersvorsorgedepot_contribution_yearly": 0,
+        },
+    )
+    result = compare(
+        _scenario(
+            as_of=d(2026, 1, 1),
+            adults=[adult],
+            dwelling={"purchase_price": 400_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "ter": 0, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 68},
+        )
+    )
+    retire_year = "2027"
+    month = next(point for point in result.cashflow if point.date.startswith(retire_year))
+    assert month.buy_left > -1_500
+    assert not (month.buy_etf > 500 and month.buy_left < -5_000)
+
+
 def test_retirement_pot_pays_housing_before_etf_surplus():
     from buy_vs_rent.pots import pot_surplus_after_shortfall
 

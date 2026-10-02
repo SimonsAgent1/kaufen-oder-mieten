@@ -448,8 +448,9 @@ ENTRIES: tuple[Rule, ...] = (
         "20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.",
         assumption=(
             "Schenkung netto nach Erwerbsteuer und Darlehen der Eltern erhöhen das Bargeld im Startmonat. "
-            "Die Schuld bleibt bis zum Horizont. Der Zinssatz ist ein Jahresanteil der Restschuld, monatlich gezahlt; "
-            "Tilgung ist nicht modelliert. Ein fehlender Zinssatz in einer Datei gilt als 0 %."
+            "Die Schuld bleibt bis zum Horizont, sofern keine Tilgung eingestellt ist. "
+            "Der Zinssatz ist ein Jahresanteil der Restschuld, monatlich gezahlt. "
+            "Fehlende Zins- oder Tilgungssätze in einer Datei gelten als 0 %."
         ),
     ),
     Rule(
@@ -464,13 +465,25 @@ ENTRIES: tuple[Rule, ...] = (
         "parent-loan-interest",
         "gifts.parent_loan_interest_monthly",
         "Zins auf Darlehen der Eltern",
-        "Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Die Schuld bleibt bis zum Horizont ungetilgt.",
+        "Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen.",
         "Modellwahl",
         "100.000 € Schuld und 3 % im Jahr → 250 € im Monat.",
         assumption=(
             "Der Zinssatz auf das Darlehen der Eltern ist ein Jahresanteil der Restschuld, monatlich gezahlt. "
             "Er senkt den Spielraum auf beiden Wegen. Er ist nicht der Sollzins der Bank. "
             "Ein Zinssatz unter einem Marktzins ist keine Schenkung."
+        ),
+    ),
+    Rule(
+        "parent-loan-principal",
+        "gifts.parent_loan_principal_monthly",
+        "Tilgung, Darlehen der Eltern",
+        "Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Zins und Tilgung erscheinen im Kaufweg unter Zinsen und Tilgung.",
+        "Modellwahl",
+        "100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.",
+        assumption=(
+            "Die anfängliche Tilgung auf das Darlehen der Eltern ist ein Jahresanteil der Restschuld, monatlich gezahlt. "
+            "Bei 0 % bleibt die Schuld bis zum Horizont. Sie ist nicht die Banktilgung."
         ),
     ),
     Rule(
@@ -719,6 +732,9 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 lines.append(entry.assumption)
         elif entry.id == "parent-loan-interest":
             if scenario.parent_loan and scenario.parent_loan_rate > 0:
+                lines.append(entry.assumption)
+        elif entry.id == "parent-loan-principal":
+            if scenario.parent_loan and scenario.parent_loan_tilgung > 0:
                 lines.append(entry.assumption)
         elif entry.id == "bank-loan-obligation-chart":
             lines.append(entry.assumption)
