@@ -1527,7 +1527,6 @@ const RENT_FLOW = [
   ["rent_left", "Übrig", "#94a3b8"],
 ];
 const BUY_FLOW = [
-  ["buy_living_rent", "Kaltmiete im eigenen Haus", "#5b8fc7"],
   ["buy_rent", "Miete", RENT_COLOR],
   ["buy_interest", "Zinsen", "#c2410c"],
   ["buy_principal", "Tilgung", BUY_COLOR],
@@ -1884,6 +1883,7 @@ function showPlotTip(svg, event, { pin = false } = {}) {
   guide.setAttribute("visibility", "visible");
   const year = state.points[index].date.slice(0, 4);
   const rows = state.series
+    .filter((item) => Math.abs(item.values[index]) > 0.5)
     .map((item) => {
       const value = item.values[index];
       const color =
