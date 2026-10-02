@@ -369,6 +369,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         return extra_equity_from_price(price, equity_share)
 
     def equity_warning_floor(price: float) -> float:
+        if not dwelling.min_equity:
+            return 0.0
         return extra_equity_from_price(price, dwelling.min_equity_share)
     sollzins = beliefs.sollzins if beliefs.sollzins is not None else 0.035
     anschlusszins = beliefs.anschlusszins if beliefs.anschlusszins is not None else sollzins
@@ -813,7 +815,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
 
         rent_consume = 0.0
         buy_consume = 0.0
-        if drawdown and rent_anchor is not None:
+        if drawdown and rent_anchor is not None and rent_month_net <= 1e-6:
             rent_draw_months += 1
             rent_target = _draw_target(
                 rent_anchor,
@@ -826,7 +828,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             )
             tax, rent_consume = rent.trim_to_net(rent_target)
             etf_tax_rent += tax
-        if drawdown and buy_anchor is not None:
+        if drawdown and buy_anchor is not None and buy_month_net <= 1e-6:
             buy_draw_months += 1
             buy_target = _draw_target(
                 buy_anchor,

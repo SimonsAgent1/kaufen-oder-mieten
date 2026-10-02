@@ -104,7 +104,7 @@ def test_buys_once_savings_cover_nebenkosten():
         )
     )
     assert bought.purchase_date == "2027-02-01"
-    assert bought.warning_below_down_payment
+    assert not bought.warning_below_down_payment
 
 
 def test_move_in_cost_raises_loan_not_rent_wealth():
@@ -670,16 +670,18 @@ def test_saved_euros_without_rate_become_yearly_share_once():
     assert dwelling.owner_costs == 200
 
 
-def test_zero_equity_share_warnings_omit_percent():
+def test_purchase_warning_ignores_share_when_equity_switch_off():
     bought = compare(
         _scenario(
             adults=[_adult(depot=16_000, sparrate=10_000)],
-            dwelling={"purchase_price": 500_000, "min_equity": False},
+            dwelling={"purchase_price": 500_000, "min_equity": False, "min_equity_share": 0.2},
         )
     )
-    assert bought.warning_below_down_payment
-    assert any("unter den Nebenkosten." in line for line in bought.warnings)
+    assert bought.purchase_date == "2027-02-01"
+    assert not bought.warning_below_down_payment
 
+
+def test_zero_equity_share_warnings_omit_percent():
     shortfall = compare(
         _scenario(
             adults=[_adult(depot=1_000)],
@@ -689,6 +691,15 @@ def test_zero_equity_share_warnings_omit_percent():
     for line in shortfall.warnings + shortfall.assumptions:
         assert "0 Prozent" not in line
     assert any("Heute fehlen" in line and "Kaufnebenkosten" in line for line in shortfall.warnings)
+    bought = compare(
+        _scenario(
+            adults=[_adult(depot=200_000, sparrate=0)],
+            dwelling={"purchase_price": 500_000, "min_equity": True, "min_equity_share": 0.0, "owner_costs": 0},
+            beliefs={"sollzins": 0, "anschlusszins": 0, "etf_return": 0},
+        )
+    )
+    assert bought.purchase_date
+    assert any("die Nebenkosten decken" in line for line in bought.assumptions)
 
 
 def test_min_equity_share_changes_purchase_threshold():
