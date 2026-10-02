@@ -15,6 +15,13 @@ Store = dict[str, DayTotals]
 
 _KEYS = ("page", "compare_ok", "compare_reject")
 
+COMPARE_COUNT_HEADER = "x-buy-vs-rent-count"
+COMPARE_COUNT_CHAT = "chat"
+
+
+def compare_counts_as_rechnen(header_value: str | None) -> bool:
+    return header_value == COMPARE_COUNT_CHAT
+
 
 def counts_path() -> Path:
     raw = os.environ.get("BUY_VS_RENT_COUNTS_FILE")

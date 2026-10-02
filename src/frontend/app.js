@@ -1194,7 +1194,9 @@ function schedule() {
   timer = setTimeout(run, 200);
 }
 
-async function run() {
+const COMPARE_COUNT_HEADER = "X-Buy-Vs-Rent-Count";
+
+async function run(options = {}) {
   const id = ++requestId;
   const body = structuredClone(scenario);
   if (!touched.sollzins) body.beliefs.sollzins = null;
@@ -1203,9 +1205,11 @@ async function run() {
     if (!touched.pensions[adult.id]) adult.pension_gross_today = null;
     applyChurchTaxConsent(adult);
   }
+  const headers = { "Content-Type": "application/json" };
+  if (options.countRechnen) headers[COMPARE_COUNT_HEADER] = "chat";
   const response = await fetch("/api/compare", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
   if (!response.ok || id !== requestId) {

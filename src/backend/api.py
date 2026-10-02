@@ -23,6 +23,7 @@ from buy_vs_rent.scenario import Scenario, load_scenario, parse_property_link, s
 from buy_vs_rent.request_counts import (
     PUBLIC_SECURITY_HEADERS,
     public_site_host,
+    compare_counts_as_rechnen,
     record_compare_ok,
     record_compare_reject,
     record_page_load,
@@ -69,10 +70,13 @@ COMPARE_RATE_DETAIL = "Zu viele Rechnungen in kurzer Zeit. Bitte einen Moment wa
 async def log_compare_without_body(request: Request, call_next):
     response = await call_next(request)
     if request.method == "POST" and request.url.path == "/api/compare":
+        count = compare_counts_as_rechnen(request.headers.get("x-buy-vs-rent-count"))
         if response.status_code == 200:
-            record_compare_ok()
+            if count:
+                record_compare_ok()
         elif response.status_code != 429:
-            record_compare_reject()
+            if count:
+                record_compare_reject()
         logger.info("compare status=%s", response.status_code)
     return response
 

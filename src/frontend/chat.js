@@ -1368,7 +1368,7 @@ async function finish() {
   const scenario = buildScenario();
   const probe = await fetch("/api/compare", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Buy-Vs-Rent-Count": "chat" },
     body: JSON.stringify(scenarioBodyForCompare(scenario)),
   });
   if (!probe.ok) {

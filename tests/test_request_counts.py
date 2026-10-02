@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 
 from buy_vs_rent.api import app
 from buy_vs_rent.request_counts import (
+    COMPARE_COUNT_HEADER,
+    compare_counts_as_rechnen,
     counts_path,
     public_site_host,
     recent_days,
@@ -67,6 +69,60 @@ def test_zahlen_404_when_caddy_forwards_public_name(tmp_path, monkeypatch):
         },
     )
     assert response.status_code == 404
+
+
+def test_compare_counts_as_rechnen_header():
+    assert compare_counts_as_rechnen("chat")
+    assert not compare_counts_as_rechnen("slider")
+    assert not compare_counts_as_rechnen(None)
+
+
+def _minimal_compare_body():
+    return {
+        "version": 1,
+        "as_of": "2026-09-01",
+        "adults": [
+            {
+                "id": "ada",
+                "label": "Ada",
+                "birth": "1990-09-01",
+                "gross_salary": 0,
+                "salary_growth": 0,
+                "depot": 0,
+                "sparrate": 0,
+                "kaltmiete": 0,
+                "pension_gross_today": 0,
+            }
+        ],
+        "horizon": {"adult_id": "ada", "age": 38},
+        "dwelling": {
+            "purchase_price": 500_000,
+            "bundesland": "Hessen",
+            "min_equity": False,
+            "owner_costs": 0,
+        },
+        "beliefs": {
+            "household_rate": False,
+            "etf_return": 0,
+            "inflation": 0,
+            "rent_growth": 0,
+            "basiszins": 0,
+            "sollzins": 0.03,
+            "anschlusszins": 0.03,
+        },
+    }
+
+
+def test_compare_ok_only_when_chat_header(tmp_path, monkeypatch):
+    monkeypatch.setenv("BUY_VS_RENT_COUNTS_FILE", str(tmp_path / "counts.json"))
+    client = TestClient(app)
+    body = _minimal_compare_body()
+    assert client.post("/api/compare", json=body).status_code == 200
+    assert recent_days(last=1)[0][1]["compare_ok"] == 0
+    assert (
+        client.post("/api/compare", json=body, headers={COMPARE_COUNT_HEADER: "chat"}).status_code == 200
+    )
+    assert recent_days(last=1)[0][1]["compare_ok"] == 1
 
 
 def test_zahlen_ok_on_lan_host(tmp_path, monkeypatch):

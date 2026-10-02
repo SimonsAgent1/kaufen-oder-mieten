@@ -403,6 +403,6 @@ def test_compare_burst_limit_returns_german_429(monkeypatch, tmp_path):
     when = datetime.now(Berlin)
     rows = recent_days(last=1, anchor=when.date())
     day = rows[0][1]
-    assert day["compare_ok"] == 2
+    assert day["compare_ok"] == 0
     assert day["compare_reject"] == 0
     assert rows[0][0] == today_key(when)

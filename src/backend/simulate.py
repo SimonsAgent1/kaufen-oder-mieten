@@ -865,12 +865,14 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             etf_tax_rent += rent.deposit(rent_month_net, month.month)
         if abs(buy_month_net) > 1e-9:
             etf_tax_buy += buy.deposit(buy_month_net, month.month)
-        rent_etf_display = max(rent_month_net, 0.0)
-        rent_draw_display = max(-rent_month_net, 0.0) + rent_consume
+        rent_flow_net = rent_month_net - rent_consume
+        rent_etf_display = max(rent_flow_net, 0.0)
+        rent_draw_display = max(-rent_flow_net, 0.0)
         buy_living_display = buy_living_rent if buy_living_rent > 1 else 0.0
-        positive_in = max(buy_month_net, 0.0)
-        buy_etf_display = max(positive_in - buy_living_display, 0.0)
-        buy_draw_display = max(-buy_month_net, 0.0) + buy_consume
+        buy_flow_net = buy_month_net - buy_consume
+        savings_net = buy_flow_net - buy_living_display
+        buy_etf_display = max(savings_net, 0.0)
+        buy_draw_display = max(-savings_net, 0.0)
         cash_months.append(
             {
                 "inflation": inflation_factor,
