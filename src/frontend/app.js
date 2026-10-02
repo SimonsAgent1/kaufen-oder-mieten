@@ -1669,9 +1669,8 @@ function flowUbrigChartValue(point, leftKey, real, chartKey) {
   return left - flowAmount(point, "buy_living_rent", real);
 }
 
-function flowStackAxisMax(totals, draws, leftValues, chartKey) {
+function flowStackAxisMax(totals, draws, leftValues) {
   let max = Math.max(1, ...totals, ...draws);
-  if (chartKey === "buy-flow") return max;
   for (let index = 0; index < leftValues.length; index += 1) {
     const left = leftValues[index];
     if (left < -1) continue;
@@ -1719,7 +1718,6 @@ function ubrigAreaMarkup(points, leftKey, real, x, y, totals, chartKey) {
       if (next >= -1) warn.push(`L${px},${y(0).toFixed(1)}`);
       continue;
     }
-    if (chartKey === "buy-flow") continue;
     const top = total + Math.max(0, value);
     upper.push(`${px},${y(top).toFixed(1)}`);
     lower.push(`${px},${y(total).toFixed(1)}`);
@@ -1754,7 +1752,7 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
     : [];
   const scale = valueScale(
     leftValues.length ? Math.min(0, ...leftValues) : 0,
-    flowStackAxisMax(totals, draws, leftValues, chartKey),
+    flowStackAxisMax(totals, draws, leftValues),
   );
   if (!points.length) {
     svg.innerHTML = "";

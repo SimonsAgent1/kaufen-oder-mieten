@@ -20,8 +20,7 @@ def test_buy_flow_ubrig_scale_ignores_living_rent_extent():
     assert 'chartKey !== "buy-flow" || leftKey !== "buy_left"' in app
     assert "flowUbrigChartValue(point, leftLayerKey, real, chartKey)" in app
     assert "function flowStackAxisMax(" in app
-    assert 'if (chartKey === "buy-flow") return max' in app
-    assert 'if (chartKey === "buy-flow") continue' in app
+    assert "(totals[index] || 0) + Math.max(0, left)" in app
 
 
 def test_profile_row_refreshes_from_api():
