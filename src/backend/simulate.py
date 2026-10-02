@@ -8,7 +8,7 @@ from datetime import date
 from buy_vs_rent.career import employment_for_month
 from buy_vs_rent.catalog import result_sentences
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
-from buy_vs_rent.gifts import parent_support_cash
+from buy_vs_rent.gifts import parent_loan_interest_monthly, parent_support_cash
 from buy_vs_rent.house import (
     house_sale_tax,
     extra_equity_from_price,
@@ -632,7 +632,11 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             housing_budget = separate_base * rent_factor
             invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct + avd_tax_cash
         drawdown = here.all_retired
-        invest_rent = invest_base
+        parent_interest = parent_loan_interest_monthly(
+            parent_loan_balance,
+            scenario.parent_loan_rate if scenario.parent_loan else 0.0,
+        )
+        invest_rent = invest_base - parent_interest
         rent_month_net = pot_inflow + invest_rent
         buy_month_net = pot_inflow
         if invest_rent > 0 and drawdown:
@@ -809,6 +813,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_draw_months = 0
                 buy_draw_total = months_between(month, end) + 1
             buy.grow_month()
+
+        if parent_interest > 0:
+            buy_month_net -= parent_interest
 
         if month.month == 12 and here.children > 0 and not drawdown:
             refund = kinder_freibetrag_refund(

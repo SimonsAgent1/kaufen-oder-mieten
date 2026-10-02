@@ -46,6 +46,13 @@ def gift_tax_parents(total_gift: float) -> float:
     return round(gift_tax_one_parent(half) + gift_tax_one_parent(half), 2)
 
 
+def parent_loan_interest_monthly(principal: float, annual_rate: float) -> float:
+    """Yearly share of outstanding principal, paid in twelve equal monthly parts. Principal unchanged until horizon."""
+    if principal <= 0 or annual_rate <= 0:
+        return 0.0
+    return principal * annual_rate / 12
+
+
 def parent_support_cash(scenario: Scenario) -> tuple[float, float, float]:
     """Spendable cash at start, gift tax paid once, and outstanding parent loan principal."""
     cash = scenario.equity_cash

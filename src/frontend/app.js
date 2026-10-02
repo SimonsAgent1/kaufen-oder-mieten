@@ -620,8 +620,12 @@ function syncParentMoneyVisibility() {
   const loanNode = document.querySelector(
     '#beliefs .control[data-control-name="parent_loan_amount"]',
   );
+  const loanRateNode = document.querySelector(
+    '#beliefs .control[data-control-name="parent_loan_rate"]',
+  );
   if (giftNode) giftNode.hidden = !giftShow;
   if (loanNode) loanNode.hidden = !loanShow;
+  if (loanRateNode) loanRateNode.hidden = !loanShow;
 }
 
 function syncRentWhileLivingVisibility() {
@@ -1020,6 +1024,7 @@ function mountBeliefs() {
   if (scenario.parent_gift_amount == null) scenario.parent_gift_amount = 0;
   if (scenario.parent_loan == null) scenario.parent_loan = false;
   if (scenario.parent_loan_amount == null) scenario.parent_loan_amount = 0;
+  if (!Number.isFinite(Number(scenario.parent_loan_rate))) scenario.parent_loan_rate = 0;
   const giftSwitch = document.createElement("label");
   giftSwitch.className = "switch belief-switch";
   giftSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_gift ? "checked" : ""}><span class="track"></span>`;
@@ -1053,7 +1058,7 @@ function mountBeliefs() {
   loanSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_loan ? "checked" : ""}><span class="track"></span>`;
   const loanCaption = document.createElement("span");
   loanCaption.className = "switch-text";
-  loanCaption.textContent = "Zinsloses Darlehen";
+  loanCaption.textContent = "Darlehen der Eltern";
   loanSwitch.append(loanCaption);
   loanSwitch.querySelector("input").addEventListener("change", (event) => {
     scenario.parent_loan = event.target.checked;
@@ -1064,7 +1069,7 @@ function mountBeliefs() {
   buckets.Vermögen.push(
     slider(
       "parent_loan_amount",
-      "Darlehen, 0 % Zins",
+      "Darlehen der Eltern, Betrag",
       0,
       2_000_000,
       1_000,
@@ -1073,6 +1078,22 @@ function mountBeliefs() {
       (value) => {
         scenario.parent_loan_amount = value;
       },
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;
+  buckets.Vermögen.push(
+    slider(
+      "parent_loan_rate",
+      "Darlehen der Eltern, Zinssatz im Jahr",
+      0,
+      0.15,
+      0.001,
+      scenario.parent_loan_rate,
+      "%",
+      (value) => {
+        scenario.parent_loan_rate = value;
+      },
+      assumptionLine("Zins auf Darlehen der Eltern"),
     ),
   );
   buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;

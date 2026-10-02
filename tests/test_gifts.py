@@ -1,5 +1,6 @@
-from buy_vs_rent.gifts import gift_tax_parents, parent_support_cash
+from buy_vs_rent.gifts import gift_tax_parents, parent_loan_interest_monthly, parent_support_cash
 from buy_vs_rent.scenario import Scenario
+from buy_vs_rent.simulate import compare
 
 
 def test_gift_tax_20_000_is_zero():
@@ -35,3 +36,71 @@ def test_parent_loan_adds_cash_without_tax():
     assert gift_tax == 0
     assert loan == 50_000
     assert cash == 50_000
+
+
+def test_parent_loan_interest_monthly_hand_worked():
+    assert parent_loan_interest_monthly(100_000, 0.03) == 250.0
+    assert parent_loan_interest_monthly(50_000, 0) == 0.0
+
+
+def test_parent_loan_rate_default_zero_in_saved_file():
+    scenario = Scenario.model_validate(
+        {
+            "as_of": "2026-09-01",
+            "adults": [
+                {
+                    "id": "ada",
+                    "label": "Ada",
+                    "birth": "1990-09-01",
+                    "gross_salary": 50_000,
+                    "depot": 0,
+                    "sparrate": 0,
+                    "kaltmiete": 800,
+                }
+            ],
+            "parent_loan": True,
+            "parent_loan_amount": 100_000,
+            "dwelling": {"purchase_price": 400_000, "bundesland": "Hessen"},
+        }
+    )
+    assert scenario.parent_loan_rate == 0.0
+
+
+def _loan_scenario(rate: float) -> Scenario:
+    return Scenario.model_validate(
+        {
+            "as_of": "2026-09-01",
+            "adults": [
+                {
+                    "id": "ada",
+                    "label": "Ada",
+                    "birth": "1990-09-01",
+                    "gross_salary": 80_000,
+                    "depot": 20_000,
+                    "sparrate": 500,
+                    "kaltmiete": 1_000,
+                }
+            ],
+            "parent_loan": True,
+            "parent_loan_amount": 100_000,
+            "parent_loan_rate": rate,
+            "dwelling": {"purchase_price": 400_000, "bundesland": "Hessen", "min_equity": False},
+            "beliefs": {"etf_return": 0, "sollzins": 0, "anschlusszins": 0, "inflation": 0},
+            "horizon": {"adult_id": "ada", "age": 85},
+        }
+    )
+
+
+def test_parent_loan_rate_zero_matches_interest_free_loan():
+    free = compare(_loan_scenario(0))
+    explicit = compare(_loan_scenario(0.0))
+    assert free.buy_final_nominal == explicit.buy_final_nominal
+    assert free.rent_final_nominal == explicit.rent_final_nominal
+
+
+def test_parent_loan_rate_reduces_both_paths():
+    free = compare(_loan_scenario(0))
+    with_interest = compare(_loan_scenario(0.03))
+    assert with_interest.buy_final_nominal < free.buy_final_nominal
+    mid = len(free.series) // 2
+    assert with_interest.series[mid].rent_nominal < free.series[mid].rent_nominal

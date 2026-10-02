@@ -396,7 +396,7 @@ ENTRIES: tuple[Rule, ...] = (
         "20.000 € gesamt → 0 € Steuer. 900.000 € gesamt → 7.000 € Steuer.",
         assumption=(
             "Eine Schenkung der Eltern zählt nicht als Einkommen. Sie wird hälftig je Elternteil versteuert, "
-            "jeweils mit 400.000 € Freibetrag. Ein zinsloses Darlehen der Eltern bleibt Darlehen; fehlende Zinsen werden nicht angesetzt."
+            "jeweils mit 400.000 € Freibetrag. Ein Darlehen der Eltern bleibt Darlehen und ist nicht die Bankfinanzierung."
         ),
     ),
     Rule(
@@ -419,9 +419,27 @@ ENTRIES: tuple[Rule, ...] = (
         "parent-support-cash",
         "gifts.parent_support_cash",
         "Geld von den Eltern",
-        "Schenkung netto nach Erwerbsteuer und zinsloses Darlehen erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.",
+        "Schenkung netto nach Erwerbsteuer und Darlehen der Eltern erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.",
         "Modellwahl",
         "20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.",
+        assumption=(
+            "Schenkung netto nach Erwerbsteuer und Darlehen der Eltern erhöhen das Bargeld im Startmonat. "
+            "Die Schuld bleibt bis zum Horizont. Der Zinssatz ist ein Jahresanteil der Restschuld, monatlich gezahlt; "
+            "Tilgung ist nicht modelliert. Ein fehlender Zinssatz in einer Datei gilt als 0 %."
+        ),
+    ),
+    Rule(
+        "parent-loan-interest",
+        "gifts.parent_loan_interest_monthly",
+        "Zins auf Darlehen der Eltern",
+        "Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Die Schuld bleibt bis zum Horizont ungetilgt.",
+        "Modellwahl",
+        "100.000 € Schuld und 3 % im Jahr → 250 € im Monat.",
+        assumption=(
+            "Der Zinssatz auf das Darlehen der Eltern ist ein Jahresanteil der Restschuld, monatlich gezahlt. "
+            "Er senkt den Spielraum auf beiden Wegen. Er ist nicht der Sollzins der Bank. "
+            "Ein Zinssatz unter einem Marktzins ist keine Schenkung."
+        ),
     ),
     Rule(
         "rent-while-living-tax",
@@ -666,6 +684,9 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 lines.append(entry.assumption)
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:
+                lines.append(entry.assumption)
+        elif entry.id == "parent-loan-interest":
+            if scenario.parent_loan and scenario.parent_loan_rate > 0:
                 lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)

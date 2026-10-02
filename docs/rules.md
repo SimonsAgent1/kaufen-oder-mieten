@@ -374,11 +374,19 @@ Probe: 50.000 € steuerpflichtig → 3.500 €.
 
 ## Geld von den Eltern
 
-Schenkung netto nach Erwerbsteuer und zinsloses Darlehen erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.
+Schenkung netto nach Erwerbsteuer und Darlehen der Eltern erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.
 
 Quelle: Modellwahl.
 
 Probe: 20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.
+
+## Zins auf Darlehen der Eltern
+
+Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Die Schuld bleibt bis zum Horizont ungetilgt.
+
+Quelle: Modellwahl.
+
+Probe: 100.000 € Schuld und 3 % im Jahr → 250 € im Monat.
 
 ## Miete im eigenen Haus
 
