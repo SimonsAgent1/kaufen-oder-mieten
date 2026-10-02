@@ -8,6 +8,7 @@ from datetime import date
 from buy_vs_rent.career import employment_for_month
 from buy_vs_rent.catalog import result_sentences
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
+from buy_vs_rent.gifts import parent_support_cash
 from buy_vs_rent.house import (
     house_sale_tax,
     extra_equity_from_price,
@@ -393,8 +394,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 zve += taxable_income(gross, inflation_factor, pv_rate(calendar, when, adult.id))
         return zve, splitting
 
+    external_cash, _, parent_loan_balance = parent_support_cash(scenario)
     buy = new_portfolio(opening)
-    rent = new_portfolio(opening + scenario.equity_cash)
+    rent = new_portfolio(opening + external_cash)
     mortgage: _Mortgage | None = None
     purchase: date | None = None
     property_value = 0.0
@@ -461,7 +463,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         cash_months.clear()
 
     warnings: list[str] = []
-    ready_today = opening + scenario.equity_cash
+    ready_today = opening + external_cash
     move_in_today = dwelling.move_in_cost_2026
     needed_today = nebenkosten_paid + move_in_today + extra_equity_at(dwelling.purchase_price)
     equity_pct = _percent_de(equity_share)
@@ -607,9 +609,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
 
         move_in = dwelling.move_in_cost_2026 * inflation_factor
         needed = nebenkosten + move_in + extra_equity_at(price_now)
-        if not here.in_care and mortgage is None and buy.value + scenario.equity_cash + 1e-6 >= needed:
+        if not here.in_care and mortgage is None and buy.value + external_cash + 1e-6 >= needed:
             tax, proceeds = buy.liquidation()
-            equity_cash = proceeds + scenario.equity_cash
+            equity_cash = proceeds + external_cash
             if equity_cash >= needed:
                 etf_tax_buy += tax
                 buy.wipe()
@@ -853,13 +855,19 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         if month.month == 12 or month == end:
             inf = inflation_factor
             buy_equity = property_value * (1 - dwelling.selling_cost_rate) - (mortgage.balance if mortgage else 0.0)
-            held_gift = 0.0 if mortgage else scenario.equity_cash
+            held_cash = 0.0 if mortgage else external_cash
             buy_etf_net = buy.liquidation()[1]
             pots_market = sum(
                 surrender_value(adult, pot_ledgers[adult.id]) for adult in scenario.adults
             )
-            buy_market = buy_etf_net + (buy_equity if mortgage else 0.0) + held_gift + pots_market
-            rent_market = rent.liquidation()[1] + pots_market
+            buy_market = (
+                buy_etf_net
+                + (buy_equity if mortgage else 0.0)
+                + held_cash
+                + pots_market
+                - parent_loan_balance
+            )
+            rent_market = rent.liquidation()[1] + pots_market - parent_loan_balance
             series.append(
                 YearPoint(
                     date=month.isoformat(),
@@ -886,8 +894,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     final_pots = sum(surrender_value(adult, pot_ledgers[adult.id]) for adult in scenario.adults)
     rent_net += final_pots
     buy_net += final_pots
+    rent_net -= parent_loan_balance
     if house_sold:
-        buy_final = buy_net
+        buy_final = buy_net - parent_loan_balance
     elif purchase is not None and mortgage is not None:
         years_held = _years_held(purchase, end)
         occupied = owner_occupied_exemption(
@@ -907,9 +916,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             splitting=splitting,
         )
         sale_proceeds = property_value * (1 - dwelling.selling_cost_rate) - house_tax - mortgage.balance
-        buy_final = buy_net + sale_proceeds
+        buy_final = buy_net + sale_proceeds - parent_loan_balance
     else:
-        buy_final = buy_net + scenario.equity_cash
+        buy_final = buy_net + external_cash - parent_loan_balance
         if dwelling.min_equity:
             warnings.append(
                 f"Innerhalb des Horizonts reichen Depot und zusätzliches Eigenkapital nicht für Nebenkosten plus {equity_pct} des Kaufpreises. Beide Linien bleiben Miete."

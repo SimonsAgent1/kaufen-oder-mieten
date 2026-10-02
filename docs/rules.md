@@ -340,6 +340,38 @@ Quelle: Altersvorsorgereformgesetz, Modell 2027.
 
 Probe: 200 € über 1.800 € erhöhen die Steuer wie 200 € geförderte Auszahlung.
 
+## Schenkung der Eltern
+
+Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 EStG.
+
+Quelle: §§ 16 Abs. 1 Nr. 2, 19 EStG.
+
+Probe: 20.000 € gesamt → 0 € Steuer. 900.000 € gesamt → 7.000 € Steuer.
+
+## Freibetrag je Elternteil
+
+400.000 € Freibetrag je Elternteil auf die Hälfte der Schenkung.
+
+Quelle: § 16 Abs. 1 Nr. 2 ErbStG.
+
+Probe: 10.000 € von einem Elternteil → 0 € Steuer.
+
+## Steuerklasse I
+
+7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 EStG.
+
+Quelle: § 19 EStG.
+
+Probe: 50.000 € steuerpflichtig → 3.500 €.
+
+## Geld von den Eltern
+
+Schenkung netto nach Erwerbsteuer und zinsloses Darlehen erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.
+
+Quelle: Modellwahl.
+
+Probe: 20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.
+
 ## Miete im eigenen Haus
 
 Kaltmiete von Mitbewohnern ist Einkünfte aus Vermietung und Verpachtung und wird mit dem persönlichen Satz besteuert, nicht als Kapitalertrag.

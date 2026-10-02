@@ -906,6 +906,36 @@ def test_unmarried_leaves_married_from_empty():
     assert scenario.married_from is None
 
 
+def test_parent_gift_net_of_tax_helps_purchase():
+    from buy_vs_rent.gifts import gift_tax_parents
+
+    gift = 900_000
+    tax = gift_tax_parents(gift)
+    assert tax == 7_000
+    without = compare(
+        _scenario(
+            adults=[_adult(depot=50_000, sparrate=0, kaltmiete=800)],
+            equity_cash=0,
+            dwelling={"purchase_price": 500_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 70},
+        )
+    )
+    with_gift = compare(
+        _scenario(
+            adults=[_adult(depot=50_000, sparrate=0, kaltmiete=800)],
+            equity_cash=0,
+            parent_gift=True,
+            parent_gift_amount=gift,
+            dwelling={"purchase_price": 500_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 70},
+        )
+    )
+    assert with_gift.purchase_date
+    assert without.purchase_date is None or with_gift.buy_final_nominal > without.buy_final_nominal
+
+
 def test_rent_while_living_raises_buy_wealth():
     from buy_vs_rent.house import rent_while_living_tax_monthly
 

@@ -516,6 +516,19 @@ const POT_SLIDER_SUFFIXES = {
   altersvorsorgedepot: ["avd_balance", "avd_contrib"],
 };
 
+function syncParentMoneyVisibility() {
+  const giftShow = Boolean(scenario?.parent_gift);
+  const loanShow = Boolean(scenario?.parent_loan);
+  const giftNode = document.querySelector(
+    '#beliefs .control[data-control-name="parent_gift_amount"]',
+  );
+  const loanNode = document.querySelector(
+    '#beliefs .control[data-control-name="parent_loan_amount"]',
+  );
+  if (giftNode) giftNode.hidden = !giftShow;
+  if (loanNode) loanNode.hidden = !loanShow;
+}
+
 function syncRentWhileLivingVisibility() {
   const show = Boolean(scenario?.dwelling?.rent_while_living);
   const node = document.querySelector(
@@ -874,6 +887,66 @@ function mountBeliefs() {
       scenario.equity_cash = value;
     }, assumptionLine("Zusätzliches Eigenkapital")),
   );
+  if (scenario.parent_gift == null) scenario.parent_gift = false;
+  if (scenario.parent_gift_amount == null) scenario.parent_gift_amount = 0;
+  if (scenario.parent_loan == null) scenario.parent_loan = false;
+  if (scenario.parent_loan_amount == null) scenario.parent_loan_amount = 0;
+  const giftSwitch = document.createElement("label");
+  giftSwitch.className = "switch belief-switch";
+  giftSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_gift ? "checked" : ""}><span class="track"></span>`;
+  const giftCaption = document.createElement("span");
+  giftCaption.className = "switch-text";
+  giftCaption.textContent = "Schenkung der Eltern";
+  giftSwitch.append(giftCaption);
+  giftSwitch.querySelector("input").addEventListener("change", (event) => {
+    scenario.parent_gift = event.target.checked;
+    syncParentMoneyVisibility();
+    schedule();
+  });
+  buckets.Vermögen.push(giftSwitch);
+  buckets.Vermögen.push(
+    slider(
+      "parent_gift_amount",
+      "Schenkung der Eltern, ein Betrag",
+      0,
+      2_000_000,
+      1_000,
+      scenario.parent_gift_amount,
+      "€",
+      (value) => {
+        scenario.parent_gift_amount = value;
+      },
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_gift;
+  const loanSwitch = document.createElement("label");
+  loanSwitch.className = "switch belief-switch";
+  loanSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_loan ? "checked" : ""}><span class="track"></span>`;
+  const loanCaption = document.createElement("span");
+  loanCaption.className = "switch-text";
+  loanCaption.textContent = "Zinsloses Darlehen der Eltern";
+  loanSwitch.append(loanCaption);
+  loanSwitch.querySelector("input").addEventListener("change", (event) => {
+    scenario.parent_loan = event.target.checked;
+    syncParentMoneyVisibility();
+    schedule();
+  });
+  buckets.Vermögen.push(loanSwitch);
+  buckets.Vermögen.push(
+    slider(
+      "parent_loan_amount",
+      "Darlehen der Eltern, 0 % Zins",
+      0,
+      2_000_000,
+      1_000,
+      scenario.parent_loan_amount,
+      "€",
+      (value) => {
+        scenario.parent_loan_amount = value;
+      },
+    ),
+  );
+  buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;
   for (const [name, label, min, max, step, unit] of BELIEFS) {
     if (name === "etf_return") {
       buckets.Vermögen.push(
@@ -1018,6 +1091,7 @@ function mountBeliefs() {
   mountSliderGroups(host, buckets);
   syncPotSliderVisibility();
   syncRentWhileLivingVisibility();
+  syncParentMoneyVisibility();
 }
 
 function schedule() {

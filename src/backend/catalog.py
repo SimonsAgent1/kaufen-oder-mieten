@@ -380,6 +380,42 @@ ENTRIES: tuple[Rule, ...] = (
         "200 € über 1.800 € erhöhen die Steuer wie 200 € geförderte Auszahlung.",
     ),
     Rule(
+        "parent-gift-tax",
+        "gifts.gift_tax_parents",
+        "Schenkung der Eltern",
+        "Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 EStG.",
+        "§§ 16 Abs. 1 Nr. 2, 19 EStG",
+        "20.000 € gesamt → 0 € Steuer. 900.000 € gesamt → 7.000 € Steuer.",
+        assumption=(
+            "Eine Schenkung der Eltern zählt nicht als Einkommen. Sie wird hälftig je Elternteil versteuert, "
+            "jeweils mit 400.000 € Freibetrag. Ein zinsloses Darlehen der Eltern bleibt Darlehen; fehlende Zinsen werden nicht angesetzt."
+        ),
+    ),
+    Rule(
+        "parent-gift-allowance",
+        "gifts.gift_tax_one_parent",
+        "Freibetrag je Elternteil",
+        "400.000 € Freibetrag je Elternteil auf die Hälfte der Schenkung.",
+        "§ 16 Abs. 1 Nr. 2 ErbStG",
+        "10.000 € von einem Elternteil → 0 € Steuer.",
+    ),
+    Rule(
+        "inheritance-tax-class-i",
+        "gifts.inheritance_tax_class_i",
+        "Steuerklasse I",
+        "7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 EStG.",
+        "§ 19 EStG",
+        "50.000 € steuerpflichtig → 3.500 €.",
+    ),
+    Rule(
+        "parent-support-cash",
+        "gifts.parent_support_cash",
+        "Geld von den Eltern",
+        "Schenkung netto nach Erwerbsteuer und zinsloses Darlehen erhöhen das verfügbare Bargeld im Startmonat. Das Darlehen bleibt als Schuld bis zum Ende.",
+        "Modellwahl",
+        "20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.",
+    ),
+    Rule(
         "rent-while-living-tax",
         "house.rent_while_living_tax_monthly",
         "Miete im eigenen Haus",
@@ -610,6 +646,9 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 )
         elif entry.id == "rent-while-living-tax":
             if scenario.dwelling.rent_while_living:
+                lines.append(entry.assumption)
+        elif entry.id == "parent-gift-tax":
+            if scenario.parent_gift or scenario.parent_loan:
                 lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)

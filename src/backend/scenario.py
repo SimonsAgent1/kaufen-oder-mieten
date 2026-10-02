@@ -205,6 +205,10 @@ class Scenario(BaseModel):
     children: list[Child] = Field(default_factory=list, max_length=MAX_CHILDREN)
     extra_rent: ExtraRent | None = None
     equity_cash: float = Field(default=0, ge=0, le=5_000_000)
+    parent_gift: bool = False
+    parent_gift_amount: float = Field(default=0, ge=0, le=5_000_000)
+    parent_loan: bool = False
+    parent_loan_amount: float = Field(default=0, ge=0, le=5_000_000)
     horizon: Horizon | None = None
     care_copay_2026: float | None = Field(default=None, ge=0, le=30_000)
     dwelling: Dwelling
