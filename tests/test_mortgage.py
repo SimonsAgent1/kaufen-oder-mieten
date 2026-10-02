@@ -1,7 +1,9 @@
 import pytest
 
 from buy_vs_rent.mortgage import (
+    MortgageSnapshot,
     balance_after,
+    bank_loan_obligation_chart_value,
     closed_form_balance,
     initial_payment,
     payment_to_clear,
@@ -32,6 +34,23 @@ def test_restschuld_after_ten_years_matches_closed_form():
     closed = closed_form_balance(100_000, 0.03, payment, 120)
     assert stepped == pytest.approx(closed)
     assert 70_000 < stepped < 95_000
+
+
+def test_bank_loan_obligation_includes_future_interest():
+    snap = MortgageSnapshot(
+        balance=100_000,
+        rate=0.03,
+        payment=initial_payment(100_000, 0.03, 0.02),
+        months_left_in_fixation=120,
+        switched=False,
+    )
+    total = bank_loan_obligation_chart_value(
+        snap,
+        months_until_sale=12,
+        anschluss_rate=0.04,
+        payment_at_purchase=snap.payment,
+    )
+    assert 100_000 < total < 103_000
 
 
 def test_payment_to_clear_reaches_zero():

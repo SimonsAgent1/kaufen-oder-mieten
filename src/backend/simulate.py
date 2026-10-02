@@ -8,7 +8,12 @@ from datetime import date
 from buy_vs_rent.career import employment_for_month
 from buy_vs_rent.catalog import result_sentences
 from buy_vs_rent.etf import Portfolio, capital_gains_rate
-from buy_vs_rent.gifts import parent_loan_interest_monthly, parent_support_cash
+from buy_vs_rent.gifts import (
+    parent_loan_interest_monthly,
+    parent_loan_interest_remaining,
+    parent_support_cash,
+)
+from buy_vs_rent.mortgage import MortgageSnapshot, bank_loan_obligation_chart_value
 from buy_vs_rent.house import (
     house_sale_tax,
     extra_equity_from_price,
@@ -933,6 +938,27 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 - parent_loan_balance
             )
             rent_market = rent.liquidation()[1] + pots_market - parent_loan_balance
+            loan_chart = 0.0
+            if mortgage is not None and not house_sold and mortgage.balance > 0:
+                loan_chart += bank_loan_obligation_chart_value(
+                    MortgageSnapshot(
+                        balance=mortgage.balance,
+                        rate=mortgage.rate,
+                        payment=mortgage.payment,
+                        months_left_in_fixation=mortgage.months_left_in_fixation,
+                        switched=mortgage.switched,
+                    ),
+                    months_until_sale=max(0, months_between(month, planned_care)),
+                    anschluss_rate=anschlusszins,
+                    payment_at_purchase=payment_at_purchase,
+                )
+            if scenario.parent_loan and parent_loan_balance > 0:
+                months_to_horizon = max(0, months_between(month, end))
+                loan_chart += parent_loan_balance + parent_loan_interest_remaining(
+                    parent_loan_balance,
+                    scenario.parent_loan_rate,
+                    months_to_horizon,
+                )
             series.append(
                 YearPoint(
                     date=month.isoformat(),
@@ -940,7 +966,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     rent_nominal=rent_market,
                     buy_real=buy_market / inf,
                     rent_real=rent_market / inf,
-                    loan_balance=mortgage.balance if mortgage else 0.0,
+                    loan_balance=loan_chart,
                     property_value=property_value,
                     buy_etf_nominal=buy_etf_net,
                     buy_etf_real=buy_etf_net / inf,

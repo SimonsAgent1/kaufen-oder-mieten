@@ -164,6 +164,14 @@ Quelle: Annuitätenformel.
 
 Probe: Ohne Zins ist es Schuld minus Rate mal Monate, mindestens 0.
 
+## Restschuld im Chart
+
+Bank: Restschuld plus noch fällige Zinsen bis Tilgung oder Verkauf. Sollzins bis zur Zinsbindung, danach Anschlusszins und ggf. höhere Rate bis zur Pflege.
+
+Quelle: Modellwahl.
+
+Probe: 100.000 €, 3 %, 2 % Tilgung, 12 Monate ohne Wechsel: Restschuld plus Zinsen über 12 Monate.
+
 ## Abgeltungsteuer
 
 25 % plus 5,5 % Soli darauf, also 26,375 %. Kirchensteuer kommt hier nicht obendrauf.
@@ -379,6 +387,14 @@ Schenkung netto nach Erwerbsteuer und Darlehen der Eltern erhöhen das verfügba
 Quelle: Modellwahl.
 
 Probe: 20.000 € Schenkung → 20.000 € mehr Bargeld, 0 € Steuer.
+
+## Noch fällige Zinsen, Darlehen der Eltern
+
+Monatlicher Zins mal verbleibende Monate bis zum Horizont. Bei 0 % Zins ist der Betrag 0.
+
+Quelle: Modellwahl.
+
+Probe: 100.000 €, 3 % im Jahr, 24 Monate → 6.000 €.
 
 ## Zins auf Darlehen der Eltern
 

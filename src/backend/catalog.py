@@ -186,6 +186,18 @@ ENTRIES: tuple[Rule, ...] = (
         "Ohne Zins ist es Schuld minus Rate mal Monate, mindestens 0.",
     ),
     Rule(
+        "bank-loan-obligation-chart",
+        "mortgage.bank_loan_obligation_chart_value",
+        "Restschuld im Chart",
+        "Bank: Restschuld plus noch fällige Zinsen bis Tilgung oder Verkauf. Sollzins bis zur Zinsbindung, danach Anschlusszins und ggf. höhere Rate bis zur Pflege.",
+        "Modellwahl",
+        "100.000 €, 3 %, 2 % Tilgung, 12 Monate ohne Wechsel: Restschuld plus Zinsen über 12 Monate.",
+        assumption=(
+            "Die Restschuld-Linie zeigt Bankdarlehen und Darlehen der Eltern jeweils als Restschuld plus noch fällige Zinsen. "
+            "Das Vermögen zieht nur die Restschuld ab. Die monatlichen Zinsen im Kauf-Chart sind die gezahlten Zinsen."
+        ),
+    ),
+    Rule(
         "capital-gains",
         "etf.capital_gains_rate",
         "Abgeltungsteuer",
@@ -427,6 +439,14 @@ ENTRIES: tuple[Rule, ...] = (
             "Die Schuld bleibt bis zum Horizont. Der Zinssatz ist ein Jahresanteil der Restschuld, monatlich gezahlt; "
             "Tilgung ist nicht modelliert. Ein fehlender Zinssatz in einer Datei gilt als 0 %."
         ),
+    ),
+    Rule(
+        "parent-loan-interest-remaining",
+        "gifts.parent_loan_interest_remaining",
+        "Noch fällige Zinsen, Darlehen der Eltern",
+        "Monatlicher Zins mal verbleibende Monate bis zum Horizont. Bei 0 % Zins ist der Betrag 0.",
+        "Modellwahl",
+        "100.000 €, 3 % im Jahr, 24 Monate → 6.000 €.",
     ),
     Rule(
         "parent-loan-interest",
@@ -688,6 +708,8 @@ def result_sentences(scenario: Scenario) -> list[str]:
         elif entry.id == "parent-loan-interest":
             if scenario.parent_loan and scenario.parent_loan_rate > 0:
                 lines.append(entry.assumption)
+        elif entry.id == "bank-loan-obligation-chart":
+            lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)
     return lines

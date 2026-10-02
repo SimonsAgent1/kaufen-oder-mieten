@@ -46,6 +46,13 @@ def gift_tax_parents(total_gift: float) -> float:
     return round(gift_tax_one_parent(half) + gift_tax_one_parent(half), 2)
 
 
+def parent_loan_interest_remaining(principal: float, annual_rate: float, months: int) -> float:
+    """Interest still due on a non-amortising parent loan until horizon."""
+    if principal <= 0 or annual_rate <= 0 or months <= 0:
+        return 0.0
+    return parent_loan_interest_monthly(principal, annual_rate) * months
+
+
 def parent_loan_interest_monthly(principal: float, annual_rate: float) -> float:
     """Yearly share of outstanding principal, paid in twelve equal monthly parts. Principal unchanged until horizon."""
     if principal <= 0 or annual_rate <= 0:

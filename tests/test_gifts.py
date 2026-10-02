@@ -1,4 +1,9 @@
-from buy_vs_rent.gifts import gift_tax_parents, parent_loan_interest_monthly, parent_support_cash
+from buy_vs_rent.gifts import (
+    gift_tax_parents,
+    parent_loan_interest_monthly,
+    parent_loan_interest_remaining,
+    parent_support_cash,
+)
 from buy_vs_rent.scenario import Scenario
 from buy_vs_rent.simulate import compare
 
@@ -36,6 +41,10 @@ def test_parent_loan_adds_cash_without_tax():
     assert gift_tax == 0
     assert loan == 50_000
     assert cash == 50_000
+
+
+def test_parent_loan_interest_remaining_hand_worked():
+    assert parent_loan_interest_remaining(100_000, 0.03, 24) == 6_000.0
 
 
 def test_parent_loan_interest_monthly_hand_worked():
@@ -96,6 +105,13 @@ def test_parent_loan_rate_zero_matches_interest_free_loan():
     explicit = compare(_loan_scenario(0.0))
     assert free.buy_final_nominal == explicit.buy_final_nominal
     assert free.rent_final_nominal == explicit.rent_final_nominal
+
+
+def test_loan_chart_includes_parent_principal_and_interest():
+    result = compare(_loan_scenario(0.03))
+    assert result.series
+    mid = result.series[len(result.series) // 2]
+    assert mid.loan_balance > 100_000
 
 
 def test_parent_loan_rate_reduces_both_paths():
