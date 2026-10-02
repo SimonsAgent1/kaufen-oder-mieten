@@ -1683,11 +1683,8 @@ function flowAmount(point, key, real) {
   return real ? amount / (point.inflation || 1) : amount;
 }
 
-/** Buy-flow scale and Übrig band: living rent counts in Übrig in the tooltip, not in vertical extent. */
-function flowUbrigChartValue(point, leftKey, real, chartKey) {
-  const left = flowAmount(point, leftKey, real);
-  if (chartKey !== "buy-flow" || leftKey !== "buy_left" || left < -1) return left;
-  return left - flowAmount(point, "buy_living_rent", real);
+function flowUbrigChartValue(point, leftKey, real, _chartKey) {
+  return flowAmount(point, leftKey, real);
 }
 
 function flowStackAxisMax(totals, draws, leftValues) {

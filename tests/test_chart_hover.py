@@ -14,10 +14,10 @@ def test_chart_hover_omits_zero_rows():
     assert "if (Math.abs(value) <= 0.5) return false" in app
 
 
-def test_buy_flow_ubrig_scale_ignores_living_rent_extent():
+def test_buy_flow_ubrig_includes_living_rent_in_band():
     app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
     assert "function flowUbrigChartValue(" in app
-    assert 'chartKey !== "buy-flow" || leftKey !== "buy_left"' in app
+    assert "return flowAmount(point, leftKey, real)" in app
     assert "flowUbrigChartValue(point, leftLayerKey, real, chartKey)" in app
     assert "function flowStackAxisMax(" in app
     assert "(totals[index] || 0) + Math.max(0, left)" in app

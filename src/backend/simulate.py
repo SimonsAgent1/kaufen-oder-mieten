@@ -513,7 +513,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_owner=avg("buy_owner"),
                 buy_etf=buy_etf,
                 buy_draw=buy_draw,
-                buy_left=income - buy_housing - buy_etf - buy_living + buy_draw,
+                buy_left=income - buy_housing - buy_etf + buy_draw + buy_living,
             )
         )
         cash_months.clear()
@@ -947,8 +947,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "buy_left": income
                 - buy_housing
                 - buy_etf_display
-                - buy_living_display
-                + buy_draw_display,
+                + buy_draw_display
+                + buy_living_display,
             }
         )
 

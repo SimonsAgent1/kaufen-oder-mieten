@@ -468,12 +468,7 @@ def test_monthly_slices_add_up():
             + point.buy_principal
             + point.buy_owner
         )
-        buy_sum = (
-            buy_housing
-            + max(point.buy_etf, 0)
-            + point.buy_living_rent
-            + point.buy_left
-        )
+        buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left
         assert abs(rent_sum - point.income) < 0.05 or abs(rent_sum - point.income - point.rent_draw) < 0.05
         assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
         assert not (point.buy_etf > 1 and point.buy_draw > 1)
@@ -992,6 +987,25 @@ def test_rent_while_living_shows_net_in_buy_chart():
     assert after is not None
     assert 350 <= after.buy_living_rent <= 600
     assert after.buy_living_rent > 0
+    off = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={
+                "purchase_price": 400_000,
+                "min_equity": False,
+                "owner_costs": 0,
+                "rent_while_living": False,
+            },
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    off_after = next(
+        (point for point in off.cashflow if point.date >= off.purchase_date[:7]),
+        None,
+    )
+    assert off_after is not None
+    assert after.buy_left > off_after.buy_left + after.buy_living_rent * 0.5
 
 
 def test_parent_gift_net_of_tax_helps_purchase():
