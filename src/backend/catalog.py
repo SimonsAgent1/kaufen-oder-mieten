@@ -186,6 +186,18 @@ ENTRIES: tuple[Rule, ...] = (
         "Ohne Zins ist es Schuld minus Rate mal Monate, mindestens 0.",
     ),
     Rule(
+        "pot-surplus-after-shortfall",
+        "pots.pot_surplus_after_shortfall",
+        "Topf-Auszahlung nach Wohnkosten",
+        "Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0. Der Rest kann ins ETF.",
+        "Modellwahl",
+        "10.000 € Auszahlung und 3.000 € Lücke → 7.000 € fürs ETF.",
+        assumption=(
+            "Im Ruhestand deckt eine Topf-Auszahlung zuerst Wohnkosten, die die Rente nicht trägt. "
+            "Nur der Überschuss geht ins ETF. Ein Monat zeigt nicht gleichzeitig ETF-Einzahlung und negatives Übrig."
+        ),
+    ),
+    Rule(
         "bank-loan-obligation-chart",
         "mortgage.bank_loan_obligation_chart_value",
         "Restschuld im Chart",
@@ -710,6 +722,16 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 lines.append(entry.assumption)
         elif entry.id == "bank-loan-obligation-chart":
             lines.append(entry.assumption)
+        elif entry.id == "pot-surplus-after-shortfall":
+            if any(
+                adult.pots.capital_life
+                or adult.pots.private_lump
+                or adult.pots.private_annuity
+                or adult.pots.riester
+                or adult.pots.altersvorsorgedepot
+                for adult in scenario.adults
+            ):
+                lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)
     return lines

@@ -1062,3 +1062,35 @@ def test_rent_while_living_raises_buy_wealth():
     )
     assert with_rent.buy_final_nominal > base.buy_final_nominal
     assert any("Kaltmiete im eigenen Haus" in line for line in with_rent.assumptions)
+
+
+def test_retirement_without_pots_shows_no_etf_when_rent_exceeds_pension():
+    result = compare(
+        _scenario(
+            adults=[
+                _adult(
+                    birth=date(1960, 1, 1),
+                    work_start=date(1990, 1, 1),
+                    retire_age=67,
+                    care_age=85,
+                    gross_salary=0,
+                    pension_gross_today=900,
+                    depot=80_000,
+                    kaltmiete=1_400,
+                )
+            ],
+            dwelling={"purchase_price": 300_000, "bundesland": "Hessen", "min_equity": False},
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0, "inflation": 0},
+            horizon={"adult_id": "ada", "age": 85},
+        )
+    )
+    for point in result.cashflow:
+        assert point.rent_etf <= 1
+        assert point.buy_etf <= 1 or point.buy_left >= -1
+
+
+def test_retirement_pot_pays_housing_before_etf_surplus():
+    from buy_vs_rent.pots import pot_surplus_after_shortfall
+
+    shortfall = 1_400 - 900
+    assert pot_surplus_after_shortfall(120_000, shortfall) == 120_000 - shortfall

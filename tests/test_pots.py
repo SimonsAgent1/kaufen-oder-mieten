@@ -9,6 +9,7 @@ from buy_vs_rent.pots import (
     avd_monthly_growth_factor,
     avd_sonderausgaben_tax_benefit,
     grundzulage_altersvorsorgedepot,
+    pot_surplus_after_shortfall,
     kinderzulage_altersvorsorgedepot,
     lump_insurance_gain,
     lump_insurance_tax,
@@ -93,6 +94,11 @@ def test_avd_excess_above_1800_is_taxed_in_contribution_year():
         splitting=False,
     )
     assert tax > 0
+
+
+def test_pot_surplus_after_shortfall_hand_worked():
+    assert pot_surplus_after_shortfall(10_000, 3_000) == 7_000
+    assert pot_surplus_after_shortfall(10_000, -100) == 10_000
 
 
 def test_grundzulage_caps_at_540():

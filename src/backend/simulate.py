@@ -52,6 +52,7 @@ from buy_vs_rent.law.de_2026 import (
     kindergeld_until_age,
 )
 from buy_vs_rent.mortgage import initial_payment, payment_to_clear, step_month
+from buy_vs_rent.pots import pot_surplus_after_shortfall
 from buy_vs_rent.pot_ledger import (
     annuity_january_net,
     grow_avd_balances,
@@ -878,6 +879,17 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             depot_empty = True
         income = take_home + pension_net + kindergeld
         buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow
+        if here.all_retired:
+            if pot_inflow > 0:
+                rent_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                    pot_inflow, actual_rent - income
+                )
+                buy_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                    pot_inflow, buy_housing - income
+                )
+            else:
+                rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
+                buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
         rent_gap = 0.0
         buy_gap = 0.0
         if here.in_care:

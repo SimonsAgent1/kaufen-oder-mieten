@@ -186,3 +186,10 @@ def pot_surrender_total(
     if altersvorsorgedepot:
         total += altersvorsorgedepot_balance
     return total
+
+
+def pot_surplus_after_shortfall(pot_cash: float, housing_shortfall: float) -> float:
+    """Pot payout left for the ETF after housing costs the pension does not cover."""
+    if pot_cash <= 0:
+        return 0.0
+    return max(0.0, pot_cash - max(0.0, housing_shortfall))

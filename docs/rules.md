@@ -164,6 +164,14 @@ Quelle: Annuitätenformel.
 
 Probe: Ohne Zins ist es Schuld minus Rate mal Monate, mindestens 0.
 
+## Topf-Auszahlung nach Wohnkosten
+
+Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0. Der Rest kann ins ETF.
+
+Quelle: Modellwahl.
+
+Probe: 10.000 € Auszahlung und 3.000 € Lücke → 7.000 € fürs ETF.
+
 ## Restschuld im Chart
 
 Bank: Restschuld plus noch fällige Zinsen bis Tilgung oder Verkauf. Sollzins bis zur Zinsbindung, danach Anschlusszins und ggf. höhere Rate bis zur Pflege.
