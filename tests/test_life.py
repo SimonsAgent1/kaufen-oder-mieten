@@ -106,6 +106,12 @@ def test_a_household_stays_coherent_through_work_retirement_and_care():
     assert by_year["2056"].rent_etf > 0
     assert by_year["2060"].rent_etf == 0
     assert by_year["2060"].rent_draw > 0
+    both = [
+        point.date
+        for point in result.cashflow
+        if (point.rent_etf > 1 and point.rent_draw > 1) or (point.buy_etf > 1 and point.buy_draw > 1)
+    ]
+    assert both == []
 
     after_care = [point for point in result.series if point.date >= result.care_start]
     assert after_care
