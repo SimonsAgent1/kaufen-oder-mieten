@@ -189,12 +189,13 @@ ENTRIES: tuple[Rule, ...] = (
         "pot-surplus-after-shortfall",
         "pots.pot_surplus_after_shortfall",
         "Topf-Auszahlung nach Wohnkosten",
-        "Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0. Der Rest kann ins ETF.",
+        "Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0.",
         "Modellwahl",
-        "10.000 € Auszahlung und 3.000 € Lücke → 7.000 € fürs ETF.",
+        "10.000 € Auszahlung und 3.000 € Lücke → 7.000 € bleiben als Bargeld in Übrig.",
         assumption=(
-            "Im Ruhestand deckt eine Topf-Auszahlung zuerst Wohnkosten, die die Rente nicht trägt. "
-            "Nur der Überschuss geht ins ETF. Ein Monat zeigt nicht gleichzeitig ETF-Einzahlung und negatives Übrig."
+            "Eine Topf-Auszahlung im Rentenmonat zählt in Übrig und bleibt Bargeld. "
+            "Sie ist keine Sparrate und geht nicht ins ETF. "
+            "Daraus werden Wohnkosten gezahlt, die die Rente nicht trägt."
         ),
     ),
     Rule(

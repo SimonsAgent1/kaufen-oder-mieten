@@ -166,11 +166,11 @@ Probe: Ohne Zins ist es Schuld minus Rate mal Monate, mindestens 0.
 
 ## Topf-Auszahlung nach Wohnkosten
 
-Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0. Der Rest kann ins ETF.
+Auszahlung aus einem Topf minus der Lücke zwischen Wohnkosten und Einkommen, mindestens 0.
 
 Quelle: Modellwahl.
 
-Probe: 10.000 € Auszahlung und 3.000 € Lücke → 7.000 € fürs ETF.
+Probe: 10.000 € Auszahlung und 3.000 € Lücke → 7.000 € bleiben als Bargeld in Übrig.
 
 ## Restschuld im Chart
 
