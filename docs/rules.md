@@ -446,7 +446,7 @@ Probe: 300 € je Kind, zwei Kinder → 600 €.
 
 ## Vergleichsmiete im Monat
 
-Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Auf dem Kaufweg zählt sie als laufende Einnahme, solange Eigentum besteht und noch nicht verkauft ist.
+Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Sie dient dem Kaufpreisfaktor, nicht dem Monatschart.
 
 Quelle: Modellwahl.
 

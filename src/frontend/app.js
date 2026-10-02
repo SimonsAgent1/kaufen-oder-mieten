@@ -1019,7 +1019,7 @@ function mountBeliefs() {
   loanSwitch.innerHTML = `<input type="checkbox" ${scenario.parent_loan ? "checked" : ""}><span class="track"></span>`;
   const loanCaption = document.createElement("span");
   loanCaption.className = "switch-text";
-  loanCaption.textContent = "Zinsloses Darlehen der Eltern";
+  loanCaption.textContent = "Zinsloses Darlehen";
   loanSwitch.append(loanCaption);
   loanSwitch.querySelector("input").addEventListener("change", (event) => {
     scenario.parent_loan = event.target.checked;
@@ -1030,7 +1030,7 @@ function mountBeliefs() {
   buckets.Vermögen.push(
     slider(
       "parent_loan_amount",
-      "Darlehen der Eltern, 0 % Zins",
+      "Darlehen, 0 % Zins",
       0,
       2_000_000,
       1_000,
@@ -1515,7 +1515,7 @@ const RENT_FLOW = [
   ["rent_left", "Übrig", "#94a3b8"],
 ];
 const BUY_FLOW = [
-  ["buy_imputed_rent", "Mietvorteil", "#5b8fc7"],
+  ["buy_living_rent", "Kaltmiete im eigenen Haus", "#5b8fc7"],
   ["buy_rent", "Miete", RENT_COLOR],
   ["buy_interest", "Zinsen", "#c2410c"],
   ["buy_principal", "Tilgung", BUY_COLOR],
@@ -1524,7 +1524,7 @@ const BUY_FLOW = [
   ["buy_left", "Übrig", "#94a3b8"],
 ];
 const HORIZON_MONTH_BUY = [
-  ["buy_imputed_rent", "Mietvorteil"],
+  ["buy_living_rent", "Kaltmiete im eigenen Haus"],
   ["buy_interest", "Zinsen"],
   ["buy_principal", "Tilgung"],
   ["buy_owner", "Eigentümerkosten"],

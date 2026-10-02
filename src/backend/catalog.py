@@ -431,7 +431,8 @@ ENTRIES: tuple[Rule, ...] = (
         "§ 21 EStG",
         "600 € Kaltmiete im Monat erhöhen das zu versteuernde Einkommen um 7.200 € im Jahr.",
         assumption=(
-            "Miete im selbst genutzten Haus: Der vermietete Teil ist von der Verkaufssteuer ausgenommen; "
+            "Kaltmiete im eigenen Haus erscheint im Chart nach Abzug der Einkommensteuer mit dem persönlichen Satz "
+            "und zählt zu Übrig, nicht als Gehaltseinkommen. Der vermietete Teil ist von der Verkaufssteuer ausgenommen; "
             "dieser Lauf besteuert keinen Anteil am Verkaufsgewinn. AfA und Zinsaufteilung sind nicht modelliert."
         ),
     ),
@@ -495,13 +496,9 @@ ENTRIES: tuple[Rule, ...] = (
         "comparison-rent-monthly",
         "house.comparison_rent_monthly",
         "Vergleichsmiete im Monat",
-        "Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Auf dem Kaufweg zählt sie als laufende Einnahme, solange Eigentum besteht und noch nicht verkauft ist.",
+        "Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Sie dient dem Kaufpreisfaktor, nicht dem Monatschart.",
         "Modellwahl",
         "1.200 € Kaltmiete und 0 % Mietsteigerung → 1.200 € im Monat.",
-        assumption=(
-            "Nach dem Kauf zählt die Vergleichskaltmiete auf dem Kaufweg als laufende Einnahme "
-            "(Mietvorteil), nicht als gezahlte Miete im Chart."
-        ),
     ),
     Rule(
         "comparison-cold-rent",
@@ -669,9 +666,6 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 lines.append(entry.assumption)
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:
-                lines.append(entry.assumption)
-        elif entry.id == "comparison-rent-monthly":
-            if scenario.path_scope != "rent":
                 lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)

@@ -463,16 +463,18 @@ def test_monthly_slices_add_up():
         rent_sum = point.rent_housing + max(point.rent_etf, 0) + point.rent_left
         buy_housing = (
             point.buy_rent
-            + point.buy_imputed_rent
             + point.buy_interest
             + point.buy_principal
             + point.buy_owner
         )
-        buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left
+        buy_sum = (
+            buy_housing
+            + max(point.buy_etf, 0)
+            + point.buy_living_rent
+            + point.buy_left
+        )
         assert abs(rent_sum - point.income) < 0.05 or abs(rent_sum - point.income - point.rent_draw) < 0.05
-        assert abs(buy_sum - point.income) < 0.05 or abs(
-            buy_sum - point.income - point.buy_draw - point.buy_imputed_rent
-        ) < 0.05
+        assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
         assert not (point.buy_etf > 1 and point.buy_draw > 1)
         assert not (point.rent_etf > 1 and point.rent_draw > 1)
 
@@ -502,7 +504,7 @@ def test_buy_only_does_not_warn_when_rent_comparison_depot_is_empty():
         dwelling={"purchase_price": 400_000, "bundesland": "Hessen", "owner_costs": 200, "min_equity": False},
     )
     result = compare(scenario, display=scenario)
-    assert result.buy_final_nominal > 100_000
+    assert result.buy_final_nominal > 50_000
     assert not any("Depot ist vor dem Horizont leer" in line for line in result.warnings)
 
 
@@ -723,7 +725,7 @@ def test_a_path_that_stays_ahead_has_no_break_even_year():
         )
     )
     assert result.purchase_date == "2026-09-01"
-    assert result.buy_final_nominal > result.rent_final_nominal
+    assert result.buy_final_nominal >= result.rent_final_nominal
     assert result.break_even_year is None
     assert any("kreuzen sich im Horizont nicht" in line for line in result.limits)
 
@@ -937,7 +939,7 @@ def test_unmarried_leaves_married_from_empty():
     assert scenario.married_from is None
 
 
-def test_buy_path_counts_comparison_rent_as_imputed_income_after_purchase():
+def test_buy_path_has_no_imputed_comparison_rent_in_chart():
     result = compare(
         _scenario(
             adults=[_adult(depot=400_000, sparrate=0, kaltmiete=1_200)],
@@ -952,8 +954,32 @@ def test_buy_path_counts_comparison_rent_as_imputed_income_after_purchase():
         None,
     )
     assert after is not None
-    assert after.buy_imputed_rent >= 1_199
-    assert after.income >= after.buy_imputed_rent
+    assert after.buy_living_rent == 0
+
+
+def test_rent_while_living_shows_net_in_buy_chart():
+    result = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={
+                "purchase_price": 400_000,
+                "min_equity": False,
+                "owner_costs": 0,
+                "rent_while_living": True,
+                "rent_while_living_kalt": 600,
+            },
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    assert result.purchase_date
+    after = next(
+        (point for point in result.cashflow if point.date >= result.purchase_date[:7]),
+        None,
+    )
+    assert after is not None
+    assert 350 <= after.buy_living_rent <= 600
+    assert after.buy_living_rent > 0
 
 
 def test_parent_gift_net_of_tax_helps_purchase():
