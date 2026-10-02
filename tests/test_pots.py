@@ -1,7 +1,11 @@
 """Hand-worked checks for retirement pot formulas."""
 
+from datetime import date
+
+from buy_vs_rent.pot_ledger import january_contributions, ledger_from_adult
 from buy_vs_rent.pots import (
     avd_excess_contribution_tax,
+    avd_grundzulage_and_refund,
     avd_monthly_growth_factor,
     avd_sonderausgaben_tax_benefit,
     grundzulage_altersvorsorgedepot,
@@ -24,14 +28,52 @@ def test_grundzulage_at_1200_own_contribution():
 
 def test_avd_1200_own_has_no_sonderausgaben_beyond_zulage():
     zulage = grundzulage_altersvorsorgedepot(1_200)
-    benefit = avd_sonderausgaben_tax_benefit(
-        1_200,
-        other_zve=60_000,
-        inflation_factor=1.0,
+    to_pot, refund = avd_grundzulage_and_refund(1_200, other_zve=40_000)
+    assert to_pot == zulage
+    assert refund == 0
+    assert avd_sonderausgaben_tax_benefit(1_200, other_zve=40_000) == 0
+    assert avd_excess_contribution_tax(1_200, other_zve=60_000) == 0
+
+
+def test_avd_january_1200_adds_1590_to_pot_without_tax_cash():
+    from buy_vs_rent.scenario import Adult, Scenario
+
+    adult = Adult.model_validate(
+        {
+            "id": "ada",
+            "label": "Ada",
+            "birth": "1990-09-01",
+            "gross_salary": 60_000,
+            "depot": 0,
+            "sparrate": 0,
+            "kaltmiete": 0,
+            "pots": {
+                "altersvorsorgedepot": True,
+                "altersvorsorgedepot_balance": 0,
+                "altersvorsorgedepot_contribution_yearly": 1_200,
+            },
+        }
+    )
+    scenario = Scenario.model_validate(
+        {
+            "as_of": "2027-01-01",
+            "adults": [adult],
+            "dwelling": {"purchase_price": 400_000, "bundesland": "Hessen"},
+        }
+    )
+    ledgers = {adult.id: ledger_from_adult(adult, scenario.as_of)}
+    deduct, tax_cash = january_contributions(
+        scenario,
+        ledgers,
+        date(2027, 1, 1),
+        1.0,
+        0,
+        household_zve=40_000,
         splitting=False,
     )
-    assert benefit <= zulage
-    assert avd_excess_contribution_tax(1_200, other_zve=60_000) == 0
+    assert deduct == 1_200
+    assert tax_cash == 0
+    assert ledgers[adult.id].avd_balance == 1_590
 
 
 def test_avd_excess_above_1800_is_taxed_in_contribution_year():

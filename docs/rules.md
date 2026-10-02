@@ -324,13 +324,21 @@ Quelle: Altersvorsorgereformgesetz, Modell 2027.
 
 Probe: 500 € eigene Beiträge → 300 € je Kind.
 
-## Sonderausgaben Altersvorsorgedepot
+## Günstigerprüfung Altersvorsorgedepot
 
-Abzug höchstens 1.800 € eigene Beiträge. Die Günstigerprüfung setzt die Steuerersparnis auf die Grundzulage, wenn der Abzug mehr bringen würde.
+Entweder Grundzulage in den Topf oder eine Steuerersparnis aus Sonderausgaben bis 1.800 €, je nachdem was höher ist. Liegt die Ersparnis darüber, zahlt das Modell nur die Grundzulage als Erstattung und keine Zulage in den Topf.
 
 Quelle: Altersvorsorgereformgesetz, Modell 2027.
 
-Probe: 1.200 € eigene Beiträge → 390 € Zulage, keine zusätzliche Steuerersparnis in diesem Jahr.
+Probe: 1.200 € eigene Beiträge → 390 € Zulage im Topf, 0 € Steuerersparnis.
+
+## Sonderausgaben Altersvorsorgedepot
+
+Steuerersparnis nur auf dem Sonderausgabenpfad der Günstigerprüfung.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 1.200 € eigene Beiträge → 0 € Erstattung, weil die Zulage höher ist.
 
 ## Beiträge über 1.800 €
 

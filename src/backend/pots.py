@@ -37,6 +37,29 @@ def kinderzulage_total(own_contribution_yearly: float, children: int) -> float:
     return per * children
 
 
+def avd_grundzulage_and_refund(
+    own_contribution_yearly: float,
+    *,
+    other_zve: float,
+    inflation_factor: float = 1.0,
+    splitting: bool = False,
+) -> tuple[float, float]:
+    """Günstigerprüfung: Grundzulage into the pot or a tax refund, not both."""
+    own = max(0.0, own_contribution_yearly)
+    zulage = grundzulage_altersvorsorgedepot(own) * inflation_factor
+    sa_base = min(own, 1_800.0) * inflation_factor
+    if sa_base <= 0:
+        return 0.0, 0.0
+    saving = income_levy(other_zve, inflation_factor, splitting) - income_levy(
+        other_zve - sa_base,
+        inflation_factor,
+        splitting,
+    )
+    if saving > zulage:
+        return 0.0, zulage
+    return zulage, 0.0
+
+
 def avd_sonderausgaben_tax_benefit(
     own_contribution_yearly: float,
     *,
@@ -44,20 +67,14 @@ def avd_sonderausgaben_tax_benefit(
     inflation_factor: float = 1.0,
     splitting: bool = False,
 ) -> float:
-    """Günstigerprüfung: Sonderausgaben up to 1.800 € own; benefit capped at the Grundzulage."""
-    own = max(0.0, own_contribution_yearly)
-    zulage = grundzulage_altersvorsorgedepot(own) * inflation_factor
-    sa_base = min(own, 1_800.0) * inflation_factor
-    if sa_base <= 0:
-        return 0.0
-    saving = income_levy(other_zve, inflation_factor, splitting) - income_levy(
-        other_zve - sa_base,
-        inflation_factor,
-        splitting,
+    """Tax refund leg of the Günstigerprüfung when the Sonderausgaben path wins."""
+    _, refund = avd_grundzulage_and_refund(
+        own_contribution_yearly,
+        other_zve=other_zve,
+        inflation_factor=inflation_factor,
+        splitting=splitting,
     )
-    if saving > zulage:
-        return zulage
-    return saving
+    return refund
 
 
 def avd_excess_contribution_tax(

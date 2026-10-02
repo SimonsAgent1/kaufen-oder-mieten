@@ -364,12 +364,20 @@ ENTRIES: tuple[Rule, ...] = (
         "500 € eigene Beiträge → 300 € je Kind.",
     ),
     Rule(
+        "avd-guenstigerpruefung",
+        "pots.avd_grundzulage_and_refund",
+        "Günstigerprüfung Altersvorsorgedepot",
+        "Entweder Grundzulage in den Topf oder eine Steuerersparnis aus Sonderausgaben bis 1.800 €, je nachdem was höher ist. Liegt die Ersparnis darüber, zahlt das Modell nur die Grundzulage als Erstattung und keine Zulage in den Topf.",
+        "Altersvorsorgereformgesetz, Modell 2027",
+        "1.200 € eigene Beiträge → 390 € Zulage im Topf, 0 € Steuerersparnis.",
+    ),
+    Rule(
         "avd-sonderausgaben",
         "pots.avd_sonderausgaben_tax_benefit",
         "Sonderausgaben Altersvorsorgedepot",
-        "Abzug höchstens 1.800 € eigene Beiträge. Die Günstigerprüfung setzt die Steuerersparnis auf die Grundzulage, wenn der Abzug mehr bringen würde.",
+        "Steuerersparnis nur auf dem Sonderausgabenpfad der Günstigerprüfung.",
         "Altersvorsorgereformgesetz, Modell 2027",
-        "1.200 € eigene Beiträge → 390 € Zulage, keine zusätzliche Steuerersparnis in diesem Jahr.",
+        "1.200 € eigene Beiträge → 0 € Erstattung, weil die Zulage höher ist.",
     ),
     Rule(
         "avd-excess-contribution",

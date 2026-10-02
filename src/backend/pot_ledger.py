@@ -9,8 +9,8 @@ from buy_vs_rent.pots import (
     ALTERSVORSORGEDEPOT_START,
     RIESTER_GRUNDZULAGE_2026,
     avd_excess_contribution_tax,
+    avd_grundzulage_and_refund,
     avd_monthly_growth_factor,
-    avd_sonderausgaben_tax_benefit,
     grundzulage_altersvorsorgedepot,
     kinderzulage_total,
     lump_insurance_gain,
@@ -109,16 +109,16 @@ def january_contributions(
         if pots.altersvorsorgedepot and not ledger.avd_paid and month >= ALTERSVORSORGEDEPOT_START:
             own_nominal = pots.altersvorsorgedepot_contribution_yearly
             own = own_nominal * inflation_factor
-            zulage = grundzulage_altersvorsorgedepot(own_nominal) * inflation_factor
-            kinder = kinderzulage_total(own_nominal, child_count) * inflation_factor
-            ledger.avd_balance += own + zulage + kinder
-            deduct += own
-            tax_cash += avd_sonderausgaben_tax_benefit(
+            zulage, refund = avd_grundzulage_and_refund(
                 own_nominal,
                 other_zve=zve,
                 inflation_factor=inflation_factor,
                 splitting=splitting,
             )
+            kinder = kinderzulage_total(own_nominal, child_count) * inflation_factor
+            ledger.avd_balance += own + zulage + kinder
+            deduct += own
+            tax_cash += refund
             tax_cash -= avd_excess_contribution_tax(
                 own_nominal,
                 other_zve=zve,
