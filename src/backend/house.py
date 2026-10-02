@@ -15,6 +15,11 @@ def comparison_cold_rent_monthly(scenario: Scenario) -> float:
     return monthly
 
 
+def comparison_rent_monthly(scenario: Scenario, rent_growth_factor: float) -> float:
+    """Vergleichskaltmiete for the month, with rent growth applied once per year."""
+    return comparison_cold_rent_monthly(scenario) * rent_growth_factor
+
+
 def price_to_rent(purchase_price: float, scenario: Scenario) -> float | None:
     """Purchase price divided by twelve months of comparison cold rent."""
     monthly = comparison_cold_rent_monthly(scenario)

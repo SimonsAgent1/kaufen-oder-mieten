@@ -391,8 +391,8 @@ ENTRIES: tuple[Rule, ...] = (
         "parent-gift-tax",
         "gifts.gift_tax_parents",
         "Schenkung der Eltern",
-        "Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 EStG.",
-        "§§ 16 Abs. 1 Nr. 2, 19 EStG",
+        "Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 ErbStG.",
+        "§§ 16 Abs. 1 Nr. 2, 19 ErbStG",
         "20.000 € gesamt → 0 € Steuer. 900.000 € gesamt → 7.000 € Steuer.",
         assumption=(
             "Eine Schenkung der Eltern zählt nicht als Einkommen. Sie wird hälftig je Elternteil versteuert, "
@@ -411,8 +411,8 @@ ENTRIES: tuple[Rule, ...] = (
         "inheritance-tax-class-i",
         "gifts.inheritance_tax_class_i",
         "Steuerklasse I",
-        "7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 EStG.",
-        "§ 19 EStG",
+        "7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 ErbStG.",
+        "§ 19 ErbStG",
         "50.000 € steuerpflichtig → 3.500 €.",
     ),
     Rule(
@@ -490,6 +490,18 @@ ENTRIES: tuple[Rule, ...] = (
         "Kinderzulage je Kind mal Anzahl der Kinder unter 25 im Modell.",
         "Altersvorsorgereformgesetz, Modell 2027",
         "300 € je Kind, zwei Kinder → 600 €.",
+    ),
+    Rule(
+        "comparison-rent-monthly",
+        "house.comparison_rent_monthly",
+        "Vergleichsmiete im Monat",
+        "Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Auf dem Kaufweg zählt sie als laufende Einnahme, solange Eigentum besteht und noch nicht verkauft ist.",
+        "Modellwahl",
+        "1.200 € Kaltmiete und 0 % Mietsteigerung → 1.200 € im Monat.",
+        assumption=(
+            "Nach dem Kauf zählt die Vergleichskaltmiete auf dem Kaufweg als laufende Einnahme "
+            "(Mietvorteil), nicht als gezahlte Miete im Chart."
+        ),
     ),
     Rule(
         "comparison-cold-rent",
@@ -657,6 +669,9 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 lines.append(entry.assumption)
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:
+                lines.append(entry.assumption)
+        elif entry.id == "comparison-rent-monthly":
+            if scenario.path_scope != "rent":
                 lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)

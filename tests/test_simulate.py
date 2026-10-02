@@ -461,10 +461,20 @@ def test_monthly_slices_add_up():
     assert result.cashflow
     for point in result.cashflow:
         rent_sum = point.rent_housing + max(point.rent_etf, 0) + point.rent_left
-        buy_housing = point.buy_rent + point.buy_interest + point.buy_principal + point.buy_owner
+        buy_housing = (
+            point.buy_rent
+            + point.buy_imputed_rent
+            + point.buy_interest
+            + point.buy_principal
+            + point.buy_owner
+        )
         buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left
         assert abs(rent_sum - point.income) < 0.05 or abs(rent_sum - point.income - point.rent_draw) < 0.05
-        assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
+        assert abs(buy_sum - point.income) < 0.05 or abs(
+            buy_sum - point.income - point.buy_draw - point.buy_imputed_rent
+        ) < 0.05
+        assert not (point.buy_etf > 1 and point.buy_draw > 1)
+        assert not (point.rent_etf > 1 and point.rent_draw > 1)
 
 
 def test_path_depot_empty_before_horizon_ignores_rent_on_buy_only():
@@ -904,6 +914,25 @@ def test_unmarried_leaves_married_from_empty():
         shared_kaltmiete=1000,
     )
     assert scenario.married_from is None
+
+
+def test_buy_path_counts_comparison_rent_as_imputed_income_after_purchase():
+    result = compare(
+        _scenario(
+            adults=[_adult(depot=400_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={"purchase_price": 350_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0, "rent_growth": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    assert result.purchase_date
+    after = next(
+        (point for point in result.cashflow if point.date >= result.purchase_date[:7]),
+        None,
+    )
+    assert after is not None
+    assert after.buy_imputed_rent >= 1_199
+    assert after.income >= after.buy_imputed_rent
 
 
 def test_parent_gift_net_of_tax_helps_purchase():

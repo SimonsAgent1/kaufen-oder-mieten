@@ -8,7 +8,7 @@ PARENT_GIFT_ALLOWANCE_EACH = 400_000.0
 
 
 def inheritance_tax_class_i(taxable: float) -> float:
-    """§ 19 EStG Steuerklasse I on the taxable share above the Freibetrag."""
+    """§ 19 ErbStG Steuerklasse I on the taxable share above the Freibetrag."""
     if taxable <= 0:
         return 0.0
     bands = (

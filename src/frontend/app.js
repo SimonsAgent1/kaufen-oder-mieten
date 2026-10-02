@@ -1420,6 +1420,7 @@ const RENT_FLOW = [
   ["rent_left", "Übrig", "#94a3b8"],
 ];
 const BUY_FLOW = [
+  ["buy_imputed_rent", "Mietvorteil", "#5b8fc7"],
   ["buy_rent", "Miete", RENT_COLOR],
   ["buy_interest", "Zinsen", "#c2410c"],
   ["buy_principal", "Tilgung", BUY_COLOR],
@@ -1428,6 +1429,7 @@ const BUY_FLOW = [
   ["buy_left", "Übrig", "#94a3b8"],
 ];
 const HORIZON_MONTH_BUY = [
+  ["buy_imputed_rent", "Mietvorteil"],
   ["buy_interest", "Zinsen"],
   ["buy_principal", "Tilgung"],
   ["buy_owner", "Eigentümerkosten"],

@@ -350,9 +350,9 @@ Probe: 200 € über 1.800 € erhöhen die Steuer wie 200 € geförderte Ausza
 
 ## Schenkung der Eltern
 
-Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 EStG.
+Eine Schenkung ist nicht einkommensteuerpflichtig. Der Betrag wird hälftig je Elternteil angesetzt. Je Elternteil gilt ein Freibetrag von 400.000 €. Darüber folgt Steuerklasse I nach § 19 ErbStG.
 
-Quelle: §§ 16 Abs. 1 Nr. 2, 19 EStG.
+Quelle: §§ 16 Abs. 1 Nr. 2, 19 ErbStG.
 
 Probe: 20.000 € gesamt → 0 € Steuer. 900.000 € gesamt → 7.000 € Steuer.
 
@@ -366,9 +366,9 @@ Probe: 10.000 € von einem Elternteil → 0 € Steuer.
 
 ## Steuerklasse I
 
-7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 EStG.
+7 % auf die ersten 75.000 € des steuerpflichtigen Erwerbs, danach höhere Stufen nach § 19 ErbStG.
 
-Quelle: § 19 EStG.
+Quelle: § 19 ErbStG.
 
 Probe: 50.000 € steuerpflichtig → 3.500 €.
 
@@ -443,6 +443,14 @@ Kinderzulage je Kind mal Anzahl der Kinder unter 25 im Modell.
 Quelle: Altersvorsorgereformgesetz, Modell 2027.
 
 Probe: 300 € je Kind, zwei Kinder → 600 €.
+
+## Vergleichsmiete im Monat
+
+Vergleichskaltmiete in Euro von heute, einmal im Jahr mit der Mietsteigerung fortgeschrieben. Auf dem Kaufweg zählt sie als laufende Einnahme, solange Eigentum besteht und noch nicht verkauft ist.
+
+Quelle: Modellwahl.
+
+Probe: 1.200 € Kaltmiete und 0 % Mietsteigerung → 1.200 € im Monat.
 
 ## Vergleichskaltmiete für den Kaufpreisfaktor
 

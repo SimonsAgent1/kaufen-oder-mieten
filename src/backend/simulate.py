@@ -11,6 +11,7 @@ from buy_vs_rent.etf import Portfolio, capital_gains_rate
 from buy_vs_rent.gifts import parent_support_cash
 from buy_vs_rent.house import (
     house_sale_tax,
+    comparison_rent_monthly,
     extra_equity_from_price,
     monthly_owner_costs,
     owner_occupied_exemption,
@@ -101,6 +102,7 @@ class CashPoint:
     rent_draw: float
     rent_left: float
     buy_rent: float
+    buy_imputed_rent: float
     buy_interest: float
     buy_principal: float
     buy_owner: float
@@ -452,6 +454,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 rent_draw=avg("rent_draw"),
                 rent_left=avg("rent_left"),
                 buy_rent=avg("buy_rent"),
+                buy_imputed_rent=avg("buy_imputed_rent"),
                 buy_interest=avg("buy_interest"),
                 buy_principal=avg("buy_principal"),
                 buy_owner=avg("buy_owner"),
@@ -594,13 +597,10 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct + avd_tax_cash
         drawdown = here.all_retired
         invest_rent = invest_base
-        if pot_inflow > 0:
-            etf_tax_rent += rent.deposit(pot_inflow, month.month)
-            etf_tax_buy += buy.deposit(pot_inflow, month.month)
-        if abs(invest_rent) > 1e-9:
-            etf_tax_rent += rent.deposit(invest_rent, month.month)
-            if drawdown:
-                rent_anchor = None
+        rent_month_net = pot_inflow + invest_rent
+        buy_month_net = pot_inflow
+        if invest_rent > 0 and drawdown:
+            rent_anchor = None
         if drawdown and rent_anchor is None:
             rent_anchor = rent.liquidation()[1] / inflation_path
             rent_draw_months = 0
@@ -637,6 +637,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 warning_20 = equity_cash < nebenkosten + move_in + equity_warning_floor(price_now)
 
         buy_still_renting = mortgage is None
+        imputed_rent = 0.0
+        if mortgage is not None and not house_sold and not buy_still_renting:
+            imputed_rent = comparison_rent_monthly(scenario, rent_factor)
         buy_extra = 0.0 if here.in_care else extra_rent(calendar, month, buy_still_renting) * inflation_factor
         buy_rent_flow = (care_copay * inflation_factor) if here.in_care and not buy_still_renting else 0.0
         if buy_still_renting:
@@ -697,7 +700,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     required = payment_to_clear(mortgage.balance, mortgage.rate, months_left)
                     if required > payment_at_purchase:
                         mortgage.payment = required
-                        income_now = take_home + pension_net + kindergeld
+                        income_now = take_home + pension_net + kindergeld + imputed_rent
                         affordable = max(payment_at_purchase, income_now - owner_paid)
                         if mortgage.payment > affordable:
                             mortgage.payment = affordable
@@ -725,7 +728,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 if here.all_retired:
                     buy_etf_flow = 0.0
                 else:
-                    buy_etf_flow = saves + kindergeld + separate_base * rent_factor - owner_out + avd_tax_cash
+                    buy_etf_flow = saves + kindergeld + imputed_rent - owner_out + avd_tax_cash
                     if extra_paid > 0 and buy_etf_flow > 0:
                         buy_etf_flow = max(0.0, buy_etf_flow - extra_paid)
             if dwelling.rent_while_living and not house_sold and not here.in_care:
@@ -737,10 +740,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     splitting=here.married,
                 )
                 buy_etf_flow += gross_rent - rent_tax
-            if abs(buy_etf_flow) > 1e-9:
-                etf_tax_buy += buy.deposit(buy_etf_flow, month.month)
-                if drawdown:
-                    buy_anchor = None
+            buy_month_net += buy_etf_flow
+            if drawdown and buy_etf_flow > 0:
+                buy_anchor = None
             if drawdown and buy_anchor is None:
                 buy_anchor = buy.liquidation()[1] / inflation_path
                 buy_draw_months = 0
@@ -759,10 +761,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         else:
             buy_etf_flow = buy_saving
             buy_rent_flow = lodging_rent + buy_extra
-            if abs(buy_etf_flow) > 1e-9:
-                etf_tax_buy += buy.deposit(buy_etf_flow, month.month)
-                if drawdown:
-                    buy_anchor = None
+            buy_month_net += buy_etf_flow
+            if drawdown and buy_etf_flow > 0:
+                buy_anchor = None
             if drawdown and buy_anchor is None:
                 buy_anchor = buy.liquidation()[1] / inflation_path
                 buy_draw_months = 0
@@ -777,8 +778,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 splitting=here.married,
             )
             kindergeld_by_child.clear()
-            rent.deposit(refund, month.month)
-            buy.deposit(refund, month.month)
+            rent_month_net += refund
+            buy_month_net += refund
 
         if month.month == 12:
             rent.vorabpauschale_tax()
@@ -823,32 +824,41 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             owns_home=mortgage is not None,
         ):
             depot_empty = True
-        income = take_home + pension_net + kindergeld
+        income = take_home + pension_net + kindergeld + imputed_rent
         buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow
+        rent_gap = 0.0
+        buy_gap = 0.0
         if here.in_care:
             rent_gap = max(0.0, actual_rent - income - rent_consume)
-            if rent_gap > 0:
-                etf_tax_rent += rent.deposit(-rent_gap, month.month)
-                rent_consume += rent_gap
+            rent_month_net -= rent_gap
+            rent_consume += rent_gap
             buy_gap = max(0.0, buy_housing - income - buy_consume)
-            if buy_gap > 0:
-                etf_tax_buy += buy.deposit(-buy_gap, month.month)
-                buy_consume += buy_gap
+            buy_month_net -= buy_gap
+            buy_consume += buy_gap
+        if abs(rent_month_net) > 1e-9:
+            etf_tax_rent += rent.deposit(rent_month_net, month.month)
+        if abs(buy_month_net) > 1e-9:
+            etf_tax_buy += buy.deposit(buy_month_net, month.month)
+        rent_etf_display = max(rent_month_net, 0.0)
+        rent_draw_display = max(-rent_month_net, 0.0) + rent_consume
+        buy_etf_display = max(buy_month_net, 0.0)
+        buy_draw_display = max(-buy_month_net, 0.0) + buy_consume
         cash_months.append(
             {
                 "inflation": inflation_factor,
                 "income": income,
                 "rent_housing": actual_rent,
-                "rent_etf": max(invest_rent, 0.0),
-                "rent_draw": max(-invest_rent, 0.0) + rent_consume,
-                "rent_left": income - actual_rent - max(invest_rent, 0.0) + rent_consume,
+                "rent_etf": rent_etf_display,
+                "rent_draw": rent_draw_display,
+                "rent_left": income - actual_rent - rent_etf_display + rent_draw_display,
                 "buy_rent": buy_rent_flow,
+                "buy_imputed_rent": imputed_rent,
                 "buy_interest": buy_interest_flow,
                 "buy_principal": buy_principal_flow,
                 "buy_owner": buy_owner_flow,
-                "buy_etf": max(buy_etf_flow, 0.0),
-                "buy_draw": max(-buy_etf_flow, 0.0) + buy_consume,
-                "buy_left": income - buy_housing - max(buy_etf_flow, 0.0) + buy_consume,
+                "buy_etf": buy_etf_display,
+                "buy_draw": buy_draw_display,
+                "buy_left": income - buy_housing - buy_etf_display + buy_draw_display,
             }
         )
 
