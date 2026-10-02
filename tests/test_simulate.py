@@ -1064,6 +1064,22 @@ def test_rent_while_living_raises_buy_wealth():
     assert any("Kaltmiete im eigenen Haus" in line for line in with_rent.assumptions)
 
 
+def test_loan_chart_series_zero_before_purchase_year():
+    result = compare(
+        _scenario(
+            adults=[_adult(depot=200_000, sparrate=0, kaltmiete=1_000)],
+            dwelling={"purchase_price": 400_000, "bundesland": "Hessen", "min_equity": False},
+            beliefs={"etf_return": 0, "sollzins": 0.03, "inflation": 0},
+            horizon={"adult_id": "ada", "age": 75},
+        )
+    )
+    assert result.purchase_date
+    purchase_year = result.purchase_date[:4]
+    for point in result.series:
+        if point.date[:4] < purchase_year:
+            assert point.loan_balance == 0
+
+
 def test_retirement_without_pots_shows_no_etf_when_rent_exceeds_pension():
     result = compare(
         _scenario(

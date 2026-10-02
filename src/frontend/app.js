@@ -1700,6 +1700,43 @@ function flowStackAxisMax(totals, draws, leftValues) {
   return max;
 }
 
+/** Year-end points only: hold each value until the next year (no diagonal blends). */
+function chartStepLineD(x, values, y) {
+  if (!values.length) return "";
+  let d = `M${x(0).toFixed(1)},${y(values[0]).toFixed(1)}`;
+  for (let i = 1; i < values.length; i += 1) {
+    d += ` H${x(i).toFixed(1)} V${y(values[i]).toFixed(1)}`;
+  }
+  return d;
+}
+
+function chartStepAreaD(x, values, y) {
+  if (!values.length) return "";
+  const base = y(0).toFixed(1);
+  let d = `M${x(0).toFixed(1)},${y(values[0]).toFixed(1)}`;
+  for (let i = 1; i < values.length; i += 1) {
+    d += ` H${x(i).toFixed(1)} V${y(values[i]).toFixed(1)}`;
+  }
+  d += ` H${x(values.length - 1).toFixed(1)} V${base} H${x(0).toFixed(1)} Z`;
+  return d;
+}
+
+function chartStackLayerStepD(x, y, rows, layerIndex) {
+  const n = rows.length;
+  if (n < 2) return "";
+  const topAt = (idx) => rows[idx].slice(0, layerIndex + 1).reduce((total, value) => total + value, 0);
+  const botAt = (idx) => rows[idx].slice(0, layerIndex).reduce((total, value) => total + value, 0);
+  const parts = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    const x0 = x(i).toFixed(1);
+    const x1 = x(i + 1).toFixed(1);
+    const t0 = y(topAt(i)).toFixed(1);
+    const b0 = y(botAt(i)).toFixed(1);
+    parts.push(`M${x0},${b0} H${x1} V${t0} H${x0} Z`);
+  }
+  return parts.join("");
+}
+
 function flowLayerVisible(layerKey, points, real) {
   if (FLOW_LEFT_KEYS.has(layerKey)) return true;
   return points.some((point) => flowAmount(point, layerKey, real) > 1);
@@ -1712,38 +1749,25 @@ function stackLayerValue(layerKey, value) {
 
 function ubrigAreaMarkup(points, leftKey, real, x, y, totals, chartKey) {
   const fills = [];
-  let upper = [];
-  let lower = [];
   const warn = [];
-  const flushFill = () => {
-    if (!upper.length) return;
-    fills.push(
-      `<path class="flow-ubrig-fill" d="M${upper.join(" L")} L${[...lower].reverse().join(" L")} Z" />`,
-    );
-    upper = [];
-    lower = [];
-  };
-  for (let index = 0; index < points.length; index += 1) {
+  for (let index = 0; index < points.length - 1; index += 1) {
     const value = flowUbrigChartValue(points[index], leftKey, real, chartKey);
     const total = totals[index] || 0;
-    const px = x(index).toFixed(1);
-    if (value < -1) {
-      flushFill();
-      const py = y(value).toFixed(1);
-      const prev =
-        index > 0 ? flowUbrigChartValue(points[index - 1], leftKey, real, chartKey) : value;
-      const next =
-        index < points.length - 1 ? flowUbrigChartValue(points[index + 1], leftKey, real, chartKey) : value;
-      if (prev >= -1) warn.push(`M${px},${y(0).toFixed(1)} L${px},${py}`);
-      else warn.push(`M${px},${py}`);
-      if (next >= -1) warn.push(`L${px},${y(0).toFixed(1)}`);
-      continue;
-    }
+    if (value < -1) continue;
     const top = total + Math.max(0, value);
-    upper.push(`${px},${y(top).toFixed(1)}`);
-    lower.push(`${px},${y(total).toFixed(1)}`);
+    const x0 = x(index).toFixed(1);
+    const x1 = x(index + 1).toFixed(1);
+    fills.push(
+      `<path class="flow-ubrig-fill" d="M${x0},${y(total).toFixed(1)} H${x1} V${y(top).toFixed(1)} H${x0} Z" />`,
+    );
   }
-  flushFill();
+  for (let index = 0; index < points.length; index += 1) {
+    const value = flowUbrigChartValue(points[index], leftKey, real, chartKey);
+    if (value >= -1) continue;
+    const px = x(index).toFixed(1);
+    const py = y(value).toFixed(1);
+    warn.push(`M${px},${y(0).toFixed(1)} L${px},${py}`);
+  }
   return [...fills, ...warn.map((path) => `<path class="flow-ubrig-warn-line" d="${path}" />`)].join("");
 }
 
@@ -1787,20 +1811,13 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   const height = band + plotHeight + padBottom;
   const y = (value) => band + plotHeight - ((value - scale.axisMin) / (scale.axisMax - scale.axisMin)) * plotHeight;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  const areas = stackLayers.map((layer, layerIndex) => {
-    const upper = rows.map((row, index) => {
-      const sum = row.slice(0, layerIndex + 1).reduce((total, value) => total + value, 0);
-      return `${x(index).toFixed(1)},${y(sum).toFixed(1)}`;
-    });
-    const lower = rows.map((row, index) => {
-      const sum = row.slice(0, layerIndex).reduce((total, value) => total + value, 0);
-      return `${x(index).toFixed(1)},${y(sum).toFixed(1)}`;
-    }).reverse();
-    return `<path fill="${layer[2]}" fill-opacity="0.88" d="M${upper.join(" L")} L${lower.join(" L")} Z" />`;
-  }).join("");
-  const withdrawal = draw
-    ? `<path class="flow-line" d="${draws.map((value, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(" ")}" />`
-    : "";
+  const areas = stackLayers
+    .map(
+      (layer, layerIndex) =>
+        `<path fill="${layer[2]}" fill-opacity="0.88" d="${chartStackLayerStepD(x, y, rows, layerIndex)}" />`,
+    )
+    .join("");
+  const withdrawal = draw ? `<path class="flow-line" d="${chartStepLineD(x, draws, y)}" />` : "";
   const ticks = yearTicks(points, x).map((tick) => {
     const anchor = tick.x < padX + 16 ? "start" : tick.x > width - padX - 16 ? "end" : "middle";
     return `<line class="tick-mark" x1="${tick.x.toFixed(1)}" y1="${y(0)}" x2="${tick.x.toFixed(1)}" y2="${y(0) + 5}" /><text class="tick" text-anchor="${anchor}" x="${tick.x.toFixed(1)}" y="${height - 8}">${tick.year}</text>`;
@@ -1925,8 +1942,15 @@ function showPlotTip(svg, event, { pin = false } = {}) {
   guide.setAttribute("y2", state.band + state.plotHeight);
   guide.setAttribute("visibility", "visible");
   const year = state.points[index].date.slice(0, 4);
+  const leftVal = state.series.find((item) => item.label === "Übrig")?.values[index] ?? 0;
   const rows = state.series
-    .filter((item) => Math.abs(item.values[index]) > 0.5)
+    .filter((item) => {
+      const value = item.values[index];
+      if (Math.abs(value) <= 0.5) return false;
+      const isEtf = item.label === "ETF" || item.label === "ETF-Entnahme";
+      if (isEtf && leftVal < -1) return false;
+      return true;
+    })
     .map((item) => {
       const value = item.values[index];
       const color =
@@ -2124,11 +2148,10 @@ function paintChart(svg, series, specs, values, plotHeight, prefix, markers) {
   const colors = { buy: BUY_COLOR, rent: RENT_COLOR, loan: BUY_COLOR, etf: BUY_ETF_COLOR };
   const lineLabels = { buy: "Kaufen", rent: "Mieten", loan: "Restschuld", etf: "ETF im Kauf" };
   const paths = specs.map(([key, klass]) => {
-    const points = series.map((point, index) => `${x(index).toFixed(1)},${y(point[key]).toFixed(1)}`);
-    const line = points.map((point, index) => `${index ? "L" : "M"}${point}`).join(" ");
-    const area = `${line} L${x(series.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
+    const values = series.map((point) => point[key]);
+    const line = chartStepLineD(x, values, y);
     const color = colors[klass] || RENT_COLOR;
-    const fill = klass === "etf" ? "" : `<path fill="${color}" fill-opacity="0.14" d="${area}" />`;
+    const fill = klass === "etf" ? "" : `<path fill="${color}" fill-opacity="0.14" d="${chartStepAreaD(x, values, y)}" />`;
     return `${fill}<path class="${klass}-line" fill="none" d="${line}" />`;
   }).join("");
   const marks = placed.map((marker) => {
