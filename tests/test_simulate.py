@@ -282,7 +282,8 @@ def test_the_working_adult_keeps_saving_after_the_other_retires():
     by_year = {point.date[:4]: point for point in result.cashflow}
     assert by_year["2027"].rent_etf == pytest.approx(400, abs=1)
     assert by_year["2029"].rent_etf == 0
-    assert by_year["2029"].rent_draw > 0
+    assert by_year["2029"].rent_draw < 1
+    assert by_year["2029"].rent_left < -3_000
 
 
 def test_extra_rent_defaults_to_zero_and_drops_after_purchase():
@@ -1103,6 +1104,43 @@ def test_retirement_without_pots_shows_no_etf_when_rent_exceeds_pension():
     for point in result.cashflow:
         assert point.rent_etf <= 1
         assert point.buy_etf <= 1 or point.buy_left >= -1
+
+
+def test_cashflow_etf_draw_stops_when_depot_is_empty():
+    """Chart Entnahme is cash from the depot, not the housing gap."""
+    result = compare(
+        _scenario(
+            as_of=date(2026, 1, 1),
+            adults=[
+                _adult(
+                    birth=date(1959, 1, 1),
+                    retire_age=67,
+                    sparrate=500,
+                    gross_salary=40_000,
+                    pension_gross_today=1_500,
+                    depot=5_000,
+                ),
+                _adult(
+                    adult_id="ben",
+                    label="Ben",
+                    birth=date(1961, 1, 1),
+                    retire_age=67,
+                    sparrate=400,
+                    gross_salary=40_000,
+                    pension_gross_today=1_500,
+                ),
+            ],
+            together_from=date(2020, 1, 1),
+            married_from=date(2020, 1, 1),
+            shared_kaltmiete=5_800,
+            horizon={"adult_id": "ben", "age": 70},
+            beliefs={"etf_consume": 1, "etf_return": 0, "inflation": 0},
+        )
+    )
+    late = [point for point in result.cashflow if point.date[:4] >= "2030"]
+    assert late
+    assert all(point.rent_draw < 1 for point in late)
+    assert any(point.rent_left < -1_000 for point in late)
 
 
 def test_retirement_pot_pays_housing_before_etf_surplus():
