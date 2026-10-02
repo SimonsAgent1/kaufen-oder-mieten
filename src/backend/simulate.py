@@ -1025,7 +1025,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         price_band = None
     rent_saving_monthly = sum(saving_amounts) / len(saving_amounts) if saving_amounts else 0.0
     limits = [
-        "Die Zahlen gelten für diesen Haushalt und diese Annahmen. Sie sagen keine Preise voraus und sind keine Beratung.",
         "Keine Vorfälligkeitsentschädigung bei einem früheren Verkauf. Kein Weg für Arbeitslosigkeit oder Trennung.",
         f"Mieten liegt nur vorn, wenn der Unterschied angelegt wird. Solange gespart wird, legt der Mietweg im Schnitt {euro_de(rent_saving_monthly)} € im Monat an.",
     ]

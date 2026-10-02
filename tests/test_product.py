@@ -97,7 +97,7 @@ def test_public_tree_has_no_personal_names():
             assert "Wähle einen gespeicherten" not in text
             assert "günstiger" not in text.lower()
         if path.name == "app.js":
-            assert "Die Zahlen gelten für diesen Haushalt" in text
+            assert "Die Zahlen gelten für diesen Haushalt" not in text
         if path == impressum:
             text = re.sub(
                 r'<main class="legal-body impressum-notice">.*?</main>',

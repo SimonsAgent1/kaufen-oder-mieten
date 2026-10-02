@@ -1472,7 +1472,6 @@ function renderResult(result) {
       ${gapLineHtml(buy, rent)}
       <article class="hero rent path-rent-only"><span>Mieten</span><strong>${summaryAmount(rent)}</strong></article>
     </div>
-    <p class="figures-advice note">Die Zahlen gelten für diesen Haushalt und diese Annahmen. Sie sind keine Beratung.</p>
   `;
   const gapSide = document.querySelector("#figures .hero-gap-side-end");
   if (gapSide && gapInfo) gapSide.append(infoButton(gapInfo));
@@ -1663,6 +1662,24 @@ function flowAmount(point, key, real) {
   return real ? amount / (point.inflation || 1) : amount;
 }
 
+/** Buy-flow scale and Übrig band: living rent counts in Übrig in the tooltip, not in vertical extent. */
+function flowUbrigChartValue(point, leftKey, real, chartKey) {
+  const left = flowAmount(point, leftKey, real);
+  if (chartKey !== "buy-flow" || leftKey !== "buy_left" || left < -1) return left;
+  return left - flowAmount(point, "buy_living_rent", real);
+}
+
+function flowStackAxisMax(totals, draws, leftValues, chartKey) {
+  let max = Math.max(1, ...totals, ...draws);
+  if (chartKey === "buy-flow") return max;
+  for (let index = 0; index < leftValues.length; index += 1) {
+    const left = leftValues[index];
+    if (left < -1) continue;
+    max = Math.max(max, (totals[index] || 0) + Math.max(0, left));
+  }
+  return max;
+}
+
 function flowLayerVisible(layerKey, points, real) {
   if (FLOW_LEFT_KEYS.has(layerKey)) return true;
   return points.some((point) => flowAmount(point, layerKey, real) > 1);
@@ -1673,7 +1690,7 @@ function stackLayerValue(layerKey, value) {
   return Math.max(0, value);
 }
 
-function ubrigAreaMarkup(points, leftKey, real, x, y, totals) {
+function ubrigAreaMarkup(points, leftKey, real, x, y, totals, chartKey) {
   const fills = [];
   let upper = [];
   let lower = [];
@@ -1687,19 +1704,22 @@ function ubrigAreaMarkup(points, leftKey, real, x, y, totals) {
     lower = [];
   };
   for (let index = 0; index < points.length; index += 1) {
-    const value = flowAmount(points[index], leftKey, real);
+    const value = flowUbrigChartValue(points[index], leftKey, real, chartKey);
     const total = totals[index] || 0;
     const px = x(index).toFixed(1);
     if (value < -1) {
       flushFill();
       const py = y(value).toFixed(1);
-      const prev = index > 0 ? flowAmount(points[index - 1], leftKey, real) : value;
-      const next = index < points.length - 1 ? flowAmount(points[index + 1], leftKey, real) : value;
+      const prev =
+        index > 0 ? flowUbrigChartValue(points[index - 1], leftKey, real, chartKey) : value;
+      const next =
+        index < points.length - 1 ? flowUbrigChartValue(points[index + 1], leftKey, real, chartKey) : value;
       if (prev >= -1) warn.push(`M${px},${y(0).toFixed(1)} L${px},${py}`);
       else warn.push(`M${px},${py}`);
       if (next >= -1) warn.push(`L${px},${y(0).toFixed(1)}`);
       continue;
     }
+    if (chartKey === "buy-flow") continue;
     const top = total + Math.max(0, value);
     upper.push(`${px},${y(top).toFixed(1)}`);
     lower.push(`${px},${y(total).toFixed(1)}`);
@@ -1729,10 +1749,12 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
   const totals = rows.map((row) => row.reduce((sum, value) => sum + value, 0));
   const draws = points.map((point) => Math.max(0, flowAmount(point, drawKey, real)));
   const leftLayerKey = shown.find((layer) => FLOW_LEFT_KEYS.has(layer[0]))?.[0];
-  const leftValues = leftLayerKey ? points.map((point) => flowAmount(point, leftLayerKey, real)) : [];
+  const leftValues = leftLayerKey
+    ? points.map((point) => flowUbrigChartValue(point, leftLayerKey, real, chartKey))
+    : [];
   const scale = valueScale(
     leftValues.length ? Math.min(0, ...leftValues) : 0,
-    Math.max(1, ...totals, ...draws, ...(leftValues.length ? leftValues : [0])),
+    flowStackAxisMax(totals, draws, leftValues, chartKey),
   );
   if (!points.length) {
     svg.innerHTML = "";
@@ -1793,7 +1815,9 @@ function paintStack(svg, legend, points, layers, drawKey, real, markers, chartKe
       <circle class="marker-dot" style="fill:${marker.color}" cx="${lineX.toFixed(1)}" cy="${y(stackTop)}" r="3.2" />
       <text class="marker-label" style="fill:${marker.color}" x="${labelX.toFixed(1)}" y="${labelY}" text-anchor="middle">${marker.label}</text>`;
   }).join("");
-  const ubrigOverlay = leftLayerKey ? ubrigAreaMarkup(points, leftLayerKey, real, x, y, totals) : "";
+  const ubrigOverlay = leftLayerKey
+    ? ubrigAreaMarkup(points, leftLayerKey, real, x, y, totals, chartKey)
+    : "";
   svg.innerHTML = `<line class="axis" x1="${padX}" y1="${y(0)}" x2="${width - padX}" y2="${y(0)}" />${levels}${areas}${withdrawal}${ubrigOverlay}${ticks}${marks}
     <line class="hover-guide" visibility="hidden" />
     <rect class="hover-catch" x="${padX}" y="${band}" width="${width - padX * 2}" height="${plotHeight}" fill="transparent" />`;

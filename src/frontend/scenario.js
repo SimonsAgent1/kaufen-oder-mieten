@@ -102,17 +102,23 @@ function removeRow(id) {
 
 async function ensureProfileRow(fetchProfile) {
   if (localStorage.getItem(PROFILE_DISMISSED_KEY)) return;
-  const rows = loadRows();
-  if (rows.some((row) => row.id === PROFILE_ROW_ID)) return;
   const response = await fetchProfile();
   if (!response.ok) return;
   const scenario = await response.json();
-  rows.unshift({
-    id: PROFILE_ROW_ID,
-    label: rowLabel(scenario),
-    scenario,
-    fromProfile: true,
-  });
+  const rows = loadRows();
+  const existing = rows.find((row) => row.id === PROFILE_ROW_ID);
+  if (existing) {
+    existing.scenario = scenario;
+    existing.label = rowLabel(scenario);
+    existing.fromProfile = true;
+  } else {
+    rows.unshift({
+      id: PROFILE_ROW_ID,
+      label: rowLabel(scenario),
+      scenario,
+      fromProfile: true,
+    });
+  }
   saveRows(rows);
 }
 
