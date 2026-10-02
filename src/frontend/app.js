@@ -288,6 +288,69 @@ function coalesceNumber(value, fallback) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function clampSnap(value, min, max, step) {
+  let v = Math.min(max, Math.max(min, value));
+  if (step > 0) {
+    v = Math.round(v / step) * step;
+    const places = Math.max(0, -Math.floor(Math.log10(step)));
+    v = Number(v.toFixed(places + 2));
+    v = Math.min(max, Math.max(min, v));
+  }
+  return v;
+}
+
+function parseGermanNumber(raw) {
+  let s = String(raw).trim().replace(/\u00a0/g, "").replace(/€/g, "").replace(/%/g, "").replace(/Jahre?/gi, "").trim();
+  if (!s) return NaN;
+  if (s.includes(",") && s.includes(".")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (s.includes(",")) {
+    s = s.replace(",", ".");
+  } else if (/\.\d{3}(?:\.\d{3})*$/.test(s)) {
+    s = s.replace(/\./g, "");
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function parseTypedValue(raw, unit, min, max) {
+  const n = parseGermanNumber(raw);
+  if (!Number.isFinite(n)) return NaN;
+  if (unit === "%") {
+    const hadPercent = /%/.test(String(raw));
+    if (hadPercent || n > 1 || (max <= 1 && n > max)) return n / 100;
+    return n;
+  }
+  if (unit === "years" || unit === "") return Math.round(n);
+  return n;
+}
+
+function editTextForValue(value, unit, step) {
+  if (!Number.isFinite(Number(value))) return "";
+  if (unit === "%") {
+    const pct = value * 100;
+    const digits = percentDisplayDecimals(step ?? 0.001);
+    return new Intl.NumberFormat("de-DE", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: digits,
+    }).format(pct);
+  }
+  if (unit === "€") {
+    return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 }).format(value);
+  }
+  if (unit === "years") return String(Math.round(value));
+  return String(Math.round(value));
+}
+
+function applySliderValue(range, out, unit, step, min, max, onInput, value) {
+  const snapped = clampSnap(value, min, max, step);
+  range.value = snapped;
+  out.textContent = formatValue(snapped, unit, step);
+  paintRange(range);
+  onInput(snapped);
+  schedule();
+}
+
 const DWELLING_DEFAULTS = {
   notary_rate: 0.02,
   broker_rate: 0.0357,
@@ -395,12 +458,44 @@ function slider(name, label, min, max, step, value, unit, onInput, infoText) {
   range.setAttribute("aria-label", label);
   const out = document.createElement("output");
   out.textContent = formatValue(start, unit, step);
+  out.tabIndex = 0;
+  out.setAttribute("role", "textbox");
+  out.setAttribute("aria-label", `${label}, Wert eingeben`);
   range.addEventListener("input", () => {
     const next = coalesceNumber(range.value, start);
     out.textContent = formatValue(next, unit, step);
     paintRange(range);
     onInput(next);
     schedule();
+  });
+  out.addEventListener("focus", () => {
+    out.dataset.editing = "1";
+    out.contentEditable = "true";
+    const current = coalesceNumber(range.value, start);
+    out.textContent = editTextForValue(current, unit, step);
+    const selection = window.getSelection();
+    const rangeDoc = document.createRange();
+    rangeDoc.selectNodeContents(out);
+    selection?.removeAllRanges();
+    selection?.addRange(rangeDoc);
+  });
+  out.addEventListener("blur", () => {
+    if (out.dataset.editing !== "1") return;
+    delete out.dataset.editing;
+    out.contentEditable = "false";
+    const previous = coalesceNumber(range.value, start);
+    const parsed = parseTypedValue(out.textContent, unit, min, max);
+    if (!Number.isFinite(parsed)) {
+      out.textContent = formatValue(previous, unit, step);
+      return;
+    }
+    applySliderValue(range, out, unit, step, min, max, onInput, parsed);
+  });
+  out.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      out.blur();
+    }
   });
   paintRange(range);
   wrap.append(caption, range, out);
