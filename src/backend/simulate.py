@@ -469,23 +469,35 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         def avg(key: str) -> float:
             return sum(item[key] for item in cash_months) / count
 
+        rent_flow = sum(item["rent_etf"] - item["rent_draw"] for item in cash_months) / count
+        buy_flow = sum(item["buy_etf"] - item["buy_draw"] for item in cash_months) / count
+        rent_etf = max(rent_flow, 0.0)
+        rent_draw = max(-rent_flow, 0.0)
+        buy_etf = max(buy_flow, 0.0)
+        buy_draw = max(-buy_flow, 0.0)
+        income = avg("income")
+        rent_housing = avg("rent_housing")
+        buy_rent = avg("buy_rent")
+        buy_living = avg("buy_living_rent")
+        buy_housing = buy_rent + avg("buy_interest") + avg("buy_principal") + avg("buy_owner")
+
         cashflow.append(
             CashPoint(
                 date=when.isoformat(),
                 inflation=avg("inflation"),
-                income=avg("income"),
-                rent_housing=avg("rent_housing"),
-                rent_etf=avg("rent_etf"),
-                rent_draw=avg("rent_draw"),
-                rent_left=avg("rent_left"),
-                buy_rent=avg("buy_rent"),
-                buy_living_rent=avg("buy_living_rent"),
+                income=income,
+                rent_housing=rent_housing,
+                rent_etf=rent_etf,
+                rent_draw=rent_draw,
+                rent_left=income - rent_housing - rent_etf + rent_draw,
+                buy_rent=buy_rent,
+                buy_living_rent=buy_living,
                 buy_interest=avg("buy_interest"),
                 buy_principal=avg("buy_principal"),
                 buy_owner=avg("buy_owner"),
-                buy_etf=avg("buy_etf"),
-                buy_draw=avg("buy_draw"),
-                buy_left=avg("buy_left"),
+                buy_etf=buy_etf,
+                buy_draw=buy_draw,
+                buy_left=income - buy_housing - buy_etf - buy_living + buy_draw,
             )
         )
         cash_months.clear()

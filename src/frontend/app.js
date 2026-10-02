@@ -101,20 +101,20 @@ function syncBeliefDisplays() {
   });
 }
 
-const SLIDER_GROUP_ORDER = ["Zeit", "Vermögen", "Wohnen", "Zins", "Regeln", "Pflege"];
+const SLIDER_GROUP_ORDER = ["Arbeit", "Wohnen", "Kredit", "Vermögen", "Lebenslauf", "Rechnung"];
 
 const BELIEF_SLIDER_GROUP = {
   rent_growth: "Wohnen",
   owner_cost_growth: "Wohnen",
   appreciation: "Wohnen",
-  inflation: "Wohnen",
+  inflation: "Rechnung",
   etf_return: "Vermögen",
   ter: "Vermögen",
-  basiszins: "Regeln",
-  tilgung: "Zins",
-  zinsbindung_years: "Zins",
-  sollzins: "Zins",
-  anschlusszins: "Zins",
+  basiszins: "Rechnung",
+  tilgung: "Kredit",
+  zinsbindung_years: "Kredit",
+  sollzins: "Kredit",
+  anschlusszins: "Kredit",
 };
 
 function emptySliderBuckets() {
@@ -792,11 +792,11 @@ function mountCareerControls(buckets, adult, name) {
     syncCareerSliderVisibility(adult);
     schedule();
   });
-  buckets.Zeit.push(jobRow);
+  buckets.Arbeit.push(jobRow);
   const jobStart = parseCareerStart(adult.job_changes[0]?.start);
   const jobGross = adult.job_changes[0]?.gross_salary ?? adult.gross_salary;
   const jobGrowth = adult.job_changes[0]?.salary_growth ?? adult.salary_growth ?? 0.02;
-  buckets.Zeit.push(
+  buckets.Arbeit.push(
     slider(`career-${adult.id}-job-year`, `${name}: Jobwechsel Jahr`, 2000, 2100, 1, jobStart.year, "years", (value) => {
       const parsed = parseCareerStart(adult.job_changes[0]?.start);
       adult.job_changes = [{ start: careerIsoStart(Math.round(value), parsed.month), gross_salary: jobGross, salary_growth: jobGrowth }];
@@ -825,9 +825,9 @@ function mountCareerControls(buckets, adult, name) {
     syncCareerSliderVisibility(adult);
     schedule();
   });
-  buckets.Zeit.push(algRow);
+  buckets.Arbeit.push(algRow);
   const algStart = parseCareerStart(adult.unemployment[0]?.start);
-  buckets.Zeit.push(
+  buckets.Arbeit.push(
     slider(`career-${adult.id}-alg-year`, `${name}: Arbeitslos ab Jahr`, 2000, 2100, 1, algStart.year, "years", (value) => {
       const parsed = parseCareerStart(adult.unemployment[0]?.start);
       adult.unemployment = [{ start: careerIsoStart(Math.round(value), parsed.month) }];
@@ -853,6 +853,47 @@ function mountBeliefs() {
   const buckets = emptySliderBuckets();
   const d = scenario.dwelling;
   const ownerRateShown = ensureOwnerCostsRate();
+  scenario.adults.forEach((adult, index) => {
+    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    buckets.Arbeit.push(
+      slider(`gross-${adult.id}`, `${name}: Brutto im Jahr`, 0, 300_000, 1_000, adult.gross_salary, "€", (value) => {
+        adult.gross_salary = value;
+      }, assumptionLine("Jede Person spart")),
+      slider(`growth-${adult.id}`, `${name}: Gehaltswachstum`, 0, 0.1, 0.001, adult.salary_growth, "%", (value) => {
+        adult.salary_growth = value;
+      }),
+    );
+    mountCareerControls(buckets, adult, name);
+  });
+  scenario.adults.forEach((adult, index) => {
+    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    buckets.Wohnen.push(
+      slider(`rent-${adult.id}`, `${name}: Kaltmiete`, 0, 5_000, 25, adult.kaltmiete, "€", (value) => {
+        adult.kaltmiete = value;
+      }),
+    );
+  });
+  if (scenario.adults.length === 2) {
+    buckets.Wohnen.push(
+      slider("shared_kaltmiete", "Gemeinsame Kaltmiete", 0, 8_000, 25, scenario.shared_kaltmiete, "€", (value) => {
+        scenario.shared_kaltmiete = value;
+      }),
+    );
+  }
+  if (scenario.extra_rent) {
+    buckets.Wohnen.push(
+      slider("extra_rent", "Zuschlag größere Wohnung", 0, 2_000, 25, scenario.extra_rent.amount_2026, "€", (value) => {
+        scenario.extra_rent.amount_2026 = value;
+      }, assumptionLine("Solange ein Weg noch mietet")),
+    );
+  }
+  for (const [name, label, min, max, step, unit] of BELIEFS) {
+    if (name === "rent_growth") {
+      buckets.Wohnen.push(
+        slider(name, label, min, max, step, beliefValue(name), unit, (value) => setBelief(name, value), assumptionLine("Die Mietsteigerung")),
+      );
+    }
+  }
   buckets.Wohnen.push(
     slider("purchase_price", "Kaufpreis", 50_000, 2_000_000, 5_000, d.purchase_price, "€", (value) => {
       d.purchase_price = value;
@@ -926,39 +967,9 @@ function mountBeliefs() {
   }
   scenario.adults.forEach((adult, index) => {
     const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
-    buckets.Zeit.push(
+    buckets.Lebenslauf.push(
       slider(`retire-${adult.id}`, `${name}: Rentenalter`, 55, 75, 1, adult.retire_age, "years", (value) => {
         adult.retire_age = Math.round(value);
-      }),
-      slider(`care-${adult.id}`, `${name}: Pflegealter`, 60, 95, 1, adult.care_age, "years", (value) => {
-        adult.care_age = Math.round(value);
-      }),
-    );
-    mountCareerControls(buckets, adult, name);
-  });
-  const horizonAge = scenario.horizon?.age ?? 100;
-  buckets.Zeit.push(
-    slider("horizon_age", "Alter am Ende der Rechnung", 50, 110, 1, horizonAge, "years", (value) => {
-      if (!scenario.horizon) {
-        const younger = scenario.adults.reduce((best, adult) => (adult.birth > best.birth ? adult : best));
-        scenario.horizon = { adult_id: younger.id, age: Math.round(value) };
-      } else scenario.horizon.age = Math.round(value);
-    }),
-  );
-  scenario.adults.forEach((adult, index) => {
-    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
-    buckets.Vermögen.push(
-      slider(`gross-${adult.id}`, `${name}: Brutto im Jahr`, 0, 300_000, 1_000, adult.gross_salary, "€", (value) => {
-        adult.gross_salary = value;
-      }, assumptionLine("Jede Person spart")),
-      slider(`growth-${adult.id}`, `${name}: Gehaltswachstum`, 0, 0.1, 0.001, adult.salary_growth, "%", (value) => {
-        adult.salary_growth = value;
-      }),
-      slider(`depot-${adult.id}`, `${name}: Depot`, 0, 500_000, 1_000, adult.depot, "€", (value) => {
-        adult.depot = value;
-      }, assumptionLine("Die ETF-Depots")),
-      slider(`spar-${adult.id}`, `${name}: Sparrate im Monat`, 0, 10_000, 50, adult.sparrate, "€", (value) => {
-        adult.sparrate = value;
       }),
     );
     const pension =
@@ -969,11 +980,34 @@ function mountBeliefs() {
       touched.pensions[adult.id] || adult.pension_gross_today != null
         ? `${name}: Rente brutto, Euro von heute`
         : `${name}: Rente brutto, Schätzung, Euro von heute`;
-    buckets.Vermögen.push(
+    buckets.Lebenslauf.push(
       slider(`pension-${adult.id}`, pensionLabel, 0, 6000, 10, pension, "€", (value) => {
         touched.pensions[adult.id] = true;
         adult.pension_gross_today = value;
       }, assumptionLine("Die gesetzliche Rente")),
+      slider(`care-${adult.id}`, `${name}: Pflegealter`, 60, 95, 1, adult.care_age, "years", (value) => {
+        adult.care_age = Math.round(value);
+      }),
+    );
+  });
+  const horizonAge = scenario.horizon?.age ?? 100;
+  buckets.Lebenslauf.push(
+    slider("horizon_age", "Alter am Ende der Rechnung", 50, 110, 1, horizonAge, "years", (value) => {
+      if (!scenario.horizon) {
+        const younger = scenario.adults.reduce((best, adult) => (adult.birth > best.birth ? adult : best));
+        scenario.horizon = { adult_id: younger.id, age: Math.round(value) };
+      } else scenario.horizon.age = Math.round(value);
+    }),
+  );
+  scenario.adults.forEach((adult, index) => {
+    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
+    buckets.Vermögen.push(
+      slider(`depot-${adult.id}`, `${name}: Depot`, 0, 500_000, 1_000, adult.depot, "€", (value) => {
+        adult.depot = value;
+      }, assumptionLine("Die ETF-Depots")),
+      slider(`spar-${adult.id}`, `${name}: Sparrate im Monat`, 0, 10_000, 50, adult.sparrate, "€", (value) => {
+        adult.sparrate = value;
+      }),
     );
     mountAdultPots(buckets, adult, name);
   });
@@ -1042,6 +1076,15 @@ function mountBeliefs() {
     ),
   );
   buckets.Vermögen[buckets.Vermögen.length - 1].hidden = !scenario.parent_loan;
+  const household = document.createElement("label");
+  household.className = "switch belief-switch";
+  household.innerHTML = `<input type="checkbox" ${scenario.beliefs.household_rate !== false ? "checked" : ""}><span class="track"></span><span class="switch-text">Zins nach der Haushaltslage</span>`;
+  household.querySelector("input").addEventListener("change", (event) => {
+    scenario.beliefs.household_rate = event.target.checked;
+    if (!touched.sollzins) scenario.beliefs.sollzins = null;
+    schedule();
+  });
+  buckets.Kredit.push(household);
   for (const [name, label, min, max, step, unit] of BELIEFS) {
     if (name === "etf_return") {
       buckets.Vermögen.push(
@@ -1066,43 +1109,10 @@ function mountBeliefs() {
             ? latest?.anschlusszins_used
             : BELIEF_DEFAULTS[name]
         : current;
-    const group = BELIEF_SLIDER_GROUP[name] || "Regeln";
+    const group = BELIEF_SLIDER_GROUP[name] || "Rechnung";
     buckets[group].push(slider(name, label, min, max, step, shown, unit, (value) => setBelief(name, value)));
   }
   mountEtfChoice(buckets);
-  scenario.adults.forEach((adult, index) => {
-    const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
-    buckets.Wohnen.push(
-      slider(`rent-${adult.id}`, `${name}: Kaltmiete`, 0, 5_000, 25, adult.kaltmiete, "€", (value) => {
-        adult.kaltmiete = value;
-      }),
-    );
-  });
-  if (scenario.adults.length === 2) {
-    buckets.Wohnen.push(
-      slider("shared_kaltmiete", "Gemeinsame Kaltmiete", 0, 8_000, 25, scenario.shared_kaltmiete, "€", (value) => {
-        scenario.shared_kaltmiete = value;
-      }),
-    );
-  }
-  if (scenario.extra_rent) {
-    buckets.Wohnen.push(
-      slider("extra_rent", "Zuschlag größere Wohnung", 0, 2_000, 25, scenario.extra_rent.amount_2026, "€", (value) => {
-        scenario.extra_rent.amount_2026 = value;
-      }, assumptionLine("Solange ein Weg noch mietet")),
-    );
-  }
-  for (const [name, label, min, max, step, unit] of BELIEFS) {
-    if (name === "rent_growth") {
-      buckets.Wohnen.push(
-        slider(name, label, min, max, step, beliefValue(name), unit, (value) => setBelief(name, value), assumptionLine("Die Mietsteigerung")),
-      );
-    } else if (name === "inflation") {
-      buckets.Wohnen.push(
-        slider(name, label, min, max, step, beliefValue(name), unit, (value) => setBelief(name, value), assumptionLine("Die Inflation")),
-      );
-    }
-  }
   const equity = document.createElement("label");
   equity.className = "switch belief-switch";
   equity.innerHTML = `<input type="checkbox" ${scenario.dwelling.min_equity ? "checked" : ""}><span class="track"></span><span class="switch-text">Erst kaufen, wenn Nebenkosten und Eigenkapitalanteil gedeckt sind</span>`;
@@ -1126,7 +1136,7 @@ function mountBeliefs() {
       assumptionLine("Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital"),
     ),
   );
-  buckets.Pflege.push(
+  buckets.Lebenslauf.push(
     slider(
       "care_copay",
       "Eigenanteil Pflege, Euro von 2026",
@@ -1141,15 +1151,6 @@ function mountBeliefs() {
       assumptionLine("Heiz- und andere Kosten"),
     ),
   );
-  const household = document.createElement("label");
-  household.className = "switch belief-switch";
-  household.innerHTML = `<input type="checkbox" ${scenario.beliefs.household_rate !== false ? "checked" : ""}><span class="track"></span><span class="switch-text">Zins nach der Haushaltslage</span>`;
-  household.querySelector("input").addEventListener("change", (event) => {
-    scenario.beliefs.household_rate = event.target.checked;
-    if (!touched.sollzins) scenario.beliefs.sollzins = null;
-    schedule();
-  });
-  buckets.Zins.push(household);
   scenario.adults.forEach((adult, index) => {
     const name = adult.label || (index === 0 ? "Du" : "Zweite Person");
     const block = document.createElement("div");
@@ -1178,9 +1179,16 @@ function mountBeliefs() {
       schedule();
     });
     block.append(consent, church);
-    buckets.Regeln.push(block);
+    buckets.Rechnung.push(block);
   });
-  buckets.Regeln.push(
+  for (const [name, label, min, max, step, unit] of BELIEFS) {
+    if (name === "inflation") {
+      buckets.Rechnung.push(
+        slider(name, label, min, max, step, beliefValue(name), unit, (value) => setBelief(name, value), assumptionLine("Die Inflation")),
+      );
+    }
+  }
+  buckets.Rechnung.push(
     slider("basiszins", "Basiszins Vorabpauschale", 0, 0.06, 0.0001, beliefValue("basiszins"), "%", (value) => setBelief("basiszins", value)),
   );
   mountSliderGroups(host, buckets);

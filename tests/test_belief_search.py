@@ -75,6 +75,14 @@ def test_belief_search_opens_collapsed_slider_groups():
     assert 'closest("details.slider-group")?.setAttribute("open", "")' in app
 
 
+def test_slider_groups_match_plan():
+    app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
+    assert 'SLIDER_GROUP_ORDER = ["Arbeit", "Wohnen", "Kredit", "Vermögen", "Lebenslauf", "Rechnung"]' in app
+    assert "buckets.Arbeit.push" in app
+    assert "buckets.Lebenslauf.push" in app
+    assert "buckets.Kredit.push" in app
+
+
 def test_pot_switch_updates_slider_visibility_without_remount():
     app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
     assert "function syncPotSliderVisibility" in app
