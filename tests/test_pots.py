@@ -1,7 +1,9 @@
 """Hand-worked checks for retirement pot formulas."""
 
 from buy_vs_rent.pots import (
+    avd_excess_contribution_tax,
     avd_monthly_growth_factor,
+    avd_sonderausgaben_tax_benefit,
     grundzulage_altersvorsorgedepot,
     kinderzulage_altersvorsorgedepot,
     lump_insurance_gain,
@@ -18,6 +20,37 @@ def test_avd_monthly_growth_uses_etf_return_without_ter():
 
 def test_grundzulage_at_1200_own_contribution():
     assert grundzulage_altersvorsorgedepot(1_200) == 390
+
+
+def test_avd_1200_own_has_no_sonderausgaben_beyond_zulage():
+    zulage = grundzulage_altersvorsorgedepot(1_200)
+    benefit = avd_sonderausgaben_tax_benefit(
+        1_200,
+        other_zve=60_000,
+        inflation_factor=1.0,
+        splitting=False,
+    )
+    assert benefit <= zulage
+    assert avd_excess_contribution_tax(1_200, other_zve=60_000) == 0
+
+
+def test_avd_excess_above_1800_is_taxed_in_contribution_year():
+    assert (
+        avd_excess_contribution_tax(
+            1_800,
+            other_zve=30_000,
+            inflation_factor=1.0,
+            splitting=False,
+        )
+        == 0
+    )
+    tax = avd_excess_contribution_tax(
+        2_000,
+        other_zve=30_000,
+        inflation_factor=1.0,
+        splitting=False,
+    )
+    assert tax > 0
 
 
 def test_grundzulage_caps_at_540():

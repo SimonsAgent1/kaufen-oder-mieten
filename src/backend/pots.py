@@ -37,6 +37,48 @@ def kinderzulage_total(own_contribution_yearly: float, children: int) -> float:
     return per * children
 
 
+def avd_sonderausgaben_tax_benefit(
+    own_contribution_yearly: float,
+    *,
+    other_zve: float,
+    inflation_factor: float = 1.0,
+    splitting: bool = False,
+) -> float:
+    """Günstigerprüfung: Sonderausgaben up to 1.800 € own; benefit capped at the Grundzulage."""
+    own = max(0.0, own_contribution_yearly)
+    zulage = grundzulage_altersvorsorgedepot(own) * inflation_factor
+    sa_base = min(own, 1_800.0) * inflation_factor
+    if sa_base <= 0:
+        return 0.0
+    saving = income_levy(other_zve, inflation_factor, splitting) - income_levy(
+        other_zve - sa_base,
+        inflation_factor,
+        splitting,
+    )
+    if saving > zulage:
+        return zulage
+    return saving
+
+
+def avd_excess_contribution_tax(
+    own_contribution_yearly: float,
+    *,
+    other_zve: float,
+    inflation_factor: float = 1.0,
+    splitting: bool = False,
+) -> float:
+    """Own contributions above 1.800 € are taxed like a promoted payout in the contribution year."""
+    excess = max(0.0, own_contribution_yearly - 1_800.0) * inflation_factor
+    if excess <= 0:
+        return 0.0
+    return promoted_payout_tax(
+        excess,
+        other_zve=other_zve,
+        inflation_factor=inflation_factor,
+        splitting=splitting,
+    )
+
+
 def lump_insurance_gain(payout: float, premiums_paid: float) -> float:
     return max(0.0, payout - premiums_paid)
 

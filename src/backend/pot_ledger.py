@@ -8,7 +8,9 @@ from datetime import date
 from buy_vs_rent.pots import (
     ALTERSVORSORGEDEPOT_START,
     RIESTER_GRUNDZULAGE_2026,
+    avd_excess_contribution_tax,
     avd_monthly_growth_factor,
+    avd_sonderausgaben_tax_benefit,
     grundzulage_altersvorsorgedepot,
     kinderzulage_total,
     lump_insurance_gain,
@@ -89,11 +91,16 @@ def january_contributions(
     month: date,
     inflation_factor: float,
     child_count: int,
-) -> float:
-    """Own AVD contributions to deduct from ETF savings (both paths)."""
+    *,
+    household_zve: float,
+    splitting: bool,
+) -> tuple[float, float]:
+    """Own AVD contributions to deduct from ETF savings, and net January tax cash (both paths)."""
     if month.month != 1:
-        return 0.0
+        return 0.0, 0.0
     deduct = 0.0
+    tax_cash = 0.0
+    zve = household_zve
     for adult in scenario.adults:
         pots = adult.pots
         ledger = ledgers[adult.id]
@@ -106,7 +113,20 @@ def january_contributions(
             kinder = kinderzulage_total(own_nominal, child_count) * inflation_factor
             ledger.avd_balance += own + zulage + kinder
             deduct += own
-    return deduct
+            tax_cash += avd_sonderausgaben_tax_benefit(
+                own_nominal,
+                other_zve=zve,
+                inflation_factor=inflation_factor,
+                splitting=splitting,
+            )
+            tax_cash -= avd_excess_contribution_tax(
+                own_nominal,
+                other_zve=zve,
+                inflation_factor=inflation_factor,
+                splitting=splitting,
+            )
+            zve += min(own_nominal, 1_800.0) * inflation_factor
+    return deduct, tax_cash
 
 
 def grow_avd_balances(

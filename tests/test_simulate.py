@@ -904,3 +904,44 @@ def test_unmarried_leaves_married_from_empty():
         shared_kaltmiete=1000,
     )
     assert scenario.married_from is None
+
+
+def test_rent_while_living_raises_buy_wealth():
+    from buy_vs_rent.house import rent_while_living_tax_monthly
+
+    monthly_tax = rent_while_living_tax_monthly(
+        600,
+        other_zve_annual=40_000,
+        inflation_factor=1.0,
+        splitting=False,
+    )
+    assert 0 < monthly_tax < 600
+    base = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={
+                "purchase_price": 400_000,
+                "min_equity": False,
+                "owner_costs": 0,
+                "rent_while_living": False,
+            },
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    with_rent = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={
+                "purchase_price": 400_000,
+                "min_equity": False,
+                "owner_costs": 0,
+                "rent_while_living": True,
+                "rent_while_living_kalt": 600,
+            },
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    assert with_rent.buy_final_nominal > base.buy_final_nominal
+    assert any("Kaltmiete im eigenen Haus" in line for line in with_rent.assumptions)

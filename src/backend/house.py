@@ -31,6 +31,22 @@ def price_to_rent_band(factor: float) -> str:
     return "über 25"
 
 
+def rent_while_living_tax_monthly(
+    monthly_cold_rent: float,
+    *,
+    other_zve_annual: float,
+    inflation_factor: float = 1.0,
+    splitting: bool = False,
+) -> float:
+    """§ 21 EStG cold rent while owner-occupied; taxed at the personal rate, not as capital income."""
+    annual = monthly_cold_rent * 12
+    if annual <= 0:
+        return 0.0
+    with_rent = income_levy(other_zve_annual + annual, inflation_factor, splitting)
+    without = income_levy(other_zve_annual, inflation_factor, splitting)
+    return max(0.0, with_rent - without) / 12
+
+
 def monthly_owner_costs(price: float, rate: float) -> float:
     """A share of the purchase price per year, as euros per month."""
     return price * rate / 12

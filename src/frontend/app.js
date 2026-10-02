@@ -516,6 +516,14 @@ const POT_SLIDER_SUFFIXES = {
   altersvorsorgedepot: ["avd_balance", "avd_contrib"],
 };
 
+function syncRentWhileLivingVisibility() {
+  const show = Boolean(scenario?.dwelling?.rent_while_living);
+  const node = document.querySelector(
+    '#beliefs .control[data-control-name="rent_while_living_kalt"]',
+  );
+  if (node) node.hidden = !show;
+}
+
 function syncPotSliderVisibility() {
   if (!scenario?.adults) return;
   for (const adult of scenario.adults) {
@@ -767,6 +775,36 @@ function mountBeliefs() {
       assumptionLine("Eigentümerkosten"),
     ),
   );
+  if (d.rent_while_living == null) d.rent_while_living = false;
+  if (d.rent_while_living_kalt == null) d.rent_while_living_kalt = 600;
+  const rentLivingSwitch = document.createElement("label");
+  rentLivingSwitch.className = "switch belief-switch";
+  rentLivingSwitch.innerHTML = `<input type="checkbox" ${d.rent_while_living ? "checked" : ""}><span class="track"></span>`;
+  const rentLivingCaption = document.createElement("span");
+  rentLivingCaption.className = "switch-text";
+  rentLivingCaption.textContent = "Kaltmiete im eigenen Haus";
+  rentLivingSwitch.append(rentLivingCaption);
+  rentLivingSwitch.querySelector("input").addEventListener("change", (event) => {
+    d.rent_while_living = event.target.checked;
+    syncRentWhileLivingVisibility();
+    schedule();
+  });
+  buckets.Wohnen.push(rentLivingSwitch);
+  buckets.Wohnen.push(
+    slider(
+      "rent_while_living_kalt",
+      "Kaltmiete im eigenen Haus im Monat",
+      0,
+      10_000,
+      50,
+      d.rent_while_living_kalt,
+      "€",
+      (value) => {
+        d.rent_while_living_kalt = value;
+      },
+    ),
+  );
+  buckets.Wohnen[buckets.Wohnen.length - 1].hidden = !d.rent_while_living;
   for (const [name, label, min, max, step, unit] of BELIEFS) {
     if (name === "owner_cost_growth") {
       buckets.Wohnen.push(
@@ -979,6 +1017,7 @@ function mountBeliefs() {
   );
   mountSliderGroups(host, buckets);
   syncPotSliderVisibility();
+  syncRentWhileLivingVisibility();
 }
 
 function schedule() {

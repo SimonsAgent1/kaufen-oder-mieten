@@ -364,6 +364,34 @@ ENTRIES: tuple[Rule, ...] = (
         "500 € eigene Beiträge → 300 € je Kind.",
     ),
     Rule(
+        "avd-sonderausgaben",
+        "pots.avd_sonderausgaben_tax_benefit",
+        "Sonderausgaben Altersvorsorgedepot",
+        "Abzug höchstens 1.800 € eigene Beiträge. Die Günstigerprüfung setzt die Steuerersparnis auf die Grundzulage, wenn der Abzug mehr bringen würde.",
+        "Altersvorsorgereformgesetz, Modell 2027",
+        "1.200 € eigene Beiträge → 390 € Zulage, keine zusätzliche Steuerersparnis in diesem Jahr.",
+    ),
+    Rule(
+        "avd-excess-contribution",
+        "pots.avd_excess_contribution_tax",
+        "Beiträge über 1.800 €",
+        "Eigene Beiträge über 1.800 € im Jahr werden im Beitragsjahr wie eine geförderte Auszahlung besteuert.",
+        "Altersvorsorgereformgesetz, Modell 2027",
+        "200 € über 1.800 € erhöhen die Steuer wie 200 € geförderte Auszahlung.",
+    ),
+    Rule(
+        "rent-while-living-tax",
+        "house.rent_while_living_tax_monthly",
+        "Miete im eigenen Haus",
+        "Kaltmiete von Mitbewohnern ist Einkünfte aus Vermietung und Verpachtung und wird mit dem persönlichen Satz besteuert, nicht als Kapitalertrag.",
+        "§ 21 EStG",
+        "600 € Kaltmiete im Monat erhöhen das zu versteuernde Einkommen um 7.200 € im Jahr.",
+        assumption=(
+            "Miete im selbst genutzten Haus: Der vermietete Teil ist von der Verkaufssteuer ausgenommen; "
+            "dieser Lauf besteuert keinen Anteil am Verkaufsgewinn. AfA und Zinsaufteilung sind nicht modelliert."
+        ),
+    ),
+    Rule(
         "lump-insurance-gain",
         "pots.lump_insurance_gain",
         "Gewinn Kapitalversicherung",
@@ -570,12 +598,19 @@ def result_sentences(scenario: Scenario) -> list[str]:
                     f"Kindererziehungszeiten: {points:.0f} Entgeltpunkte für {who}, alle Kinder zusammen."
                 )
         elif entry.id == "owner-occupied":
-            if scenario.exclusive_own_use_until_sale:
+            if scenario.dwelling.rent_while_living:
+                lines.append(
+                    "Ausschließliche Eigennutzung des ganzen Hauses gilt nicht, solange Kaltmiete im eigenen Haus an ist."
+                )
+            elif scenario.exclusive_own_use_until_sale:
                 lines.append(entry.assumption)
             else:
                 lines.append(
                     "Eigennutzung von Kauf bis Verkauf ist aus. Die Verkaufssteuer folgt Haltedauer und Gewinn."
                 )
+        elif entry.id == "rent-while-living-tax":
+            if scenario.dwelling.rent_while_living:
+                lines.append(entry.assumption)
         else:
             lines.append(entry.assumption)
     return lines

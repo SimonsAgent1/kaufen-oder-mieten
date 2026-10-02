@@ -15,6 +15,7 @@ from buy_vs_rent.house import (
     owner_occupied_exemption,
     price_to_rent,
     price_to_rent_band,
+    rent_while_living_tax_monthly,
     sale_gain,
 )
 from buy_vs_rent.household import (
@@ -555,8 +556,14 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 )
             else:
                 zve += taxable_income(gross, inflation_factor, pv)
-        pot_deduct = january_contributions(
-            scenario, pot_ledgers, month, inflation_factor, here.children
+        pot_deduct, avd_tax_cash = january_contributions(
+            scenario,
+            pot_ledgers,
+            month,
+            inflation_factor,
+            here.children,
+            household_zve=zve,
+            splitting=here.married,
         )
         grow_avd_balances(scenario, pot_ledgers, month, beliefs.etf_return)
         other_zve, splitting = income_at_sale(month, inflation_factor)
@@ -582,7 +589,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             invest_base = 0.0
         else:
             housing_budget = separate_base * rent_factor
-            invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct
+            invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct + avd_tax_cash
         drawdown = here.all_retired
         invest_rent = invest_base
         if pot_inflow > 0:
@@ -634,7 +641,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_saving = (
                 0.0
                 if here.all_retired
-                else saves + kindergeld + separate_base * rent_factor - (lodging_rent + buy_extra) - pot_deduct
+                else saves + kindergeld + separate_base * rent_factor - (lodging_rent + buy_extra) - pot_deduct + avd_tax_cash
             )
         else:
             buy_saving = invest_base if not here.in_care else (0.0 if here.all_retired else saves + kindergeld + separate_base * rent_factor - actual_rent)
@@ -716,9 +723,18 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 if here.all_retired:
                     buy_etf_flow = 0.0
                 else:
-                    buy_etf_flow = saves + kindergeld + separate_base * rent_factor - owner_out
+                    buy_etf_flow = saves + kindergeld + separate_base * rent_factor - owner_out + avd_tax_cash
                     if extra_paid > 0 and buy_etf_flow > 0:
                         buy_etf_flow = max(0.0, buy_etf_flow - extra_paid)
+            if dwelling.rent_while_living and not house_sold and not here.in_care:
+                gross_rent = dwelling.rent_while_living_kalt * inflation_factor
+                rent_tax = rent_while_living_tax_monthly(
+                    gross_rent,
+                    other_zve_annual=zve,
+                    inflation_factor=inflation_factor,
+                    splitting=here.married,
+                )
+                buy_etf_flow += gross_rent - rent_tax
             if abs(buy_etf_flow) > 1e-9:
                 etf_tax_buy += buy.deposit(buy_etf_flow, month.month)
                 if drawdown:
@@ -1104,7 +1120,12 @@ def _assumptions(
         "Das ist eine Illustration, kein Pflegeplan."
     )
     if exempt:
-        if scenario.exclusive_own_use_until_sale:
+        if scenario.dwelling.rent_while_living:
+            lines.append(
+                "Die Verkaufssteuer ist 0 €; der vermietete Teil zählt nicht als Verkaufsgewinn in diesem Lauf. "
+                f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
+            )
+        elif scenario.exclusive_own_use_until_sale:
             lines.append(
                 "Die Verkaufssteuer ist 0 € nur bei ausschließlicher Eigennutzung bis zum Verkauf. "
                 f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."

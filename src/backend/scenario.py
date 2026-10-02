@@ -160,6 +160,8 @@ class Dwelling(BaseModel):
     min_equity: bool = True
     min_equity_share: float = Field(default=0.15, ge=0, le=0.5)
     move_in_cost_2026: float = Field(default=0, ge=0, le=500_000)
+    rent_while_living: bool = False
+    rent_while_living_kalt: float = Field(default=600, ge=0, le=20_000)
 
     @model_validator(mode="after")
     def _sync_owner_costs_from_rate(self) -> Dwelling:

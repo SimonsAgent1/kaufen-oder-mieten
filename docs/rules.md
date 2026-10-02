@@ -324,6 +324,30 @@ Quelle: Altersvorsorgereformgesetz, Modell 2027.
 
 Probe: 500 € eigene Beiträge → 300 € je Kind.
 
+## Sonderausgaben Altersvorsorgedepot
+
+Abzug höchstens 1.800 € eigene Beiträge. Die Günstigerprüfung setzt die Steuerersparnis auf die Grundzulage, wenn der Abzug mehr bringen würde.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 1.200 € eigene Beiträge → 390 € Zulage, keine zusätzliche Steuerersparnis in diesem Jahr.
+
+## Beiträge über 1.800 €
+
+Eigene Beiträge über 1.800 € im Jahr werden im Beitragsjahr wie eine geförderte Auszahlung besteuert.
+
+Quelle: Altersvorsorgereformgesetz, Modell 2027.
+
+Probe: 200 € über 1.800 € erhöhen die Steuer wie 200 € geförderte Auszahlung.
+
+## Miete im eigenen Haus
+
+Kaltmiete von Mitbewohnern ist Einkünfte aus Vermietung und Verpachtung und wird mit dem persönlichen Satz besteuert, nicht als Kapitalertrag.
+
+Quelle: § 21 EStG.
+
+Probe: 600 € Kaltmiete im Monat erhöhen das zu versteuernde Einkommen um 7.200 € im Jahr.
+
 ## Gewinn Kapitalversicherung
 
 Auszahlung minus eingezahlte Beiträge.
