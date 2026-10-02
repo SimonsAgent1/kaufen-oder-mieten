@@ -668,6 +668,27 @@ def test_saved_euros_without_rate_become_yearly_share_once():
     assert dwelling.owner_costs == 200
 
 
+def test_zero_equity_share_warnings_omit_percent():
+    bought = compare(
+        _scenario(
+            adults=[_adult(depot=16_000, sparrate=10_000)],
+            dwelling={"purchase_price": 500_000, "min_equity": False},
+        )
+    )
+    assert bought.warning_below_down_payment
+    assert any("unter den Nebenkosten." in line for line in bought.warnings)
+
+    shortfall = compare(
+        _scenario(
+            adults=[_adult(depot=1_000)],
+            dwelling={"purchase_price": 500_000, "min_equity": True, "min_equity_share": 0.0},
+        )
+    )
+    for line in shortfall.warnings + shortfall.assumptions:
+        assert "0 Prozent" not in line
+    assert any("Heute fehlen" in line and "Kaufnebenkosten" in line for line in shortfall.warnings)
+
+
 def test_min_equity_share_changes_purchase_threshold():
     low = compare(
         _scenario(

@@ -172,6 +172,30 @@ def _percent_de(share: float) -> str:
     return f"{pct:.1f}".replace(".", ",") + " Prozent"
 
 
+def _equity_share_clause(share: float, *, kind: str) -> str:
+    """German phrasing for Nebenkosten with optional equity share of purchase price."""
+    if share > 1e-9:
+        pct = _percent_de(share)
+        if kind == "fuer":
+            return f"Nebenkosten plus {pct} des Kaufpreises"
+        if kind == "unter":
+            return f"den Nebenkosten plus {pct} des Kaufpreises"
+        if kind == "decken":
+            return f"die Nebenkosten plus {pct} des Kaufpreises decken"
+        if kind == "nicht_fuer":
+            return f"Nebenkosten plus {pct} des Kaufpreises"
+        raise ValueError(kind)
+    if kind == "fuer":
+        return "die Kaufnebenkosten"
+    if kind == "unter":
+        return "den Nebenkosten"
+    if kind == "decken":
+        return "die Nebenkosten decken"
+    if kind == "nicht_fuer":
+        return "die Kaufnebenkosten"
+    raise ValueError(kind)
+
+
 def _de_date(value: date) -> str:
     return f"{value.day:02d}.{value.month:02d}.{value.year}"
 
@@ -469,11 +493,10 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     ready_today = opening + external_cash
     move_in_today = dwelling.move_in_cost_2026
     needed_today = nebenkosten_paid + move_in_today + extra_equity_at(dwelling.purchase_price)
-    equity_pct = _percent_de(equity_share)
     if ready_today + 1e-6 < needed_today:
         if dwelling.min_equity:
             warnings.append(
-                f"Heute fehlen {euro_de(needed_today - ready_today)} € für Nebenkosten plus {equity_pct} des Kaufpreises. "
+                f"Heute fehlen {euro_de(needed_today - ready_today)} € für {_equity_share_clause(equity_share, kind='fuer')}. "
                 "Gekauft wird im ersten Monat, in dem Depot und zusätzliches Eigenkapital das erreichen."
             )
         else:
@@ -931,7 +954,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_final = buy_net + external_cash - parent_loan_balance
         if dwelling.min_equity:
             warnings.append(
-                f"Innerhalb des Horizonts reichen Depot und zusätzliches Eigenkapital nicht für Nebenkosten plus {equity_pct} des Kaufpreises. Beide Linien bleiben Miete."
+                f"Innerhalb des Horizonts reichen Depot und zusätzliches Eigenkapital nicht für {_equity_share_clause(equity_share, kind='nicht_fuer')}. Beide Linien bleiben Miete."
             )
         else:
             warnings.append(
@@ -959,7 +982,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
 
     if warning_20 and purchase is not None:
         warnings.append(
-            f"Beim Kauf liegt das Eigenkapital unter den Nebenkosten plus {equity_pct} des Kaufpreises."
+            f"Beim Kauf liegt das Eigenkapital unter {_equity_share_clause(equity_share, kind='unter')}."
         )
     if not eligible(scenario.as_of, 1.0):
         warnings.append("Das zu versteuernde Einkommen liegt über 175.000 €. Dann gibt es kein Elterngeld.")
@@ -1104,9 +1127,10 @@ def _assumptions(
             ]
         )
         if dwelling.min_equity:
-            pct = _percent_de(dwelling.min_equity_share)
+            share = dwelling.min_equity_share
             lines.append(
-                f"Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital die Nebenkosten plus {pct} des Kaufpreises decken."
+                "Gekauft wird erst, wenn Depot und zusätzliches Eigenkapital "
+                f"{_equity_share_clause(share, kind='decken')}."
             )
         else:
             lines.append("Gekauft wird, sobald Depot und zusätzliches Eigenkapital die Nebenkosten decken.")
