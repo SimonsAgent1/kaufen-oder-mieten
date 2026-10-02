@@ -53,6 +53,7 @@ from buy_vs_rent.law.de_2026 import (
     kindergeld_until_age,
 )
 from buy_vs_rent.mortgage import initial_payment, payment_to_clear, step_month
+from buy_vs_rent.pots import pot_surplus_after_shortfall
 from buy_vs_rent.pot_ledger import (
     annuity_january_net,
     grow_avd_balances,
@@ -309,14 +310,6 @@ def _draw_target(
     return blended * inflation_factor
 
 
-def _pay_from_cash_hold(cash: float, shortfall: float) -> tuple[float, float]:
-    """Pay housing shortfall from cash on hand. Returns (cash_left, amount_paid)."""
-    if shortfall <= 1e-9 or cash <= 1e-9:
-        return cash, 0.0
-    paid = min(cash, shortfall)
-    return cash - paid, paid
-
-
 def _etf_net_raised(portfolio: Portfolio, net_needed: float, month: int) -> tuple[float, float]:
     """Sell ETF units for up to `net_needed` after tax. Returns tax paid and cash to the household."""
     if net_needed <= 1e-9 or portfolio.value <= 1e-9:
@@ -481,8 +474,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     series: list[YearPoint] = []
     cash_months: list[dict[str, float]] = []
     cashflow: list[CashPoint] = []
-    rent_cash_hold = 0.0
-    buy_cash_hold = 0.0
     total_months = months_between(scenario.as_of, end)
     separate_base = sum(adult.kaltmiete for adult in scenario.adults)
     pot_ledgers = {adult.id: ledger_from_adult(adult, scenario.as_of) for adult in scenario.adults}
@@ -506,10 +497,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_rent = avg("buy_rent")
         buy_living = avg("buy_living_rent")
         buy_housing = buy_rent + avg("buy_interest") + avg("buy_principal") + avg("buy_owner")
-        pot_flow = avg("pot_inflow")
-        rent_cash_paid = avg("rent_from_cash")
-        buy_cash_paid = avg("buy_from_cash")
-
         cashflow.append(
             CashPoint(
                 date=when.isoformat(),
@@ -518,7 +505,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 rent_housing=rent_housing,
                 rent_etf=rent_etf,
                 rent_draw=rent_draw,
-                rent_left=income + pot_flow + rent_cash_paid - rent_housing - rent_etf + rent_draw,
+                rent_left=income - rent_housing - rent_etf + rent_draw,
                 buy_rent=buy_rent,
                 buy_living_rent=buy_living,
                 buy_interest=avg("buy_interest"),
@@ -526,7 +513,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_owner=avg("buy_owner"),
                 buy_etf=buy_etf,
                 buy_draw=buy_draw,
-                buy_left=income + pot_flow + buy_cash_paid - buy_housing - buy_etf + buy_draw + buy_living,
+                buy_left=income - buy_housing - buy_etf + buy_draw + buy_living,
             )
         )
         cash_months.clear()
@@ -637,10 +624,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         )
         grow_avd_balances(scenario, pot_ledgers, month, beliefs.etf_return)
         other_zve, splitting = income_at_sale(month, inflation_factor)
-        retire_pot_cash = 0.0
-        pot_annuity = 0.0
+        pot_inflow = 0.0
         for adult in scenario.adults:
-            retire_pot_cash += retire_payouts(
+            pot_inflow += retire_payouts(
                 adult,
                 pot_ledgers[adult.id],
                 month,
@@ -648,7 +634,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 inflation_factor=inflation_factor,
                 splitting=splitting,
             )
-            pot_annuity += annuity_january_net(
+            pot_inflow += annuity_january_net(
                 adult,
                 pot_ledgers[adult.id],
                 month,
@@ -656,9 +642,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 inflation_factor=inflation_factor,
                 splitting=splitting,
             )
-        pot_inflow = retire_pot_cash + pot_annuity
-        rent_cash_hold += pot_inflow
-        buy_cash_hold += pot_inflow
         if here.all_retired:
             invest_base = 0.0
         else:
@@ -674,8 +657,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             scenario.parent_loan_tilgung if scenario.parent_loan else 0.0,
         )
         invest_rent = invest_base - parent_interest - parent_principal
-        rent_month_net = invest_rent
-        buy_month_net = 0.0
+        rent_month_net = pot_inflow + invest_rent
+        buy_month_net = pot_inflow
         if invest_rent > 0 and drawdown:
             rent_anchor = None
         if drawdown and rent_anchor is None:
@@ -914,25 +897,24 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             depot_empty = True
         income = take_home + pension_net + kindergeld
         buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow
-        rent_cash_hold, rent_from_cash = _pay_from_cash_hold(
-            rent_cash_hold, max(0.0, actual_rent - income)
-        )
-        buy_cash_hold, buy_from_cash = _pay_from_cash_hold(
-            buy_cash_hold, max(0.0, buy_housing - income)
-        )
         if here.all_retired:
-            rent_month_net = min(rent_month_net, max(0.0, income - actual_rent + rent_from_cash))
-            buy_month_net = min(
-                buy_month_net,
-                max(0.0, income - buy_housing + buy_from_cash) + max(0.0, buy_living_rent),
-            )
+            if pot_inflow > 0:
+                rent_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                    pot_inflow, actual_rent - income
+                )
+                buy_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                    pot_inflow, buy_housing - income
+                )
+            else:
+                rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
+                buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
         if here.in_care:
-            rent_short = max(0.0, actual_rent - income - rent_from_cash - rent_etf_cash)
+            rent_short = max(0.0, actual_rent - income - rent_etf_cash)
             if rent_short > 1e-9:
                 tax, raised = _etf_net_raised(rent, rent_short, month.month)
                 etf_tax_rent += tax
                 rent_etf_cash += raised
-            buy_short = max(0.0, buy_housing - income - buy_from_cash - buy_etf_cash)
+            buy_short = max(0.0, buy_housing - income - buy_etf_cash)
             if buy_short > 1e-9:
                 tax, raised = _etf_net_raised(buy, buy_short, month.month)
                 etf_tax_buy += tax
@@ -959,18 +941,10 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             {
                 "inflation": inflation_factor,
                 "income": income,
-                "pot_inflow": pot_inflow,
                 "rent_housing": actual_rent,
                 "rent_etf": rent_etf_display,
                 "rent_draw": rent_draw_display,
-                "rent_from_cash": rent_from_cash,
-                "buy_from_cash": buy_from_cash,
-                "rent_left": income
-                + pot_inflow
-                + rent_from_cash
-                - actual_rent
-                - rent_etf_display
-                + rent_draw_display,
+                "rent_left": income - actual_rent - rent_etf_display + rent_draw_display,
                 "buy_rent": buy_rent_flow,
                 "buy_living_rent": buy_living_display,
                 "buy_interest": buy_interest_flow,
@@ -979,8 +953,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "buy_etf": buy_etf_display,
                 "buy_draw": buy_draw_display,
                 "buy_left": income
-                + pot_inflow
-                + buy_from_cash
                 - buy_housing
                 - buy_etf_display
                 + buy_draw_display
@@ -1001,10 +973,9 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 + (buy_equity if mortgage else 0.0)
                 + held_cash
                 + pots_market
-                + buy_cash_hold
                 - parent_loan_balance
             )
-            rent_market = rent.liquidation()[1] + pots_market + rent_cash_hold - parent_loan_balance
+            rent_market = rent.liquidation()[1] + pots_market - parent_loan_balance
             loan_chart = 0.0
             if mortgage is not None and not house_sold and mortgage.balance > 0:
                 loan_chart += bank_loan_obligation_chart_value(
@@ -1050,8 +1021,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     etf_tax_rent += rent_tax
     etf_tax_buy += buy_tax
     final_pots = sum(surrender_value(adult, pot_ledgers[adult.id]) for adult in scenario.adults)
-    rent_net += final_pots + rent_cash_hold
-    buy_net += final_pots + buy_cash_hold
+    rent_net += final_pots
+    buy_net += final_pots
     rent_net -= parent_loan_balance
     if house_sold:
         buy_final = buy_net - parent_loan_balance

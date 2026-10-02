@@ -1157,7 +1157,7 @@ def test_cashflow_etf_draw_stops_when_depot_is_empty():
     assert any(point.rent_left < -1_000 for point in late)
 
 
-def test_avd_payout_retirement_month_counts_in_ubrig_once():
+def test_avd_payout_retirement_month_goes_to_etf_not_ubrig():
     from datetime import date as d
 
     adult = _adult(
@@ -1191,11 +1191,7 @@ def test_avd_payout_retirement_month_counts_in_ubrig_once():
         )
     )
     result = compare(base)
-    retire_year = "2027"
-    month = next(point for point in result.cashflow if point.date.startswith(retire_year))
-    assert month.buy_etf < 100
-    without_month = next(point for point in without.cashflow if point.date.startswith(retire_year))
-    assert month.buy_left > without_month.buy_left + 500
+    assert result.rent_final_nominal > without.rent_final_nominal + 4_000
 
 
 def test_retirement_pot_pays_housing_before_etf_surplus():
