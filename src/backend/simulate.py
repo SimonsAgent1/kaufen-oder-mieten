@@ -320,6 +320,13 @@ def _etf_net_raised(portfolio: Portfolio, net_needed: float, month: int) -> tupl
     return tax, max(0.0, before - after)
 
 
+def draw_used_in_ubrig(draw: float, income: float, outflow: float) -> float:
+    """Chart Übrig: ETF-Entnahme zählt nur bis zur Lücke nach Einkommen, nicht zusätzlich auf Übrig."""
+    if draw <= 0:
+        return 0.0
+    return min(draw, max(0.0, outflow - income))
+
+
 def _take_home(net: float, leave: float, benefit: float, retired: bool) -> float:
     if retired:
         return 0.0
@@ -947,27 +954,26 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_etf_display = 0.0
             buy_draw_display = -buy_flow_net
         home_owned = mortgage is not None and not buy_still_renting and not house_sold
-        rent_left_display = income - actual_rent - rent_etf_display + rent_draw_display
-        if home_owned:
-            buy_left_display = income + buy_living_display - buy_etf_display + buy_draw_display
+        rent_outflow = actual_rent + rent_etf_display
+        rent_draw_ubrig = draw_used_in_ubrig(rent_draw_display, income, rent_outflow)
+        rent_left_display = income - rent_outflow + rent_draw_ubrig
+        buy_outflow = buy_housing + buy_etf_display - buy_living_display
+        buy_shortfall = max(0.0, buy_outflow - income)
+        buy_draw_ubrig = draw_used_in_ubrig(buy_draw_display, income, buy_outflow)
+        if home_owned and buy_shortfall <= 0:
+            buy_left_display = income + buy_living_display - buy_etf_display + buy_draw_ubrig
         else:
-            buy_left_display = (
-                income
-                - buy_housing
-                - buy_etf_display
-                + buy_draw_display
-                + buy_living_display
-            )
+            buy_left_display = income + buy_living_display - buy_outflow + buy_draw_ubrig
         if any_retired and not here.all_retired:
             rent_left_display = max(
                 0.0,
-                min(rent_left_display, income - actual_rent + rent_draw_display),
+                min(rent_left_display, income - actual_rent + rent_draw_ubrig),
             )
             buy_left_display = max(
                 0.0,
                 min(
                     buy_left_display,
-                    income - buy_housing + buy_draw_display + buy_living_display,
+                    income - buy_housing + buy_draw_ubrig + buy_living_display,
                 ),
             )
         cash_months.append(

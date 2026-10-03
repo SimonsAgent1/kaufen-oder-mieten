@@ -1012,6 +1012,45 @@ def test_shared_home_rent_periods_apply_only_inside_stretch():
     assert 550 <= by_year["2036"].buy_living_rent <= 900
 
 
+def test_draw_used_in_ubrig_hand_worked():
+    from buy_vs_rent.simulate import draw_used_in_ubrig
+
+    assert draw_used_in_ubrig(800, 2_000, 1_500) == 0
+    assert draw_used_in_ubrig(800, 2_000, 2_500) == 500
+
+
+def test_retirement_draw_does_not_inflate_ubrig_when_income_covers_rent():
+    result = compare(
+        _scenario(
+            as_of=date(2026, 1, 1),
+            adults=[
+                _adult(
+                    birth=date(1959, 1, 1),
+                    retire_age=67,
+                    sparrate=0,
+                    gross_salary=40_000,
+                    pension_gross_today=2_500,
+                    depot=200_000,
+                    kaltmiete=400,
+                )
+            ],
+            dwelling={"purchase_price": 350_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_consume": 1, "etf_return": 0, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 75},
+        )
+    )
+    retired = [point for point in result.cashflow if int(point.date[:4]) >= 2027]
+    assert retired
+    with_draw = [
+        point
+        for point in retired
+        if point.rent_draw > 100 and point.income > point.rent_housing + 100
+    ]
+    assert with_draw
+    for point in with_draw:
+        assert point.rent_left <= point.income - point.rent_housing + 50
+
+
 def test_buy_left_after_purchase_counts_housing_once():
     result = compare(
         _scenario(
