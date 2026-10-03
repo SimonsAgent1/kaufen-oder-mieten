@@ -323,6 +323,19 @@ def _etf_net_raised(portfolio: Portfolio, net_needed: float, month: int) -> tupl
     return tax, max(0.0, before - after)
 
 
+def cap_saving_deposit(
+    deposit: float,
+    income: float,
+    housing: float,
+    *,
+    housing_credit: float = 0.0,
+) -> float:
+    """ETF deposit cannot exceed take-home after housing; extra Sparrate is not invested."""
+    if deposit <= 0:
+        return deposit
+    return min(deposit, max(0.0, income - housing + housing_credit))
+
+
 def draw_used_in_ubrig(draw: float, income: float, outflow: float) -> float:
     """Chart Übrig: ETF-Entnahme zählt nur bis zur Lücke nach Einkommen, nicht zusätzlich auf Übrig."""
     if draw <= 0:
@@ -906,6 +919,14 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
             buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
         buy_living_display = buy_living_rent if buy_living_rent > 1 else 0.0
+        if not here.all_retired:
+            rent_month_net = cap_saving_deposit(rent_month_net, income, actual_rent)
+            buy_month_net = buy_living_display + cap_saving_deposit(
+                buy_month_net - buy_living_display,
+                income,
+                buy_housing,
+                housing_credit=buy_living_display,
+            )
         rent_etf_cash = 0.0
         buy_etf_cash = 0.0
         rent_planned_deposit = max(0.0, rent_month_net) if rent_month_net > 1e-9 else 0.0

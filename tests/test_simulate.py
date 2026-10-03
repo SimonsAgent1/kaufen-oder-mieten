@@ -103,7 +103,7 @@ def test_buys_once_savings_cover_nebenkosten():
             dwelling={"purchase_price": 500_000, "min_equity": False},
         )
     )
-    assert bought.purchase_date == "2027-02-01"
+    assert bought.purchase_date == "2027-11-01"
     assert not bought.warning_below_down_payment
 
 
@@ -134,17 +134,20 @@ def test_move_in_cost_raises_loan_not_rent_wealth():
 def test_fifteen_percent_option_waits_for_costs_plus_down_payment():
     early = compare(
         _scenario(
-            adults=[_adult(depot=16_000, sparrate=10_000)],
-            dwelling={"purchase_price": 500_000, "min_equity": False},
+            adults=[_adult(depot=50_000, sparrate=2_000)],
+            dwelling={"purchase_price": 300_000, "min_equity": False},
+            horizon={"adult_id": "ada", "age": 45},
         )
     )
     waited = compare(
         _scenario(
-            adults=[_adult(depot=16_000, sparrate=10_000)],
-            dwelling={"purchase_price": 500_000, "min_equity": True},
+            adults=[_adult(depot=50_000, sparrate=2_000)],
+            dwelling={"purchase_price": 300_000, "min_equity": True},
+            horizon={"adult_id": "ada", "age": 45},
         )
     )
-    assert early.purchase_date == "2027-02-01"
+    assert early.purchase_date == "2026-09-01"
+    assert waited.purchase_date == "2027-12-01"
     assert waited.purchase_date > early.purchase_date
     assert not waited.warning_below_down_payment
     assert waited.loan_at_purchase < early.loan_at_purchase
@@ -251,6 +254,36 @@ def test_care_replaces_rent_and_sells_the_house():
     assert by_year["2027"].rent_housing == 3_600
     assert by_year["2027"].buy_rent == 3_600
     assert result.series[-1].property_value == 0
+
+
+def test_cap_saving_deposit_hand_worked():
+    from buy_vs_rent.simulate import cap_saving_deposit
+
+    assert cap_saving_deposit(3_000, 2_500, 1_200) == 1_300
+    assert cap_saving_deposit(-500, 2_500, 1_200) == -500
+
+
+def test_sparrate_deposit_capped_while_owning_home():
+    result = compare(
+        _scenario(
+            adults=[
+                _adult(
+                    depot=250_000,
+                    sparrate=3_500,
+                    salary_growth=0.08,
+                    gross_salary=60_000,
+                    kaltmiete=1_200,
+                )
+            ],
+            dwelling={"purchase_price": 400_000, "min_equity": False, "owner_costs": 150},
+            beliefs={"etf_return": 0, "sollzins": 0.03, "anschlusszins": 0, "inflation": 0, "tilgung": 0.1},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    assert result.purchase_date
+    for point in result.cashflow:
+        if point.buy_etf > 100:
+            assert point.buy_left >= -1
 
 
 def test_salary_growth_raises_one_later_sparrate_month():
@@ -738,7 +771,7 @@ def test_purchase_warning_ignores_share_when_equity_switch_off():
             dwelling={"purchase_price": 500_000, "min_equity": False, "min_equity_share": 0.2},
         )
     )
-    assert bought.purchase_date == "2027-02-01"
+    assert bought.purchase_date == "2027-11-01"
     assert not bought.warning_below_down_payment
 
 
