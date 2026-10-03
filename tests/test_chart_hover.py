@@ -27,8 +27,17 @@ def test_charts_use_step_lines_between_years():
     app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
     assert "function chartStepLineD(" in app
     assert "function chartStackLayerStepD(" in app
-    assert 'chartStepLineD(x, values, y)' in app
+    assert "continuousSegment" in app
+    assert "function segmentTouchesMarker(" in app
+    assert "function loanBalanceSegmentSteps(" in app
     assert "if (isEtf && leftVal < -1) return false" in app
+
+
+def test_shared_home_rent_add_uses_quiet_pill_and_remounts():
+    app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
+    assert "Weitere Mietphase" in app
+    assert 'className = "quiet pill"' in app
+    assert "mountBeliefs();\n    schedule();" in app or "mountBeliefs();\n        schedule();" in app
 
 
 def test_profile_row_refreshes_from_api():

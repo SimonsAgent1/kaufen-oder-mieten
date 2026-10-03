@@ -631,10 +631,12 @@ function syncParentMoneyVisibility() {
 
 function ensureSharedHomeRent(dwelling) {
   if (!Array.isArray(dwelling.shared_home_rent)) dwelling.shared_home_rent = [];
+  if (dwelling.shared_home_rent.length) dwelling.rent_while_living = true;
+  const asOfYear = Number(String(scenario?.as_of ?? "2026-01-01").slice(0, 4)) || 2026;
   if (dwelling.rent_while_living && !dwelling.shared_home_rent.length) {
     dwelling.shared_home_rent = [
       {
-        from: "2026-01-01",
+        from: `${asOfYear}-01-01`,
         until: "2099-12-01",
         kalt: dwelling.rent_while_living_kalt ?? 600,
         payer: "stranger",
@@ -644,12 +646,14 @@ function ensureSharedHomeRent(dwelling) {
   if (!dwelling.rent_while_living) dwelling.shared_home_rent = [];
   for (const period of dwelling.shared_home_rent) {
     if (period.payer !== "spouse" && period.payer !== "stranger") period.payer = "stranger";
+    if (period.kalt != null) dwelling.rent_while_living_kalt = period.kalt;
   }
 }
 
 function mountSharedHomePayerChoice(buckets, period, label, hidden) {
   const wrap = document.createElement("div");
   wrap.className = "control etf-choice";
+  wrap.dataset.sharedHomeRentUi = "1";
   wrap.hidden = hidden;
   const caption = document.createElement("span");
   caption.className = "control-label";
@@ -681,10 +685,9 @@ function mountSharedHomePayerChoice(buckets, period, label, hidden) {
 
 function syncRentWhileLivingVisibility() {
   const show = Boolean(scenario?.dwelling?.rent_while_living);
-  const node = document.querySelector(
-    '#beliefs .control[data-control-name="rent_while_living_kalt"]',
-  );
-  if (node) node.hidden = !show;
+  document.querySelectorAll("[data-shared-home-rent-ui]").forEach((node) => {
+    node.hidden = !show;
+  });
 }
 
 function syncPotSliderVisibility() {
@@ -991,41 +994,20 @@ function mountBeliefs() {
   rentLivingSwitch.append(rentLivingCaption);
   rentLivingSwitch.querySelector("input").addEventListener("change", (event) => {
     d.rent_while_living = event.target.checked;
+    if (!d.rent_while_living) d.shared_home_rent = [];
     ensureSharedHomeRent(d);
-    syncRentWhileLivingVisibility();
+    mountBeliefs();
     schedule();
   });
   buckets.Wohnen.push(rentLivingSwitch);
-  buckets.Wohnen.push(
-    slider(
-      "rent_while_living_kalt",
-      "Kaltmiete im eigenen Haus im Monat",
-      0,
-      10_000,
-      50,
-      d.rent_while_living_kalt,
-      "€",
-      (value) => {
-        d.rent_while_living_kalt = value;
-        ensureSharedHomeRent(d);
-        if (d.shared_home_rent[0]) d.shared_home_rent[0].kalt = value;
-      },
-    ),
-  );
-  buckets.Wohnen[buckets.Wohnen.length - 1].hidden = !d.rent_while_living;
-  if (d.shared_home_rent[0]) {
-    mountSharedHomePayerChoice(
-      buckets,
-      d.shared_home_rent[0],
-      "Wer zahlt die Kaltmiete?",
-      !d.rent_while_living,
-    );
-  }
+  const addRentPhaseRow = document.createElement("div");
+  addRentPhaseRow.className = "choices";
+  addRentPhaseRow.dataset.sharedHomeRentUi = "1";
+  addRentPhaseRow.hidden = !d.rent_while_living || d.shared_home_rent.length >= 8;
   const addRentPhase = document.createElement("button");
   addRentPhase.type = "button";
-  addRentPhase.className = "secondary";
+  addRentPhase.className = "quiet pill";
   addRentPhase.textContent = "Weitere Mietphase";
-  addRentPhase.hidden = !d.rent_while_living;
   addRentPhase.addEventListener("click", () => {
     ensureSharedHomeRent(d);
     if (d.shared_home_rent.length >= 8) return;
@@ -1037,55 +1019,61 @@ function mountBeliefs() {
       kalt: d.rent_while_living_kalt ?? 600,
       payer: "stranger",
     });
+    mountBeliefs();
     schedule();
   });
-  buckets.Wohnen.push(addRentPhase);
+  addRentPhaseRow.append(addRentPhase);
+  buckets.Wohnen.push(addRentPhaseRow);
   d.shared_home_rent.forEach((period, index) => {
-    if (index === 0) return;
+    const phaseNum = index + 1;
     const fromYear = Number(period.from.slice(0, 4));
     const untilYear = Number(period.until.slice(0, 4));
-    buckets.Wohnen.push(
-      slider(
-        `shared-home-rent-${index}-from`,
-        `Mietphase ${index + 1}: von Jahr`,
-        2000,
-        2100,
-        1,
-        fromYear,
-        "years",
-        (value) => {
-          period.from = `${Math.round(value)}-01-01`;
-        },
-      ),
-      slider(
-        `shared-home-rent-${index}-until`,
-        `Mietphase ${index + 1}: bis Jahr`,
-        2000,
-        2100,
-        1,
-        untilYear,
-        "years",
-        (value) => {
-          period.until = `${Math.round(value)}-12-01`;
-        },
-      ),
-      slider(
-        `shared-home-rent-${index}-kalt`,
-        `Mietphase ${index + 1}: Kaltmiete`,
-        0,
-        10_000,
-        50,
-        period.kalt,
-        "€",
-        (value) => {
-          period.kalt = value;
-        },
-      ),
+    const fromSlider = slider(
+      `shared-home-rent-${index}-from`,
+      `Mietphase ${phaseNum}: von Jahr`,
+      2000,
+      2100,
+      1,
+      fromYear,
+      "years",
+      (value) => {
+        period.from = `${Math.round(value)}-01-01`;
+      },
     );
+    const untilSlider = slider(
+      `shared-home-rent-${index}-until`,
+      `Mietphase ${phaseNum}: bis Jahr`,
+      2000,
+      2100,
+      1,
+      untilYear,
+      "years",
+      (value) => {
+        period.until = `${Math.round(value)}-12-01`;
+      },
+    );
+    const kaltSlider = slider(
+      `shared-home-rent-${index}-kalt`,
+      `Mietphase ${phaseNum}: Kaltmiete im Monat`,
+      0,
+      10_000,
+      50,
+      period.kalt,
+      "€",
+      (value) => {
+        period.kalt = value;
+        d.rent_while_living_kalt = value;
+      },
+    );
+    for (const node of [fromSlider, untilSlider, kaltSlider]) {
+      node.dataset.sharedHomeRentUi = "1";
+      node.hidden = !d.rent_while_living;
+    }
+    buckets.Wohnen.push(fromSlider, untilSlider, kaltSlider);
     mountSharedHomePayerChoice(
       buckets,
       period,
-      `Mietphase ${index + 1}: Zahler`,
+      `Mietphase ${phaseNum}: Zahler`,
       !d.rent_while_living,
     );
   });
@@ -1845,22 +1833,58 @@ function flowStackAxisMax(totals, draws, leftValues) {
   return max;
 }
 
-/** Year-end points only: hold each value until the next year (no diagonal blends). */
-function chartStepLineD(x, values, y) {
+function segmentTouchesMarker(series, index, markers, chartKeys) {
+  if (!markers?.length || index >= series.length - 1) return false;
+  const start = series[index].date;
+  const end = series[index + 1].date;
+  return markers.some((marker) => {
+    if (!chartKeys.includes(marker.chart)) return false;
+    const when = marker.date;
+    return when > start && when <= end;
+  });
+}
+
+function loanBalanceSegmentSteps(values, index) {
+  const left = Number(values[index]) || 0;
+  const right = Number(values[index + 1]) || 0;
+  return (left <= 1 && right > 1) || (left > 1 && right <= 1);
+}
+
+function etfSegmentSteps(values, index) {
+  const left = Number(values[index]) || 0;
+  const right = Number(values[index + 1]) || 0;
+  return (left > 1 && right < -1) || (left < -1 && right > 1);
+}
+
+function chartMarkerKeys(chartPrefix, klass) {
+  if (chartPrefix === "loan" || klass === "loan") return ["loan", "both"];
+  return ["wealth", "both"];
+}
+
+/** Slopes between years when the series continues; vertical steps at jumps. */
+function chartStepLineD(x, values, y, options = {}) {
+  const continuousSegment = options.continuousSegment ?? (() => false);
   if (!values.length) return "";
   let d = `M${x(0).toFixed(1)},${y(values[0]).toFixed(1)}`;
-  for (let i = 1; i < values.length; i += 1) {
-    d += ` H${x(i).toFixed(1)} V${y(values[i]).toFixed(1)}`;
+  for (let i = 0; i < values.length - 1; i += 1) {
+    const x1 = x(i + 1).toFixed(1);
+    const y1 = y(values[i + 1]).toFixed(1);
+    if (continuousSegment(i)) d += ` L${x1},${y1}`;
+    else d += ` H${x1} V${y1}`;
   }
   return d;
 }
 
-function chartStepAreaD(x, values, y) {
+function chartStepAreaD(x, values, y, options = {}) {
+  const continuousSegment = options.continuousSegment ?? (() => false);
   if (!values.length) return "";
   const base = y(0).toFixed(1);
   let d = `M${x(0).toFixed(1)},${y(values[0]).toFixed(1)}`;
-  for (let i = 1; i < values.length; i += 1) {
-    d += ` H${x(i).toFixed(1)} V${y(values[i]).toFixed(1)}`;
+  for (let i = 0; i < values.length - 1; i += 1) {
+    const x1 = x(i + 1).toFixed(1);
+    const y1 = y(values[i + 1]).toFixed(1);
+    if (continuousSegment(i)) d += ` L${x1},${y1}`;
+    else d += ` H${x1} V${y1}`;
   }
   d += ` H${x(values.length - 1).toFixed(1)} V${base} H${x(0).toFixed(1)} Z`;
   return d;
@@ -2293,10 +2317,20 @@ function paintChart(svg, series, specs, values, plotHeight, prefix, markers) {
   const colors = { buy: BUY_COLOR, rent: RENT_COLOR, loan: BUY_COLOR, etf: BUY_ETF_COLOR };
   const lineLabels = { buy: "Kaufen", rent: "Mieten", loan: "Restschuld", etf: "ETF im Kauf" };
   const paths = specs.map(([key, klass]) => {
-    const values = series.map((point) => point[key]);
-    const line = chartStepLineD(x, values, y);
+    const lineValues = series.map((point) => point[key]);
+    const markerKeys = chartMarkerKeys(prefix, klass);
+    const continuousSegment = (index) => {
+      if (segmentTouchesMarker(series, index, markers, markerKeys)) return false;
+      if (klass === "loan" && loanBalanceSegmentSteps(lineValues, index)) return false;
+      if (klass === "etf" && etfSegmentSteps(lineValues, index)) return false;
+      return true;
+    };
+    const line = chartStepLineD(x, lineValues, y, { continuousSegment });
     const color = colors[klass] || RENT_COLOR;
-    const fill = klass === "etf" ? "" : `<path fill="${color}" fill-opacity="0.14" d="${chartStepAreaD(x, values, y)}" />`;
+    const fill =
+      klass === "etf"
+        ? ""
+        : `<path fill="${color}" fill-opacity="0.14" d="${chartStepAreaD(x, lineValues, y, { continuousSegment })}" />`;
     return `${fill}<path class="${klass}-line" fill="none" d="${line}" />`;
   }).join("");
   const marks = placed.map((marker) => {
