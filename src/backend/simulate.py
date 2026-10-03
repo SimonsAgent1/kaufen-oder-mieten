@@ -856,35 +856,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             rent.vorabpauschale_tax()
             buy.vorabpauschale_tax()
 
-        rent_etf_cash = 0.0
-        buy_etf_cash = 0.0
-        if drawdown and rent_anchor is not None and rent_month_net <= 1e-6:
-            rent_draw_months += 1
-            rent_target = _draw_target(
-                rent_anchor,
-                rent_draw_months,
-                rent_draw_total,
-                real_monthly,
-                beliefs.etf_consume,
-                inflation_path,
-                beliefs.etf_reserve,
-            )
-            tax, rent_etf_cash = rent.trim_to_net(rent_target)
-            etf_tax_rent += tax
-        if drawdown and buy_anchor is not None and buy_month_net <= 1e-6:
-            buy_draw_months += 1
-            buy_target = _draw_target(
-                buy_anchor,
-                buy_draw_months,
-                buy_draw_total,
-                real_monthly,
-                beliefs.etf_consume,
-                inflation_path,
-                beliefs.etf_reserve,
-            )
-            tax, buy_etf_cash = buy.trim_to_net(buy_target)
-            etf_tax_buy += tax
-
         interest_paid += buy_interest_flow
         if not here.all_retired and invest_rent > 0:
             saving_amounts.append(invest_rent)
@@ -908,17 +879,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             else:
                 rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
                 buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
-        if here.in_care:
-            rent_short = max(0.0, actual_rent - income - rent_etf_cash)
-            if rent_short > 1e-9:
-                tax, raised = _etf_net_raised(rent, rent_short, month.month)
-                etf_tax_rent += tax
-                rent_etf_cash += raised
-            buy_short = max(0.0, buy_housing - income - buy_etf_cash)
-            if buy_short > 1e-9:
-                tax, raised = _etf_net_raised(buy, buy_short, month.month)
-                etf_tax_buy += tax
-                buy_etf_cash += raised
+        buy_living_display = buy_living_rent if buy_living_rent > 1 else 0.0
+        rent_etf_cash = 0.0
+        buy_etf_cash = 0.0
+        rent_planned_deposit = max(0.0, rent_month_net) if rent_month_net > 1e-9 else 0.0
+        buy_saving_net = buy_month_net - buy_living_display
+        buy_planned_deposit = max(0.0, buy_saving_net) if buy_saving_net > 1e-9 else 0.0
         if rent_month_net > 1e-9:
             etf_tax_rent += rent.deposit(rent_month_net, month.month)
         elif rent_month_net < -1e-9:
@@ -931,12 +897,61 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             liq0 = buy.liquidation()[1]
             etf_tax_buy += buy.deposit(buy_month_net, month.month)
             buy_etf_cash += max(0.0, liq0 - buy.liquidation()[1])
-        rent_etf_display = max(0.0, rent_month_net) if rent_month_net > 1e-9 else 0.0
+        if drawdown and rent_anchor is not None and rent_month_net <= 1e-6 and rent_planned_deposit <= 1e-9:
+            rent_draw_months += 1
+            rent_target = _draw_target(
+                rent_anchor,
+                rent_draw_months,
+                rent_draw_total,
+                real_monthly,
+                beliefs.etf_consume,
+                inflation_path,
+                beliefs.etf_reserve,
+            )
+            tax, rent_etf_cash = rent.trim_to_net(rent_target)
+            etf_tax_rent += tax
+        if drawdown and buy_anchor is not None and buy_month_net <= 1e-6 and buy_planned_deposit <= 1e-9:
+            buy_draw_months += 1
+            buy_target = _draw_target(
+                buy_anchor,
+                buy_draw_months,
+                buy_draw_total,
+                real_monthly,
+                beliefs.etf_consume,
+                inflation_path,
+                beliefs.etf_reserve,
+            )
+            tax, buy_etf_cash = buy.trim_to_net(buy_target)
+            etf_tax_buy += tax
+        if here.in_care:
+            rent_short = max(0.0, actual_rent - income - rent_etf_cash)
+            if rent_short > 1e-9:
+                tax, raised = _etf_net_raised(rent, rent_short, month.month)
+                etf_tax_rent += tax
+                rent_etf_cash += raised
+            buy_short = max(0.0, buy_housing - income - buy_etf_cash)
+            if buy_short > 1e-9:
+                tax, raised = _etf_net_raised(buy, buy_short, month.month)
+                etf_tax_buy += tax
+                buy_etf_cash += raised
+        rent_etf_display = rent_planned_deposit
         rent_draw_display = max(0.0, rent_etf_cash)
-        buy_living_display = buy_living_rent if buy_living_rent > 1 else 0.0
-        buy_saving_net = buy_month_net - buy_living_display
-        buy_etf_display = max(0.0, buy_saving_net) if buy_saving_net > 1e-9 else 0.0
+        rent_flow_net = rent_etf_display - rent_draw_display
+        if rent_flow_net >= 0:
+            rent_etf_display = rent_flow_net
+            rent_draw_display = 0.0
+        else:
+            rent_etf_display = 0.0
+            rent_draw_display = -rent_flow_net
+        buy_etf_display = buy_planned_deposit
         buy_draw_display = max(0.0, buy_etf_cash)
+        buy_flow_net = buy_etf_display - buy_draw_display
+        if buy_flow_net >= 0:
+            buy_etf_display = buy_flow_net
+            buy_draw_display = 0.0
+        else:
+            buy_etf_display = 0.0
+            buy_draw_display = -buy_flow_net
         cash_months.append(
             {
                 "inflation": inflation_factor,

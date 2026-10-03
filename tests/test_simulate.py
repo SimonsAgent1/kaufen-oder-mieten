@@ -1157,6 +1157,35 @@ def test_cashflow_etf_draw_stops_when_depot_is_empty():
     assert any(point.rent_left < -1_000 for point in late)
 
 
+def test_cashflow_never_shows_etf_in_and_out_same_month():
+    result = compare(
+        _scenario(
+            adults=[
+                _adult(
+                    birth=date(1960, 1, 1),
+                    retire_age=67,
+                    gross_salary=55_000,
+                    pension_gross_today=1_400,
+                    depot=80_000,
+                    sparrate=0,
+                    kaltmiete=1_000,
+                    pots={
+                        "altersvorsorgedepot": True,
+                        "altersvorsorgedepot_balance": 25_000,
+                        "altersvorsorgedepot_contribution_yearly": 0,
+                    },
+                )
+            ],
+            dwelling={"purchase_price": 350_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_consume": 1, "etf_return": 0, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 85},
+        )
+    )
+    for point in result.cashflow:
+        assert not (point.rent_etf > 1 and point.rent_draw > 1)
+        assert not (point.buy_etf > 1 and point.buy_draw > 1)
+
+
 def test_avd_payout_retirement_month_goes_to_etf_not_ubrig():
     from datetime import date as d
 
