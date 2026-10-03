@@ -121,6 +121,27 @@ function emptySliderBuckets() {
   return Object.fromEntries(SLIDER_GROUP_ORDER.map((name) => [name, []]));
 }
 
+function captureSliderGroupState() {
+  const host = document.getElementById("beliefs");
+  if (!host) return { open: new Set(), scrollY: window.scrollY };
+  const open = new Set();
+  host.querySelectorAll("details.slider-group[open]").forEach((el) => {
+    const title = el.querySelector(".slider-group-title span")?.textContent;
+    if (title) open.add(title);
+  });
+  return { open, scrollY: window.scrollY };
+}
+
+function restoreSliderGroupState(state) {
+  const host = document.getElementById("beliefs");
+  if (!host || !state) return;
+  host.querySelectorAll("details.slider-group").forEach((el) => {
+    const title = el.querySelector(".slider-group-title span")?.textContent;
+    if (title && state.open.has(title)) el.setAttribute("open", "");
+  });
+  window.scrollTo(0, state.scrollY);
+}
+
 function mountSliderGroups(host, buckets) {
   for (const title of SLIDER_GROUP_ORDER) {
     const items = buckets[title];
@@ -899,6 +920,7 @@ function mountCareerControls(buckets, adult, name) {
 }
 
 function mountBeliefs() {
+  const groupState = captureSliderGroupState();
   const host = document.getElementById("beliefs");
   host.innerHTML = "";
   normalizeSliderScenario();
@@ -1438,6 +1460,7 @@ function mountBeliefs() {
     slider("basiszins", "Basiszins Vorabpauschale", 0, 0.06, 0.0001, beliefValue("basiszins"), "%", (value) => setBelief("basiszins", value)),
   );
   mountSliderGroups(host, buckets);
+  restoreSliderGroupState(groupState);
   syncPotSliderVisibility();
   syncRentWhileLivingVisibility();
   syncParentMoneyVisibility();

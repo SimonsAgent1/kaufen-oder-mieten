@@ -707,6 +707,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
 
         buy_still_renting = mortgage is None
         buy_living_rent = 0.0
+        sold_house_this_month = False
         buy_extra = 0.0 if here.in_care else extra_rent(calendar, month, buy_still_renting) * inflation_factor
         buy_rent_flow = (care_copay * inflation_factor) if here.in_care and not buy_still_renting else 0.0
         if buy_still_renting:
@@ -750,6 +751,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 mortgage.balance = 0.0
                 mortgage.payment = 0.0
                 house_sold = True
+                sold_house_this_month = True
                 buy_anchor = None
             owner_paid = owner_base * owner_factor
             cash_interest = 0.0
@@ -935,7 +937,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 etf_tax_rent += tax
                 rent_etf_cash += raised
             buy_short = max(0.0, buy_housing - income - buy_etf_cash)
-            if buy_short > 1e-9:
+            if buy_short > 1e-9 and not sold_house_this_month:
                 tax, raised = _etf_net_raised(buy, buy_short, month.month)
                 etf_tax_buy += tax
                 buy_etf_cash += raised

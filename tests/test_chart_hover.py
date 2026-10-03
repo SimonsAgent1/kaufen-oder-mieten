@@ -40,6 +40,12 @@ def test_shared_home_rent_add_uses_quiet_pill_and_remounts():
     assert "mountBeliefs();\n    schedule();" in app or "mountBeliefs();\n        schedule();" in app
 
 
+def test_mount_beliefs_keeps_open_slider_groups():
+    app = (ROOT / "src" / "frontend" / "app.js").read_text(encoding="utf-8")
+    assert "function captureSliderGroupState()" in app
+    assert "restoreSliderGroupState(groupState)" in app
+
+
 def test_profile_row_refreshes_from_api():
     scenario = (ROOT / "src" / "frontend" / "scenario.js").read_text(encoding="utf-8")
     assert "existing.scenario = scenario" in scenario

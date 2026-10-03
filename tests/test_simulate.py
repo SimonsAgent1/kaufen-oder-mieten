@@ -176,6 +176,48 @@ def test_high_follow_up_rate_pays_the_loan_off_by_care():
     )
 
 
+def test_care_sale_month_does_not_raise_etf_for_copay():
+    result = compare(
+        _scenario(
+            as_of=date(2026, 1, 1),
+            adults=[
+                _adult(
+                    birth=date(1950, 3, 1),
+                    care_age=76,
+                    depot=60_000,
+                    sparrate=0,
+                    kaltmiete=900,
+                    pension_gross_today=2_000,
+                    gross_salary=0,
+                )
+            ],
+            beliefs={
+                "etf_return": 0,
+                "ter": 0,
+                "inflation": 0,
+                "sollzins": 0,
+                "anschlusszins": 0,
+                "etf_consume": 0,
+            },
+            dwelling={
+                "purchase_price": 350_000,
+                "appreciation": 0,
+                "owner_costs": 0,
+                "min_equity": False,
+                "notary_rate": 0,
+                "broker_rate": 0,
+                "transfer_tax": 0,
+                "selling_cost_rate": 0,
+            },
+            horizon={"adult_id": "ada", "age": 78},
+        )
+    )
+    care_year = result.care_start[:4]
+    at_care = next(point for point in result.series if point.date.startswith(care_year))
+    assert at_care.property_value == 0
+    assert at_care.buy_real >= 42_000
+
+
 def test_care_replaces_rent_and_sells_the_house():
     result = compare(
         _scenario(
