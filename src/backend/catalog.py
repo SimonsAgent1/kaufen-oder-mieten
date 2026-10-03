@@ -490,9 +490,9 @@ ENTRIES: tuple[Rule, ...] = (
         "shared-home-rent-period",
         "house.shared_home_living_rent_net",
         "Kaltmiete im eigenen Haus, Zeiträume",
-        "Pro Monat gilt höchstens eine Mietphase mit Start, Ende und Kaltmiete. Netto nach Steuer zählt in Übrig.",
+        "Pro Monat gilt höchstens eine Mietphase mit Start, Ende, Kaltmiete und Zahler. Fremder: § 21, persönlicher Satz. Ehepartner: volle Kaltmiete in Übrig, ohne zweite Steuer auf die Miete.",
         "§ 21 EStG; Modellwahl",
-        "600 € in einer aktiven Phase → Netto wie bei der Einzelmiete.",
+        "600 € Kaltmiete, Zahler Fremder → Netto wie bei der Einzelmiete; Zahler Ehepartner → 600 €.",
     ),
     Rule(
         "rent-while-living-tax",
@@ -734,7 +734,12 @@ def result_sentences(scenario: Scenario) -> list[str]:
                 )
         elif entry.id == "rent-while-living-tax":
             if scenario.dwelling.shared_home_rent:
-                lines.append(entry.assumption)
+                if any(period.payer == "stranger" for period in scenario.dwelling.shared_home_rent):
+                    lines.append(entry.assumption)
+                if any(period.payer == "spouse" for period in scenario.dwelling.shared_home_rent):
+                    lines.append(
+                        "Kaltmiete vom Ehepartner zählt als voller Zufluss in Übrig; sie wird nicht noch einmal als §-21-Miete besteuert."
+                    )
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:
                 lines.append(entry.assumption)

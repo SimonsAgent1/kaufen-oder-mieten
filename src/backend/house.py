@@ -54,12 +54,17 @@ def rent_while_living_tax_monthly(
     return max(0.0, with_rent - without) / 12
 
 
-def _shared_home_rent_gross_monthly(dwelling: Dwelling, month: date, inflation_factor: float) -> float:
-    """Cold rent from a shared-home stretch that covers `month`, if any."""
+def _shared_home_rent_split_monthly(
+    dwelling: Dwelling, month: date, inflation_factor: float
+) -> tuple[float, float]:
+    """Cold rent in the active stretch: (stranger §21 gross, spouse inflow gross)."""
     for period in dwelling.shared_home_rent:
         if period.start <= month <= period.until:
-            return period.kalt * inflation_factor
-    return 0.0
+            gross = period.kalt * inflation_factor
+            if period.payer == "spouse":
+                return 0.0, gross
+            return gross, 0.0
+    return 0.0, 0.0
 
 
 def shared_home_living_rent_net(
@@ -70,16 +75,19 @@ def shared_home_living_rent_net(
     inflation_factor: float,
     splitting: bool,
 ) -> float:
-    gross = _shared_home_rent_gross_monthly(dwelling, month, inflation_factor)
-    if gross <= 0:
+    stranger_gross, spouse_gross = _shared_home_rent_split_monthly(dwelling, month, inflation_factor)
+    if stranger_gross <= 0 and spouse_gross <= 0:
         return 0.0
-    tax = rent_while_living_tax_monthly(
-        gross,
-        other_zve_annual=other_zve_annual,
-        inflation_factor=inflation_factor,
-        splitting=splitting,
-    )
-    return gross - tax
+    stranger_net = stranger_gross
+    if stranger_gross > 0:
+        tax = rent_while_living_tax_monthly(
+            stranger_gross,
+            other_zve_annual=other_zve_annual,
+            inflation_factor=inflation_factor,
+            splitting=splitting,
+        )
+        stranger_net = stranger_gross - tax
+    return stranger_net + spouse_gross
 
 
 def monthly_owner_costs(price: float, rate: float) -> float:

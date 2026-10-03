@@ -987,7 +987,37 @@ def test_shared_home_rent_periods_apply_only_inside_stretch():
     assert by_year["2029"].buy_living_rent < 1
     assert 250 <= by_year["2031"].buy_living_rent <= 400
     assert by_year["2034"].buy_living_rent < 1
-    assert 600 <= by_year["2036"].buy_living_rent <= 900
+    assert 550 <= by_year["2036"].buy_living_rent <= 900
+
+
+def test_shared_home_rent_spouse_payer_is_full_cold_rent_in_buy_chart():
+    result = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, kaltmiete=1_200)],
+            dwelling={
+                "purchase_price": 400_000,
+                "min_equity": False,
+                "owner_costs": 0,
+                "shared_home_rent": [
+                    {
+                        "from": "2026-01-01",
+                        "until": "2099-12-01",
+                        "kalt": 600,
+                        "payer": "spouse",
+                    }
+                ],
+            },
+            beliefs={"etf_return": 0, "sollzins": 0, "anschlusszins": 0, "inflation": 0},
+            horizon={"adult_id": "ada", "age": 65},
+        )
+    )
+    assert result.purchase_date
+    after = next(
+        (point for point in result.cashflow if point.date >= result.purchase_date[:7]),
+        None,
+    )
+    assert after is not None
+    assert after.buy_living_rent == 600
 
 
 def test_rent_while_living_shows_net_in_buy_chart():

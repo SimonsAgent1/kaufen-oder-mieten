@@ -422,11 +422,11 @@ Probe: 100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.
 
 ## Kaltmiete im eigenen Haus, Zeiträume
 
-Pro Monat gilt höchstens eine Mietphase mit Start, Ende und Kaltmiete. Netto nach Steuer zählt in Übrig.
+Pro Monat gilt höchstens eine Mietphase mit Start, Ende, Kaltmiete und Zahler. Fremder: § 21, persönlicher Satz. Ehepartner: volle Kaltmiete in Übrig, ohne zweite Steuer auf die Miete.
 
 Quelle: § 21 EStG; Modellwahl.
 
-Probe: 600 € in einer aktiven Phase → Netto wie bei der Einzelmiete.
+Probe: 600 € Kaltmiete, Zahler Fremder → Netto wie bei der Einzelmiete; Zahler Ehepartner → 600 €.
 
 ## Miete im eigenen Haus
 

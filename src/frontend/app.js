@@ -637,10 +637,46 @@ function ensureSharedHomeRent(dwelling) {
         from: "2026-01-01",
         until: "2099-12-01",
         kalt: dwelling.rent_while_living_kalt ?? 600,
+        payer: "stranger",
       },
     ];
   }
   if (!dwelling.rent_while_living) dwelling.shared_home_rent = [];
+  for (const period of dwelling.shared_home_rent) {
+    if (period.payer !== "spouse" && period.payer !== "stranger") period.payer = "stranger";
+  }
+}
+
+function mountSharedHomePayerChoice(buckets, period, label, hidden) {
+  const wrap = document.createElement("div");
+  wrap.className = "control etf-choice";
+  wrap.hidden = hidden;
+  const caption = document.createElement("span");
+  caption.className = "control-label";
+  caption.textContent = label;
+  const choices = document.createElement("div");
+  choices.className = "choices etf-choices";
+  const stranger = document.createElement("button");
+  stranger.type = "button";
+  stranger.textContent = "Fremder";
+  stranger.className = period.payer !== "spouse" ? "primary" : "";
+  const spouse = document.createElement("button");
+  spouse.type = "button";
+  spouse.textContent = "Ehepartner";
+  spouse.className = period.payer === "spouse" ? "primary" : "";
+  stranger.addEventListener("click", () => {
+    period.payer = "stranger";
+    mountBeliefs();
+    schedule();
+  });
+  spouse.addEventListener("click", () => {
+    period.payer = "spouse";
+    mountBeliefs();
+    schedule();
+  });
+  choices.append(stranger, spouse);
+  wrap.append(caption, choices);
+  buckets.Wohnen.push(wrap);
 }
 
 function syncRentWhileLivingVisibility() {
@@ -977,6 +1013,14 @@ function mountBeliefs() {
     ),
   );
   buckets.Wohnen[buckets.Wohnen.length - 1].hidden = !d.rent_while_living;
+  if (d.shared_home_rent[0]) {
+    mountSharedHomePayerChoice(
+      buckets,
+      d.shared_home_rent[0],
+      "Wer zahlt die Kaltmiete?",
+      !d.rent_while_living,
+    );
+  }
   const addRentPhase = document.createElement("button");
   addRentPhase.type = "button";
   addRentPhase.className = "secondary";
@@ -991,6 +1035,7 @@ function mountBeliefs() {
       from: `${startYear}-01-01`,
       until: "2099-12-01",
       kalt: d.rent_while_living_kalt ?? 600,
+      payer: "stranger",
     });
     schedule();
   });
@@ -1036,6 +1081,12 @@ function mountBeliefs() {
           period.kalt = value;
         },
       ),
+    );
+    mountSharedHomePayerChoice(
+      buckets,
+      period,
+      `Mietphase ${index + 1}: Zahler`,
+      !d.rent_while_living,
     );
   });
   for (const [name, label, min, max, step, unit] of BELIEFS) {

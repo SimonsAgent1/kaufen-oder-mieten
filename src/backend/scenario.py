@@ -150,6 +150,7 @@ class SharedHomeRentPeriod(BaseModel):
     start: date = Field(alias="from")
     until: date
     kalt: float = Field(ge=0, le=20_000)
+    payer: Literal["stranger", "spouse"] = "stranger"
 
     @field_validator("start", "until")
     @classmethod
