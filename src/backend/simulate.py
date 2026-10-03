@@ -952,12 +952,10 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         else:
             buy_etf_display = 0.0
             buy_draw_display = -buy_flow_net
-        home_owned = mortgage is not None and not buy_still_renting and not house_sold
         rent_outflow = actual_rent + rent_etf_display
         rent_draw_ubrig = draw_used_in_ubrig(rent_draw_display, income, rent_outflow)
         rent_left_display = income - rent_outflow + rent_draw_ubrig
         buy_outflow = buy_housing + buy_etf_display - buy_living_display
-        buy_shortfall = max(0.0, buy_outflow - income)
         buy_draw_ubrig = draw_used_in_ubrig(buy_draw_display, income, buy_outflow)
         buy_left_display = income + buy_living_display - buy_outflow + buy_draw_ubrig
         if pot_inflow > 0:
