@@ -462,6 +462,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         return zve, splitting
 
     external_cash, _, parent_loan_balance = parent_support_cash(scenario)
+    parent_loan_original = scenario.parent_loan_amount if scenario.parent_loan else 0.0
     buy = new_portfolio(opening)
     rent = new_portfolio(opening + external_cash)
     mortgage: _Mortgage | None = None
@@ -630,7 +631,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 can_claim,
                 sibling_bonus(calendar, month, adult.id),
             )
-            saves += _scaled_sparrate(adult.sparrate, growth, retired, leave, benefit, net)
+            saves += _scaled_sparrate(adult.sparrate, inflation_factor, retired, leave, benefit, net)
             take_home += _take_home(net, leave, benefit, retired)
             if retired:
                 pension_net += net_monthly_pension(
@@ -672,8 +673,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         if here.all_retired:
             invest_base = 0.0
         else:
-            housing_budget = separate_base * rent_factor
-            invest_base = saves + kindergeld + housing_budget - actual_rent - pot_deduct + avd_tax_cash
+            invest_base = saves + kindergeld - pot_deduct + avd_tax_cash
         drawdown = here.all_retired
         parent_interest = parent_loan_interest_monthly(
             parent_loan_balance,
@@ -682,6 +682,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         parent_principal = parent_loan_principal_monthly(
             parent_loan_balance,
             scenario.parent_loan_tilgung if scenario.parent_loan else 0.0,
+            parent_loan_original,
         )
         invest_rent = invest_base - parent_interest - parent_principal
         rent_month_net = pot_inflow + invest_rent
@@ -732,10 +733,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_saving = (
                 0.0
                 if here.all_retired
-                else saves + kindergeld + separate_base * rent_factor - (lodging_rent + buy_extra) - pot_deduct + avd_tax_cash
+                else saves + kindergeld - (lodging_rent + buy_extra) - pot_deduct + avd_tax_cash
             )
         else:
-            buy_saving = invest_base if not here.in_care else (0.0 if here.all_retired else saves + kindergeld + separate_base * rent_factor - actual_rent)
+            buy_saving = invest_base if not here.in_care else (
+                0.0 if here.all_retired else saves + kindergeld - actual_rent - pot_deduct + avd_tax_cash
+            )
         buy_interest_flow = 0.0
         buy_principal_flow = 0.0
         buy_parent_interest_flow = 0.0
@@ -869,8 +872,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_month_net -= parent_interest + parent_principal
             was_parent = parent_loan_balance
             parent_loan_balance = max(0.0, parent_loan_balance - parent_principal)
-            if parent_loan_balance < 100.0 and scenario.parent_loan_tilgung > 0:
-                if parent_payoff is None and was_parent >= 100.0:
+            if parent_loan_balance < 1e-6:
+                if scenario.parent_loan_tilgung > 0 and parent_payoff is None and was_parent >= 1e-6:
                     parent_payoff = month.isoformat()
                 parent_loan_balance = 0.0
 

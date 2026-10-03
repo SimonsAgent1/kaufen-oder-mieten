@@ -286,15 +286,43 @@ def test_sparrate_deposit_capped_while_owning_home():
             assert point.buy_left >= -1
 
 
-def test_salary_growth_raises_one_later_sparrate_month():
-    flat = compare(_scenario(adults=[_adult(sparrate=1_000)], horizon={"adult_id": "ada", "age": 37}))
-    growing = compare(
+def test_sparrate_deposit_ignores_salary_growth_with_zero_inflation():
+    base_kw = dict(
+        as_of=date(2026, 1, 1),
+        beliefs={"inflation": 0, "etf_return": 0},
+        horizon={"adult_id": "ada", "age": 55},
+        dwelling={"purchase_price": 800_000, "min_equity": False},
+    )
+    flat = compare(
         _scenario(
-            adults=[_adult(sparrate=1_000, salary_growth=0.05)],
-            horizon={"adult_id": "ada", "age": 37},
+            **base_kw,
+            adults=[_adult(sparrate=1_000, gross_salary=50_000, birth=date(1990, 1, 1), salary_growth=0)],
         )
     )
-    assert growing.rent_final_nominal == flat.rent_final_nominal + 50
+    growing = compare(
+        _scenario(
+            **base_kw,
+            adults=[_adult(sparrate=1_000, gross_salary=50_000, birth=date(1990, 1, 1), salary_growth=0.08)],
+        )
+    )
+    year = next(y for y in sorted({p.date[:4] for p in flat.cashflow}) if y >= "2028")
+    by_flat = {point.date[:4]: point for point in flat.cashflow}
+    by_grown = {point.date[:4]: point for point in growing.cashflow}
+    assert abs(by_flat[year].rent_etf - by_grown[year].rent_etf) < 5
+
+
+def test_sparrate_deposit_rises_with_inflation_not_salary():
+    base_kw = dict(
+        as_of=date(2026, 1, 1),
+        adults=[_adult(sparrate=1_000, salary_growth=0.05, gross_salary=50_000, birth=date(1990, 1, 1))],
+        horizon={"adult_id": "ada", "age": 55},
+        dwelling={"purchase_price": 800_000, "min_equity": False},
+    )
+    base = compare(_scenario(**base_kw, beliefs={"etf_return": 0, "inflation": 0}))
+    inflated = compare(_scenario(**base_kw, beliefs={"etf_return": 0, "inflation": 0.02}))
+    y0 = next(point for point in base.cashflow if point.date.startswith("2027"))
+    y3 = next(point for point in inflated.cashflow if int(point.date[:4]) >= int(y0.date[:4]) + 2)
+    assert y3.rent_etf > y0.rent_etf + 30
 
 
 def test_unmarried_parents_still_receive_kindergeld():
@@ -433,7 +461,7 @@ def test_inflation_deflates_final_wealth():
     assert real.rent_final_real < real.rent_final_nominal
 
 
-def test_moving_in_together_invests_the_rent_saved():
+def test_moving_in_together_keeps_rent_savings_in_ubrig_not_etf():
     adults = [
         _adult(birth=date(1990, 1, 1), kaltmiete=700, sparrate=0),
         _adult(adult_id="ben", label="Ben", birth=date(1992, 1, 1), kaltmiete=900, sparrate=0),
@@ -445,10 +473,14 @@ def test_moving_in_together_invests_the_rent_saved():
         married_from=None,
         horizon={"adult_id": "ada", "age": 40},
         dwelling={"purchase_price": 5_000_000, "min_equity": False},
+        beliefs={"inflation": 0, "etf_return": 0},
     )
     cheap = compare(_scenario(**shared, shared_kaltmiete=1_500))
-    same = compare(_scenario(**shared, shared_kaltmiete=1_600))
-    assert cheap.rent_final_nominal - same.rent_final_nominal == 25 * 100
+    dearer = compare(_scenario(**shared, shared_kaltmiete=1_600))
+    cheap_pt = next(point for point in cheap.cashflow if point.date.startswith("2029"))
+    dear_pt = next(point for point in dearer.cashflow if point.date.startswith("2029"))
+    assert cheap_pt.rent_left > dear_pt.rent_left + 50
+    assert abs(cheap.rent_final_nominal - dearer.rent_final_nominal) < 100
 
 
 def test_a_stated_pension_replaces_the_estimate():

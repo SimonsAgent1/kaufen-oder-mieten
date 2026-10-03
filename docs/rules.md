@@ -414,11 +414,11 @@ Probe: 100.000 € Schuld und 3 % im Jahr → 250 € im Monat.
 
 ## Tilgung, Darlehen der Eltern
 
-Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Zins und Tilgung erscheinen im Kaufweg unter Zinsen und Tilgung.
+Jährlicher Anteil des ursprünglichen Darlehensbetrags, in zwölf gleichen Monatszahlungen. Zinsen laufen auf die Restschuld.
 
 Quelle: Modellwahl.
 
-Probe: 100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.
+Probe: 100.000 € Darlehen und 10 % Tilgung im Jahr → 833 € im Monat, nach 10 Jahren abbezahlt.
 
 ## Kaltmiete im eigenen Haus, Zeiträume
 

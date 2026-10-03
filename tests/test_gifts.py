@@ -56,8 +56,9 @@ def test_parent_loan_interest_monthly_hand_worked():
 
 
 def test_parent_loan_principal_monthly_hand_worked():
-    assert parent_loan_principal_monthly(100_000, 0.02) == pytest.approx(166.67, rel=0, abs=0.1)
-    assert parent_loan_principal_monthly(100_000, 0) == 0.0
+    assert parent_loan_principal_monthly(100_000, 0.10, 100_000) == pytest.approx(833.33, rel=0, abs=0.1)
+    assert parent_loan_principal_monthly(50_000, 0.10, 100_000) == pytest.approx(833.33, rel=0, abs=0.1)
+    assert parent_loan_principal_monthly(100_000, 0, 100_000) == 0.0
 
 
 def test_parent_loan_rate_default_zero_in_saved_file():

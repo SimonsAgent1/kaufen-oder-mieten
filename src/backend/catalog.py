@@ -478,11 +478,11 @@ ENTRIES: tuple[Rule, ...] = (
         "parent-loan-principal",
         "gifts.parent_loan_principal_monthly",
         "Tilgung, Darlehen der Eltern",
-        "Jahresanteil der ausstehenden Schuld, in zwölf gleichen Monatszahlungen. Zins und Tilgung erscheinen im Kaufweg unter Zinsen und Tilgung.",
+        "Jährlicher Anteil des ursprünglichen Darlehensbetrags, in zwölf gleichen Monatszahlungen. Zinsen laufen auf die Restschuld.",
         "Modellwahl",
-        "100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.",
+        "100.000 € Darlehen und 10 % Tilgung im Jahr → 833 € im Monat, nach 10 Jahren abbezahlt.",
         assumption=(
-            "Die anfängliche Tilgung auf das Darlehen der Eltern ist ein Jahresanteil der Restschuld, monatlich gezahlt. "
+            "Die Tilgung auf das Darlehen der Eltern ist ein fester Jahresanteil des ursprünglichen Betrags, monatlich gezahlt. "
             "Bei 0 % bleibt die Schuld bis zum Horizont. Sie ist nicht die Banktilgung."
         ),
     ),

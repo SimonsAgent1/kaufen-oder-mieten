@@ -15,7 +15,7 @@ adults:
     gross_salary: 60000
     salary_growth: 0.02
     depot: 20000
-    sparrate: 500
+    sparrate: 900
     kaltmiete: 700
   - id: ben
     label: Ben
@@ -26,7 +26,7 @@ adults:
     gross_salary: 50000
     salary_growth: 0.02
     depot: 5000
-    sparrate: 300
+    sparrate: 600
     kaltmiete: 700
 together_from: 2024-06-01
 married_from: 2025-06-01
