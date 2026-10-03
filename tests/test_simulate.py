@@ -283,7 +283,8 @@ def test_the_working_adult_keeps_saving_after_the_other_retires():
     assert by_year["2027"].rent_etf == pytest.approx(400, abs=1)
     assert by_year["2029"].rent_etf == 0
     assert by_year["2029"].rent_draw < 1
-    assert by_year["2029"].rent_left < -3_000
+    assert by_year["2027"].rent_left >= -1
+    assert by_year["2027"].buy_left >= -1
 
 
 def test_extra_rent_defaults_to_zero_and_drops_after_purchase():
@@ -460,6 +461,7 @@ def test_pv_rate_follows_the_child_count():
 def test_monthly_slices_add_up():
     result = compare(_scenario(adults=[_adult(sparrate=500, kaltmiete=800, depot=50_000)]))
     assert result.cashflow
+    purchase_year = result.purchase_date[:4] if result.purchase_date else None
     for point in result.cashflow:
         rent_sum = point.rent_housing + max(point.rent_etf, 0) + point.rent_left
         buy_housing = (
@@ -468,9 +470,29 @@ def test_monthly_slices_add_up():
             + point.buy_principal
             + point.buy_owner
         )
-        buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left
+        if purchase_year and point.date[:4] == purchase_year:
+            continue
+        owned = (
+            purchase_year is not None
+            and int(point.date[:4]) >= int(purchase_year) + 1
+            and buy_housing > 1
+            and point.buy_rent < 1
+        )
+        if owned:
+            assert (
+                abs(
+                    point.income
+                    + point.buy_living_rent
+                    - point.buy_etf
+                    - point.buy_left
+                    + point.buy_draw
+                )
+                < 0.05
+            )
+        else:
+            buy_sum = buy_housing + max(point.buy_etf, 0) + point.buy_left - point.buy_living_rent
+            assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
         assert abs(rent_sum - point.income) < 0.05 or abs(rent_sum - point.income - point.rent_draw) < 0.05
-        assert abs(buy_sum - point.income) < 0.05 or abs(buy_sum - point.income - point.buy_draw) < 0.05
         assert not (point.buy_etf > 1 and point.buy_draw > 1)
         assert not (point.rent_etf > 1 and point.rent_draw > 1)
 
@@ -988,6 +1010,25 @@ def test_shared_home_rent_periods_apply_only_inside_stretch():
     assert 250 <= by_year["2031"].buy_living_rent <= 400
     assert by_year["2034"].buy_living_rent < 1
     assert 550 <= by_year["2036"].buy_living_rent <= 900
+
+
+def test_buy_left_after_purchase_counts_housing_once():
+    result = compare(
+        _scenario(
+            adults=[_adult(depot=400_000, sparrate=500, kaltmiete=1_200)],
+            dwelling={"purchase_price": 400_000, "min_equity": False, "owner_costs": 250},
+            beliefs={"etf_return": 0, "sollzins": 0.03, "anschlusszins": 0, "inflation": 0},
+            horizon={"adult_id": "ada", "age": 70},
+        )
+    )
+    assert result.purchase_date
+    py = int(result.purchase_date[:4]) + 2
+    after = next(point for point in result.cashflow if int(point.date[:4]) >= py)
+    housing = after.buy_interest + after.buy_principal + after.buy_owner
+    assert housing > 100
+    assert after.buy_rent < 1
+    assert abs(after.buy_left - (after.income - after.buy_etf + after.buy_draw)) < 2
+    assert abs(after.buy_left - (after.income - housing - after.buy_etf)) > 50
 
 
 def test_shared_home_rent_spouse_payer_is_full_cold_rent_in_buy_chart():

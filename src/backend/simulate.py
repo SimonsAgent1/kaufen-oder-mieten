@@ -496,7 +496,6 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         rent_housing = avg("rent_housing")
         buy_rent = avg("buy_rent")
         buy_living = avg("buy_living_rent")
-        buy_housing = buy_rent + avg("buy_interest") + avg("buy_principal") + avg("buy_owner")
         cashflow.append(
             CashPoint(
                 date=when.isoformat(),
@@ -505,7 +504,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 rent_housing=rent_housing,
                 rent_etf=rent_etf,
                 rent_draw=rent_draw,
-                rent_left=income - rent_housing - rent_etf + rent_draw,
+                rent_left=avg("rent_left"),
                 buy_rent=buy_rent,
                 buy_living_rent=buy_living,
                 buy_interest=avg("buy_interest"),
@@ -513,7 +512,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_owner=avg("buy_owner"),
                 buy_etf=buy_etf,
                 buy_draw=buy_draw,
-                buy_left=income - buy_housing - buy_etf + buy_draw + buy_living,
+                buy_left=avg("buy_left"),
             )
         )
         cash_months.clear()
@@ -569,8 +568,10 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         take_home = 0.0
         pension_net = 0.0
         zve = 0.0
+        any_retired = False
         for adult in scenario.adults:
             retired = month >= calendar.retire[adult.id]
+            any_retired = any_retired or retired
             growth = (1 + adult.salary_growth) ** years
             pv = pv_rate(calendar, month, adult.id)
             church = church_tax_rate(dwelling.bundesland) if adult.church_tax else 0.0
@@ -945,6 +946,30 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         else:
             buy_etf_display = 0.0
             buy_draw_display = -buy_flow_net
+        home_owned = mortgage is not None and not buy_still_renting and not house_sold
+        rent_left_display = income - actual_rent - rent_etf_display + rent_draw_display
+        if home_owned:
+            buy_left_display = income + buy_living_display - buy_etf_display + buy_draw_display
+        else:
+            buy_left_display = (
+                income
+                - buy_housing
+                - buy_etf_display
+                + buy_draw_display
+                + buy_living_display
+            )
+        if any_retired and not here.all_retired:
+            rent_left_display = max(
+                0.0,
+                min(rent_left_display, income - actual_rent + rent_draw_display),
+            )
+            buy_left_display = max(
+                0.0,
+                min(
+                    buy_left_display,
+                    income - buy_housing + buy_draw_display + buy_living_display,
+                ),
+            )
         cash_months.append(
             {
                 "inflation": inflation_factor,
@@ -952,7 +977,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "rent_housing": actual_rent,
                 "rent_etf": rent_etf_display,
                 "rent_draw": rent_draw_display,
-                "rent_left": income - actual_rent - rent_etf_display + rent_draw_display,
+                "rent_left": rent_left_display,
                 "buy_rent": buy_rent_flow,
                 "buy_living_rent": buy_living_display,
                 "buy_interest": buy_interest_flow,
@@ -960,11 +985,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "buy_owner": buy_owner_flow,
                 "buy_etf": buy_etf_display,
                 "buy_draw": buy_draw_display,
-                "buy_left": income
-                - buy_housing
-                - buy_etf_display
-                + buy_draw_display
-                + buy_living_display,
+                "buy_left": buy_left_display,
             }
         )
 
