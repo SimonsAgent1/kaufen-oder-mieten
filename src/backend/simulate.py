@@ -869,17 +869,16 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             depot_empty = True
         income = take_home + pension_net + kindergeld
         buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow
-        if here.all_retired:
-            if pot_inflow > 0:
-                rent_month_net += -pot_inflow + pot_surplus_after_shortfall(
-                    pot_inflow, actual_rent - income
-                )
-                buy_month_net += -pot_inflow + pot_surplus_after_shortfall(
-                    pot_inflow, buy_housing - income
-                )
-            else:
-                rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
-                buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
+        if pot_inflow > 0:
+            rent_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                pot_inflow, actual_rent - income
+            )
+            buy_month_net += -pot_inflow + pot_surplus_after_shortfall(
+                pot_inflow, buy_housing - income
+            )
+        elif here.all_retired:
+            rent_month_net = min(rent_month_net, max(0.0, income - actual_rent))
+            buy_month_net = min(buy_month_net, max(0.0, income - buy_housing) + max(0.0, buy_living_rent))
         buy_living_display = buy_living_rent if buy_living_rent > 1 else 0.0
         rent_etf_cash = 0.0
         buy_etf_cash = 0.0
@@ -964,6 +963,18 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_left_display = income + buy_living_display - buy_etf_display + buy_draw_ubrig
         else:
             buy_left_display = income + buy_living_display - buy_outflow + buy_draw_ubrig
+        if pot_inflow > 0:
+            rent_left_display = max(0.0, income - actual_rent + rent_draw_ubrig)
+            if home_owned and buy_shortfall <= 0:
+                buy_left_display = max(
+                    0.0,
+                    income + buy_living_display - buy_etf_display + buy_draw_ubrig,
+                )
+            else:
+                buy_left_display = max(
+                    0.0,
+                    income + buy_living_display - buy_housing + buy_draw_ubrig,
+                )
         if any_retired and not here.all_retired:
             rent_left_display = max(
                 0.0,

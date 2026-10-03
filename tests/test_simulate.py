@@ -1364,3 +1364,30 @@ def test_retirement_pot_pays_housing_before_etf_surplus():
 
     shortfall = 1_400 - 900
     assert pot_surplus_after_shortfall(120_000, shortfall) == 120_000 - shortfall
+    result = compare(
+        _scenario(
+            as_of=date(2026, 1, 1),
+            adults=[
+                _adult(
+                    birth=date(1960, 3, 1),
+                    retire_age=67,
+                    sparrate=0,
+                    gross_salary=55_000,
+                    pension_gross_today=900,
+                    depot=50_000,
+                    kaltmiete=1_400,
+                    pots={
+                        "altersvorsorgedepot": True,
+                        "altersvorsorgedepot_balance": 120_000,
+                        "altersvorsorgedepot_contribution_yearly": 0,
+                    },
+                )
+            ],
+            dwelling={"purchase_price": 350_000, "min_equity": False, "owner_costs": 0},
+            beliefs={"etf_return": 0, "inflation": 0, "sollzins": 0, "anschlusszins": 0},
+            horizon={"adult_id": "ada", "age": 75},
+        )
+    )
+    by_year = {point.date[:4]: point for point in result.cashflow}
+    assert by_year["2027"].rent_left > -500
+    assert by_year["2027"].buy_left > -500
