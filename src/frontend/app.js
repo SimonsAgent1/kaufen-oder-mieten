@@ -1077,6 +1077,95 @@ function mountBeliefs() {
       !d.rent_while_living,
     );
   });
+  if (d.building_cost == null) d.building_cost = null;
+  if (d.rented_area_share == null) d.rented_area_share = null;
+  if (d.building_finished_year == null) d.building_finished_year = null;
+  if (d.rented_maintenance_annual == null) d.rented_maintenance_annual = 0;
+  if (d.modernization_cost == null) d.modernization_cost = 0;
+  if (d.craftsman_labor_annual == null) d.craftsman_labor_annual = 0;
+  const deductionSliders = [
+    [
+      "building_cost",
+      "Gebäudewert ohne Grund",
+      0,
+      2_000_000,
+      5_000,
+      d.building_cost ?? 0,
+      "€",
+      (value) => {
+        d.building_cost = value > 0 ? value : null;
+      },
+      assumptionLine("Abzüge bei Fremdmiete im eigenen Haus"),
+    ],
+    [
+      "rented_area_share",
+      "Vermieteter Anteil",
+      0,
+      1,
+      0.01,
+      d.rented_area_share ?? 0,
+      "%",
+      (value) => {
+        d.rented_area_share = value > 0 ? value : null;
+      },
+    ],
+    [
+      "building_finished_year",
+      "Fertigstellungsjahr",
+      1900,
+      2030,
+      1,
+      d.building_finished_year ?? 2000,
+      "years",
+      (value) => {
+        d.building_finished_year = Math.round(value);
+      },
+    ],
+    [
+      "rented_maintenance_annual",
+      "Erhaltung vermieteter Teil im Jahr",
+      0,
+      50_000,
+      100,
+      d.rented_maintenance_annual,
+      "€",
+      (value) => {
+        d.rented_maintenance_annual = value;
+      },
+    ],
+    [
+      "modernization_cost",
+      "Modernisierung nach Kauf",
+      0,
+      500_000,
+      1_000,
+      d.modernization_cost,
+      "€",
+      (value) => {
+        d.modernization_cost = value;
+      },
+    ],
+    [
+      "craftsman_labor_annual",
+      "Handwerker im Eigenteil im Jahr",
+      0,
+      20_000,
+      100,
+      d.craftsman_labor_annual,
+      "€",
+      (value) => {
+        d.craftsman_labor_annual = value;
+      },
+      assumptionLine("Handwerker im Eigenteil"),
+    ],
+  ];
+  for (const row of deductionSliders) {
+    const [name, label, min, max, step, start, unit, onChange, assumption] = row;
+    const node = slider(name, label, min, max, step, start, unit, onChange, assumption);
+    node.dataset.sharedHomeRentUi = "1";
+    node.hidden = !d.rent_while_living;
+    buckets.Wohnen.push(node);
+  }
   for (const [name, label, min, max, step, unit] of BELIEFS) {
     if (name === "owner_cost_growth") {
       buckets.Wohnen.push(

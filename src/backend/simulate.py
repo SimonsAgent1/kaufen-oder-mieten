@@ -22,6 +22,7 @@ from buy_vs_rent.house import (
     owner_occupied_exemption,
     price_to_rent,
     price_to_rent_band,
+    craftsman_income_tax_credit_monthly,
     shared_home_living_rent_net,
     sale_gain,
 )
@@ -804,8 +805,12 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     other_zve_annual=zve,
                     inflation_factor=inflation_factor,
                     splitting=here.married,
+                    purchase=purchase,
+                    monthly_loan_interest=cash_interest,
                 )
             buy_month_net += buy_etf_flow + buy_living_rent
+            if dwelling.craftsman_labor_annual > 0 and not house_sold and not buy_still_renting:
+                buy_month_net += craftsman_income_tax_credit_monthly(dwelling.craftsman_labor_annual)
             if drawdown and buy_etf_flow > 0:
                 buy_anchor = None
             if drawdown and buy_anchor is None:

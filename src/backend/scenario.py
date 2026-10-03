@@ -177,6 +177,12 @@ class Dwelling(BaseModel):
     rent_while_living: bool = False
     rent_while_living_kalt: float = Field(default=600, ge=0, le=20_000)
     shared_home_rent: list[SharedHomeRentPeriod] = Field(default_factory=list, max_length=8)
+    building_cost: float | None = Field(default=None, gt=0, le=5_000_000)
+    rented_area_share: float | None = Field(default=None, gt=0, le=1)
+    building_finished_year: int | None = Field(default=None, ge=1800, le=2100)
+    rented_maintenance_annual: float = Field(default=0, ge=0, le=100_000)
+    modernization_cost: float = Field(default=0, ge=0, le=2_000_000)
+    craftsman_labor_annual: float = Field(default=0, ge=0, le=20_000)
 
     @model_validator(mode="after")
     def _legacy_shared_home_rent(self) -> Dwelling:

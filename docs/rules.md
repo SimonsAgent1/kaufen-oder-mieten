@@ -436,6 +436,46 @@ Quelle: § 21 EStG.
 
 Probe: 600 € Kaltmiete im Monat erhöhen das zu versteuernde Einkommen um 7.200 € im Jahr.
 
+## AfA Gebäudeanteil
+
+Linearer AfA-Satz auf Gebäudewert mal vermieteter Anteil, im Kaufjahr nur für die Monate ab Kauf.
+
+Quelle: § 7 Abs. 4 EStG.
+
+Probe: 300.000 €, Anteil 2/3, Baujahr 2005 → 4.000 € im vollen Jahr.
+
+## Abzüge aktiv
+
+AfA und Zinsanteil gelten nur mit Gebäudewert, vermietetem Anteil und Fertigstellungsjahr.
+
+Quelle: Modellwahl.
+
+Probe: Leerer Gebäudewert oder Anteil → keine Abzüge.
+
+## Abzüge bei Fremdmiete im eigenen Haus
+
+Mit Gebäudewert, vermietetem Anteil und Baujahr: AfA auf den Gebäudewertanteil, derselbe Anteil der Darlehenszinsen und Erhaltungsaufwand auf den vermieteten Teil mindern die §-21-Einkünfte. Tilgung nicht. Leerer Gebäudewert oder leerer Anteil: wie bisher ohne diese Abzüge.
+
+Quelle: § 7 Abs. 4, § 6 Abs. 1 Nr. 1a EStG; Modellwahl.
+
+Probe: Gebäude 300.000 €, Baujahr 2005, Anteil 2/3, Zinsen 14.666,67 €, AfA 4.000 €, Kaltmiete 16.800 € → Verlust 1.866,67 €.
+
+## Handwerker im Eigenteil
+
+20 % der Handwerkerleistungen im selbst genutzten Teil, höchstens 1.200 € im Jahr, als Steuergutschrift.
+
+Quelle: § 35a Abs. 3 EStG.
+
+Probe: 6.000 € Handwerker → 1.200 € Gutschrift.
+
+## Handwerker Gutschrift monatlich
+
+Die Jahresgutschrift wird in zwölf gleichen Monatsbeträgen auf den Kaufweg gelegt.
+
+Quelle: Modellwahl.
+
+Probe: 1.200 € im Jahr → 100 € im Monat.
+
 ## Gewinn Kapitalversicherung
 
 Auszahlung minus eingezahlte Beiträge.

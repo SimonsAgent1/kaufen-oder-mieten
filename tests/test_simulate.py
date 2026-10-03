@@ -1182,6 +1182,41 @@ def test_parent_gift_net_of_tax_helps_purchase():
     assert without.purchase_date is None or with_gift.buy_final_nominal > without.buy_final_nominal
 
 
+def test_shared_home_stranger_rent_higher_net_with_rental_deductions():
+    base = {
+        "purchase_price": 550_000,
+        "min_equity": False,
+        "owner_costs": 0,
+        "building_cost": 300_000,
+        "rented_area_share": 2 / 3,
+        "building_finished_year": 2005,
+        "shared_home_rent": [
+            {"from": "2026-01-01", "until": "2099-12-01", "kalt": 1_400, "payer": "stranger"},
+        ],
+    }
+    beliefs = {"etf_return": 0, "sollzins": 0.04, "anschlusszins": 0.04, "inflation": 0, "tilgung": 0}
+    with_ded = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, gross_salary=80_000, kaltmiete=1_200)],
+            dwelling=base,
+            beliefs=beliefs,
+            horizon={"adult_id": "ada", "age": 70},
+        )
+    )
+    without_ded = compare(
+        _scenario(
+            adults=[_adult(depot=300_000, sparrate=0, gross_salary=80_000, kaltmiete=1_200)],
+            dwelling={**base, "building_cost": None, "rented_area_share": None, "building_finished_year": None},
+            beliefs=beliefs,
+            horizon={"adult_id": "ada", "age": 70},
+        )
+    )
+    assert with_ded.purchase_date
+    w = next(p for p in with_ded.cashflow if p.date >= with_ded.purchase_date[:7])
+    wo = next(p for p in without_ded.cashflow if p.date >= without_ded.purchase_date[:7])
+    assert w.buy_living_rent > wo.buy_living_rent + 50
+
+
 def test_rent_while_living_raises_buy_wealth():
     from buy_vs_rent.house import rent_while_living_tax_monthly
 

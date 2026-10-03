@@ -504,8 +504,48 @@ ENTRIES: tuple[Rule, ...] = (
         assumption=(
             "Kaltmiete im eigenen Haus erscheint im Chart nach Abzug der Einkommensteuer mit dem persönlichen Satz "
             "und zählt zu Übrig, nicht als Gehaltseinkommen. Der vermietete Teil ist von der Verkaufssteuer ausgenommen; "
-            "dieser Lauf besteuert keinen Anteil am Verkaufsgewinn. AfA und Zinsaufteilung sind nicht modelliert."
+            "dieser Lauf besteuert keinen Anteil am Verkaufsgewinn."
         ),
+    ),
+    Rule(
+        "shared-home-afa",
+        "house.annual_building_afa",
+        "AfA Gebäudeanteil",
+        "Linearer AfA-Satz auf Gebäudewert mal vermieteter Anteil, im Kaufjahr nur für die Monate ab Kauf.",
+        "§ 7 Abs. 4 EStG",
+        "300.000 €, Anteil 2/3, Baujahr 2005 → 4.000 € im vollen Jahr.",
+    ),
+    Rule(
+        "shared-home-rental-deductions",
+        "house.rental_deductions_configured",
+        "Abzüge aktiv",
+        "AfA und Zinsanteil gelten nur mit Gebäudewert, vermietetem Anteil und Fertigstellungsjahr.",
+        "Modellwahl",
+        "Leerer Gebäudewert oder Anteil → keine Abzüge.",
+    ),
+    Rule(
+        "shared-home-rental-deductions-annual",
+        "house.annual_rental_deductions",
+        "Abzüge bei Fremdmiete im eigenen Haus",
+        "Mit Gebäudewert, vermietetem Anteil und Baujahr: AfA auf den Gebäudewertanteil, derselbe Anteil der Darlehenszinsen und Erhaltungsaufwand auf den vermieteten Teil mindern die §-21-Einkünfte. Tilgung nicht. Leerer Gebäudewert oder leerer Anteil: wie bisher ohne diese Abzüge.",
+        "§ 7 Abs. 4, § 6 Abs. 1 Nr. 1a EStG; Modellwahl",
+        "Gebäude 300.000 €, Baujahr 2005, Anteil 2/3, Zinsen 14.666,67 €, AfA 4.000 €, Kaltmiete 16.800 € → Verlust 1.866,67 €.",
+    ),
+    Rule(
+        "craftsman-tax-credit",
+        "house.craftsman_income_tax_credit_annual",
+        "Handwerker im Eigenteil",
+        "20 % der Handwerkerleistungen im selbst genutzten Teil, höchstens 1.200 € im Jahr, als Steuergutschrift.",
+        "§ 35a Abs. 3 EStG",
+        "6.000 € Handwerker → 1.200 € Gutschrift.",
+    ),
+    Rule(
+        "craftsman-tax-credit-monthly",
+        "house.craftsman_income_tax_credit_monthly",
+        "Handwerker Gutschrift monatlich",
+        "Die Jahresgutschrift wird in zwölf gleichen Monatsbeträgen auf den Kaufweg gelegt.",
+        "Modellwahl",
+        "1.200 € im Jahr → 100 € im Monat.",
     ),
     Rule(
         "lump-insurance-gain",
@@ -740,6 +780,19 @@ def result_sentences(scenario: Scenario) -> list[str]:
                     lines.append(
                         "Kaltmiete vom Ehepartner zählt als voller Zufluss in Übrig; sie wird nicht noch einmal als §-21-Miete besteuert."
                     )
+        elif entry.id == "shared-home-rental-deductions-annual":
+            from buy_vs_rent.house import rental_deductions_configured
+
+            if rental_deductions_configured(scenario.dwelling) and any(
+                period.payer == "stranger" for period in scenario.dwelling.shared_home_rent
+            ):
+                lines.append(
+                    "Bei Fremdmiete im eigenen Haus mindern AfA, vermieteter Zinsanteil und Erhaltung die §-21-Einkünfte; "
+                    "Tilgung bleibt nur in den Wohnkosten. Ohne Gebäudewert und Anteil gilt die einfache Kaltmietensteuer."
+                )
+        elif entry.id == "craftsman-tax-credit":
+            if scenario.dwelling.craftsman_labor_annual > 0:
+                lines.append(entry.assumption)
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:
                 lines.append(entry.assumption)
