@@ -704,7 +704,8 @@ ENTRIES: tuple[Rule, ...] = (
         "Modellwahl",
         "Verzehr 0 hält den realen Wert plus 0,5 % im Jahr.",
         assumption=(
-            "Bei Erhalt wächst das Depot inflationsbereinigt um 0,5 % pro Jahr; das Restvermögen wird dann nicht genutzt."
+            "Bei Erhalt wird aus dem Depot nur entnommen, was das Einkommen nicht deckt. "
+            "Sonst wächst der Bestand inflationsbereinigt um 0,5 % pro Jahr. Das Restvermögen gilt nur bei Verzehr."
         ),
     ),
     Rule(

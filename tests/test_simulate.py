@@ -950,6 +950,30 @@ def test_per_adult_church_tax_only_on_one_adult():
     assert "Zweite" not in line.split("an:")[0]
 
 
+def test_erhalt_withdraws_only_when_income_falls_short():
+    result = compare(
+        _scenario(
+            adults=[
+                _adult(
+                    birth=date(1959, 1, 1),
+                    retire_age=67,
+                    depot=500_000,
+                    sparrate=0,
+                    gross_salary=50_000,
+                    pension_gross_today=3_000,
+                    kaltmiete=1_000,
+                )
+            ],
+            beliefs={"etf_consume": 0, "etf_return": 0, "inflation": 0, "ter": 0},
+            horizon={"adult_id": "ada", "age": 80},
+        )
+    )
+    before_care = [point for point in result.cashflow if int(point.date[:4]) < 2034]
+    assert before_care
+    assert max(point.rent_draw for point in before_care) < 50
+    assert result.rent_final_nominal > 400_000
+
+
 def test_consume_zero_ignores_reserve():
     spent = compare(_scenario(beliefs={"etf_consume": 0, "etf_reserve": 100_000}, horizon={"adult_id": "ada", "age": 75}))
     kept = compare(_scenario(beliefs={"etf_consume": 0, "etf_reserve": 0}, horizon={"adult_id": "ada", "age": 75}))

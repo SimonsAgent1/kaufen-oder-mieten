@@ -116,6 +116,8 @@ class CashPoint:
     buy_etf: float
     buy_draw: float
     buy_left: float
+    buy_parent_interest: float = 0.0
+    buy_parent_principal: float = 0.0
 
 
 @dataclass
@@ -465,6 +467,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
     restschuld: float | None = None
     fixation_end: str | None = None
     payoff: str | None = None
+    parent_payoff: str | None = None
     etf_tax_buy = 0.0
     etf_tax_rent = 0.0
     kindergeld_by_child: dict[str, tuple[float, int]] = {}
@@ -517,6 +520,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 buy_living_rent=buy_living,
                 buy_interest=avg("buy_interest"),
                 buy_principal=avg("buy_principal"),
+                buy_parent_interest=avg("buy_parent_interest"),
+                buy_parent_principal=avg("buy_parent_principal"),
                 buy_owner=avg("buy_owner"),
                 buy_etf=buy_etf,
                 buy_draw=buy_draw,
@@ -720,6 +725,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy_saving = invest_base if not here.in_care else (0.0 if here.all_retired else saves + kindergeld + separate_base * rent_factor - actual_rent)
         buy_interest_flow = 0.0
         buy_principal_flow = 0.0
+        buy_parent_interest_flow = 0.0
+        buy_parent_principal_flow = 0.0
         buy_owner_flow = 0.0
         buy_etf_flow = buy_saving
         if mortgage is not None:
@@ -843,11 +850,16 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             buy.grow_month()
 
         if scenario.parent_loan and parent_loan_balance > 0:
-            buy_interest_flow += parent_interest
-            buy_principal_flow += parent_principal
+            buy_parent_interest_flow = parent_interest
+            buy_parent_principal_flow = parent_principal
         if parent_interest > 0 or parent_principal > 0:
             buy_month_net -= parent_interest + parent_principal
+            was_parent = parent_loan_balance
             parent_loan_balance = max(0.0, parent_loan_balance - parent_principal)
+            if parent_loan_balance < 100.0 and scenario.parent_loan_tilgung > 0:
+                if parent_payoff is None and was_parent >= 100.0:
+                    parent_payoff = month.isoformat()
+                parent_loan_balance = 0.0
 
         if month.month == 12 and here.children > 0 and not drawdown:
             refund = kinder_freibetrag_refund(
@@ -875,7 +887,14 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         ):
             depot_empty = True
         income = take_home + pension_net + kindergeld
-        buy_housing = buy_rent_flow + buy_interest_flow + buy_principal_flow + buy_owner_flow
+        buy_housing = (
+            buy_rent_flow
+            + buy_interest_flow
+            + buy_principal_flow
+            + buy_parent_interest_flow
+            + buy_parent_principal_flow
+            + buy_owner_flow
+        )
         if pot_inflow > 0:
             rent_month_net += -pot_inflow + pot_surplus_after_shortfall(
                 pot_inflow, actual_rent - income
@@ -905,31 +924,46 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
             etf_tax_buy += buy.deposit(buy_month_net, month.month)
             buy_etf_cash += max(0.0, liq0 - buy.liquidation()[1])
         if drawdown and rent_anchor is not None and rent_month_net <= 1e-6 and rent_planned_deposit <= 1e-9:
-            rent_draw_months += 1
-            rent_target = _draw_target(
-                rent_anchor,
-                rent_draw_months,
-                rent_draw_total,
-                real_monthly,
-                beliefs.etf_consume,
-                inflation_path,
-                beliefs.etf_reserve,
-            )
-            tax, rent_etf_cash = rent.trim_to_net(rent_target)
-            etf_tax_rent += tax
+            if beliefs.etf_consume > 0:
+                rent_draw_months += 1
+                rent_target = _draw_target(
+                    rent_anchor,
+                    rent_draw_months,
+                    rent_draw_total,
+                    real_monthly,
+                    beliefs.etf_consume,
+                    inflation_path,
+                    beliefs.etf_reserve,
+                )
+                tax, rent_etf_cash = rent.trim_to_net(rent_target)
+                etf_tax_rent += tax
+            else:
+                rent_gap = max(0.0, actual_rent - income - rent_etf_cash)
+                if rent_gap > 1e-9:
+                    tax, raised = _etf_net_raised(rent, rent_gap, month.month)
+                    etf_tax_rent += tax
+                    rent_etf_cash += raised
         if drawdown and buy_anchor is not None and buy_month_net <= 1e-6 and buy_planned_deposit <= 1e-9:
-            buy_draw_months += 1
-            buy_target = _draw_target(
-                buy_anchor,
-                buy_draw_months,
-                buy_draw_total,
-                real_monthly,
-                beliefs.etf_consume,
-                inflation_path,
-                beliefs.etf_reserve,
-            )
-            tax, buy_etf_cash = buy.trim_to_net(buy_target)
-            etf_tax_buy += tax
+            if beliefs.etf_consume > 0:
+                buy_draw_months += 1
+                buy_target = _draw_target(
+                    buy_anchor,
+                    buy_draw_months,
+                    buy_draw_total,
+                    real_monthly,
+                    beliefs.etf_consume,
+                    inflation_path,
+                    beliefs.etf_reserve,
+                )
+                tax, buy_etf_cash = buy.trim_to_net(buy_target)
+                etf_tax_buy += tax
+            else:
+                living_inflow = buy_living_rent if buy_living_rent > 1 else 0.0
+                buy_gap = max(0.0, buy_housing - living_inflow - income - buy_etf_cash)
+                if buy_gap > 1e-9 and not sold_house_this_month:
+                    tax, raised = _etf_net_raised(buy, buy_gap, month.month)
+                    etf_tax_buy += tax
+                    buy_etf_cash += raised
         if here.in_care:
             rent_short = max(0.0, actual_rent - income - rent_etf_cash)
             if rent_short > 1e-9:
@@ -999,6 +1033,8 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                 "buy_living_rent": buy_living_display,
                 "buy_interest": buy_interest_flow,
                 "buy_principal": buy_principal_flow,
+                "buy_parent_interest": buy_parent_interest_flow,
+                "buy_parent_principal": buy_parent_principal_flow,
                 "buy_owner": buy_owner_flow,
                 "buy_etf": buy_etf_display,
                 "buy_draw": buy_draw_display,
@@ -1209,7 +1245,7 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         series=series,
         cashflow=cashflow,
         markers=_break_even_mark(
-            _markers(scenario, names, end, purchase, fixation_end, payoff),
+            _markers(scenario, names, end, purchase, fixation_end, payoff, parent_payoff),
             series,
             break_even,
         ),
@@ -1338,6 +1374,7 @@ def _markers(
     purchase: date | None,
     fixation_end: str | None,
     payoff: str | None,
+    parent_payoff: str | None,
 ) -> list[Marker]:
     buckets: dict[tuple[str, str], list[str]] = {}
 
@@ -1367,6 +1404,8 @@ def _markers(
         add(date.fromisoformat(fixation_end), "Zinsbindung", "loan")
     if payoff:
         add(date.fromisoformat(payoff), "Abbezahlt", "loan")
+    if parent_payoff:
+        add(date.fromisoformat(parent_payoff), "Darlehen abbezahlt", "loan")
     care = care_start(scenario)
     if care <= end:
         add(care, "Pflege", "wealth")

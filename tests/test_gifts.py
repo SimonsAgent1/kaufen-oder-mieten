@@ -143,9 +143,29 @@ def test_parent_loan_tilgung_appears_in_buy_flow_chart():
     after = [
         point
         for point in result.cashflow
-        if point.date >= result.purchase_date[:7] and point.buy_principal > 200
+        if point.date >= result.purchase_date[:7] and point.buy_parent_principal > 100
     ]
     assert after
+    bank_only = [
+        point
+        for point in result.cashflow
+        if point.date >= result.purchase_date[:7] and point.buy_principal > 100
+    ]
+    assert bank_only
+
+
+def test_parent_loan_payoff_marker_when_tilgung_positive():
+    result = compare(
+        Scenario.model_validate(
+            {
+                **_loan_scenario(0).model_dump(mode="json"),
+                "parent_loan_amount": 12_000,
+                "parent_loan_tilgung": 0.1,
+            }
+        )
+    )
+    labels = [marker.label for marker in result.markers if marker.chart == "loan"]
+    assert "Darlehen abbezahlt" in labels
 
 
 def test_parent_loan_rate_reduces_both_paths():

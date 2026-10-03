@@ -105,7 +105,7 @@ def test_a_household_stays_coherent_through_work_retirement_and_care():
     by_year = {point.date[:4]: point for point in result.cashflow}
     assert by_year["2056"].rent_etf > 0
     assert by_year["2060"].rent_etf == 0
-    assert by_year["2060"].rent_draw > 0
+    assert by_year["2060"].rent_draw < 50
     both = [
         point.date
         for point in result.cashflow
