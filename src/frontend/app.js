@@ -629,6 +629,20 @@ function syncParentMoneyVisibility() {
   if (loanRateNode) loanRateNode.hidden = !loanShow;
 }
 
+function ensureSharedHomeRent(dwelling) {
+  if (!Array.isArray(dwelling.shared_home_rent)) dwelling.shared_home_rent = [];
+  if (dwelling.rent_while_living && !dwelling.shared_home_rent.length) {
+    dwelling.shared_home_rent = [
+      {
+        from: "2026-01-01",
+        until: "2099-12-01",
+        kalt: dwelling.rent_while_living_kalt ?? 600,
+      },
+    ];
+  }
+  if (!dwelling.rent_while_living) dwelling.shared_home_rent = [];
+}
+
 function syncRentWhileLivingVisibility() {
   const show = Boolean(scenario?.dwelling?.rent_while_living);
   const node = document.querySelector(
@@ -931,6 +945,7 @@ function mountBeliefs() {
   );
   if (d.rent_while_living == null) d.rent_while_living = false;
   if (d.rent_while_living_kalt == null) d.rent_while_living_kalt = 600;
+  ensureSharedHomeRent(d);
   const rentLivingSwitch = document.createElement("label");
   rentLivingSwitch.className = "switch belief-switch";
   rentLivingSwitch.innerHTML = `<input type="checkbox" ${d.rent_while_living ? "checked" : ""}><span class="track"></span>`;
@@ -940,6 +955,7 @@ function mountBeliefs() {
   rentLivingSwitch.append(rentLivingCaption);
   rentLivingSwitch.querySelector("input").addEventListener("change", (event) => {
     d.rent_while_living = event.target.checked;
+    ensureSharedHomeRent(d);
     syncRentWhileLivingVisibility();
     schedule();
   });
@@ -955,10 +971,73 @@ function mountBeliefs() {
       "€",
       (value) => {
         d.rent_while_living_kalt = value;
+        ensureSharedHomeRent(d);
+        if (d.shared_home_rent[0]) d.shared_home_rent[0].kalt = value;
       },
     ),
   );
   buckets.Wohnen[buckets.Wohnen.length - 1].hidden = !d.rent_while_living;
+  const addRentPhase = document.createElement("button");
+  addRentPhase.type = "button";
+  addRentPhase.className = "secondary";
+  addRentPhase.textContent = "Weitere Mietphase";
+  addRentPhase.hidden = !d.rent_while_living;
+  addRentPhase.addEventListener("click", () => {
+    ensureSharedHomeRent(d);
+    if (d.shared_home_rent.length >= 8) return;
+    const last = d.shared_home_rent.at(-1);
+    const startYear = last ? Number(last.until.slice(0, 4)) + 1 : 2027;
+    d.shared_home_rent.push({
+      from: `${startYear}-01-01`,
+      until: "2099-12-01",
+      kalt: d.rent_while_living_kalt ?? 600,
+    });
+    schedule();
+  });
+  buckets.Wohnen.push(addRentPhase);
+  d.shared_home_rent.forEach((period, index) => {
+    if (index === 0) return;
+    const fromYear = Number(period.from.slice(0, 4));
+    const untilYear = Number(period.until.slice(0, 4));
+    buckets.Wohnen.push(
+      slider(
+        `shared-home-rent-${index}-from`,
+        `Mietphase ${index + 1}: von Jahr`,
+        2000,
+        2100,
+        1,
+        fromYear,
+        "years",
+        (value) => {
+          period.from = `${Math.round(value)}-01-01`;
+        },
+      ),
+      slider(
+        `shared-home-rent-${index}-until`,
+        `Mietphase ${index + 1}: bis Jahr`,
+        2000,
+        2100,
+        1,
+        untilYear,
+        "years",
+        (value) => {
+          period.until = `${Math.round(value)}-12-01`;
+        },
+      ),
+      slider(
+        `shared-home-rent-${index}-kalt`,
+        `Mietphase ${index + 1}: Kaltmiete`,
+        0,
+        10_000,
+        50,
+        period.kalt,
+        "€",
+        (value) => {
+          period.kalt = value;
+        },
+      ),
+    );
+  });
   for (const [name, label, min, max, step, unit] of BELIEFS) {
     if (name === "owner_cost_growth") {
       buckets.Wohnen.push(

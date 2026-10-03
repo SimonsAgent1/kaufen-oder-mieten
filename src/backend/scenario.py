@@ -144,6 +144,19 @@ class Horizon(BaseModel):
     age: int = Field(ge=1, le=120)
 
 
+class SharedHomeRentPeriod(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    start: date = Field(alias="from")
+    until: date
+    kalt: float = Field(ge=0, le=20_000)
+
+    @field_validator("start", "until")
+    @classmethod
+    def _month(cls, value: date) -> date:
+        return first_of_month(value)
+
+
 class Dwelling(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -162,6 +175,21 @@ class Dwelling(BaseModel):
     move_in_cost_2026: float = Field(default=0, ge=0, le=500_000)
     rent_while_living: bool = False
     rent_while_living_kalt: float = Field(default=600, ge=0, le=20_000)
+    shared_home_rent: list[SharedHomeRentPeriod] = Field(default_factory=list, max_length=8)
+
+    @model_validator(mode="after")
+    def _legacy_shared_home_rent(self) -> Dwelling:
+        if self.rent_while_living and not self.shared_home_rent:
+            self.shared_home_rent = [
+                SharedHomeRentPeriod.model_validate(
+                    {
+                        "from": date(2000, 1, 1),
+                        "until": date(2100, 1, 1),
+                        "kalt": self.rent_while_living_kalt,
+                    }
+                )
+            ]
+        return self
 
     @model_validator(mode="after")
     def _sync_owner_costs_from_rate(self) -> Dwelling:

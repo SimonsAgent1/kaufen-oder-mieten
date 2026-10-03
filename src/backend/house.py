@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from buy_vs_rent.income import income_levy
-from buy_vs_rent.scenario import Scenario
+from buy_vs_rent.scenario import Dwelling, Scenario
 
 
 def comparison_cold_rent_monthly(scenario: Scenario) -> float:
@@ -50,6 +52,34 @@ def rent_while_living_tax_monthly(
     with_rent = income_levy(other_zve_annual + annual, inflation_factor, splitting)
     without = income_levy(other_zve_annual, inflation_factor, splitting)
     return max(0.0, with_rent - without) / 12
+
+
+def _shared_home_rent_gross_monthly(dwelling: Dwelling, month: date, inflation_factor: float) -> float:
+    """Cold rent from a shared-home stretch that covers `month`, if any."""
+    for period in dwelling.shared_home_rent:
+        if period.start <= month <= period.until:
+            return period.kalt * inflation_factor
+    return 0.0
+
+
+def shared_home_living_rent_net(
+    dwelling: Dwelling,
+    month: date,
+    *,
+    other_zve_annual: float,
+    inflation_factor: float,
+    splitting: bool,
+) -> float:
+    gross = _shared_home_rent_gross_monthly(dwelling, month, inflation_factor)
+    if gross <= 0:
+        return 0.0
+    tax = rent_while_living_tax_monthly(
+        gross,
+        other_zve_annual=other_zve_annual,
+        inflation_factor=inflation_factor,
+        splitting=splitting,
+    )
+    return gross - tax
 
 
 def monthly_owner_costs(price: float, rate: float) -> float:

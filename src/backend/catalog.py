@@ -487,6 +487,14 @@ ENTRIES: tuple[Rule, ...] = (
         ),
     ),
     Rule(
+        "shared-home-rent-period",
+        "house.shared_home_living_rent_net",
+        "Kaltmiete im eigenen Haus, Zeiträume",
+        "Pro Monat gilt höchstens eine Mietphase mit Start, Ende und Kaltmiete. Netto nach Steuer zählt in Übrig.",
+        "§ 21 EStG; Modellwahl",
+        "600 € in einer aktiven Phase → Netto wie bei der Einzelmiete.",
+    ),
+    Rule(
         "rent-while-living-tax",
         "house.rent_while_living_tax_monthly",
         "Miete im eigenen Haus",
@@ -714,7 +722,7 @@ def result_sentences(scenario: Scenario) -> list[str]:
                     f"Kindererziehungszeiten: {points:.0f} Entgeltpunkte für {who}, alle Kinder zusammen."
                 )
         elif entry.id == "owner-occupied":
-            if scenario.dwelling.rent_while_living:
+            if scenario.dwelling.shared_home_rent:
                 lines.append(
                     "Ausschließliche Eigennutzung des ganzen Hauses gilt nicht, solange Kaltmiete im eigenen Haus an ist."
                 )
@@ -725,7 +733,7 @@ def result_sentences(scenario: Scenario) -> list[str]:
                     "Eigennutzung von Kauf bis Verkauf ist aus. Die Verkaufssteuer folgt Haltedauer und Gewinn."
                 )
         elif entry.id == "rent-while-living-tax":
-            if scenario.dwelling.rent_while_living:
+            if scenario.dwelling.shared_home_rent:
                 lines.append(entry.assumption)
         elif entry.id == "parent-gift-tax":
             if scenario.parent_gift or scenario.parent_loan:

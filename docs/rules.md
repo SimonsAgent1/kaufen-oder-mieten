@@ -420,6 +420,14 @@ Quelle: Modellwahl.
 
 Probe: 100.000 € Schuld und 2 % Tilgung im Jahr → etwa 167 € im Monat.
 
+## Kaltmiete im eigenen Haus, Zeiträume
+
+Pro Monat gilt höchstens eine Mietphase mit Start, Ende und Kaltmiete. Netto nach Steuer zählt in Übrig.
+
+Quelle: § 21 EStG; Modellwahl.
+
+Probe: 600 € in einer aktiven Phase → Netto wie bei der Einzelmiete.
+
 ## Miete im eigenen Haus
 
 Kaltmiete von Mitbewohnern ist Einkünfte aus Vermietung und Verpachtung und wird mit dem persönlichen Satz besteuert, nicht als Kapitalertrag.

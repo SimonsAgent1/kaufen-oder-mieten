@@ -22,7 +22,7 @@ from buy_vs_rent.house import (
     owner_occupied_exemption,
     price_to_rent,
     price_to_rent_band,
-    rent_while_living_tax_monthly,
+    shared_home_living_rent_net,
     sale_gain,
 )
 from buy_vs_rent.household import (
@@ -789,21 +789,14 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
                     buy_etf_flow = saves + kindergeld - owner_out + avd_tax_cash
                     if extra_paid > 0 and buy_etf_flow > 0:
                         buy_etf_flow = max(0.0, buy_etf_flow - extra_paid)
-            if (
-                dwelling.rent_while_living
-                and mortgage is not None
-                and not house_sold
-                and not here.in_care
-                and not buy_still_renting
-            ):
-                gross_rent = dwelling.rent_while_living_kalt * inflation_factor
-                rent_tax = rent_while_living_tax_monthly(
-                    gross_rent,
+            if mortgage is not None and not house_sold and not here.in_care and not buy_still_renting:
+                buy_living_rent = shared_home_living_rent_net(
+                    dwelling,
+                    month,
                     other_zve_annual=zve,
                     inflation_factor=inflation_factor,
                     splitting=here.married,
                 )
-                buy_living_rent = gross_rent - rent_tax
             buy_month_net += buy_etf_flow + buy_living_rent
             if drawdown and buy_etf_flow > 0:
                 buy_anchor = None
@@ -1273,7 +1266,7 @@ def _assumptions(
         "Das ist eine Illustration, kein Pflegeplan."
     )
     if exempt:
-        if scenario.dwelling.rent_while_living:
+        if scenario.dwelling.shared_home_rent:
             lines.append(
                 "Die Verkaufssteuer ist 0 €; der vermietete Teil zählt nicht als Verkaufsgewinn in diesem Lauf. "
                 f"Der steuerfreie Gewinn beträgt {euro_de(house_gain_value)} €."
