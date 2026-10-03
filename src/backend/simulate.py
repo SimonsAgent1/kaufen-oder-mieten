@@ -959,22 +959,17 @@ def compare(scenario: Scenario, *, display: Scenario | None = None) -> Result:
         buy_outflow = buy_housing + buy_etf_display - buy_living_display
         buy_shortfall = max(0.0, buy_outflow - income)
         buy_draw_ubrig = draw_used_in_ubrig(buy_draw_display, income, buy_outflow)
-        if home_owned and buy_shortfall <= 0:
-            buy_left_display = income + buy_living_display - buy_etf_display + buy_draw_ubrig
-        else:
-            buy_left_display = income + buy_living_display - buy_outflow + buy_draw_ubrig
+        buy_left_display = income + buy_living_display - buy_outflow + buy_draw_ubrig
         if pot_inflow > 0:
             rent_left_display = max(0.0, income - actual_rent + rent_draw_ubrig)
-            if home_owned and buy_shortfall <= 0:
-                buy_left_display = max(
-                    0.0,
-                    income + buy_living_display - buy_etf_display + buy_draw_ubrig,
-                )
-            else:
-                buy_left_display = max(
-                    0.0,
-                    income + buy_living_display - buy_housing + buy_draw_ubrig,
-                )
+            buy_left_display = max(
+                0.0,
+                income
+                + buy_living_display
+                - buy_housing
+                - buy_etf_display
+                + buy_draw_ubrig,
+            )
         if any_retired and not here.all_retired:
             rent_left_display = max(
                 0.0,

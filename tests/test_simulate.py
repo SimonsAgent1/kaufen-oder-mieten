@@ -483,6 +483,7 @@ def test_monthly_slices_add_up():
                 abs(
                     point.income
                     + point.buy_living_rent
+                    - buy_housing
                     - point.buy_etf
                     - point.buy_left
                     + point.buy_draw
@@ -1066,8 +1067,15 @@ def test_buy_left_after_purchase_counts_housing_once():
     housing = after.buy_interest + after.buy_principal + after.buy_owner
     assert housing > 100
     assert after.buy_rent < 1
-    assert abs(after.buy_left - (after.income - after.buy_etf + after.buy_draw)) < 2
-    assert abs(after.buy_left - (after.income - housing - after.buy_etf)) > 50
+    stack = (
+        after.income
+        + after.buy_living_rent
+        - housing
+        - after.buy_etf
+        - after.buy_left
+        + after.buy_draw
+    )
+    assert abs(stack) < 2
 
 
 def test_shared_home_rent_spouse_payer_is_full_cold_rent_in_buy_chart():
