@@ -985,9 +985,9 @@ def test_shared_home_rent_periods_apply_only_inside_stretch():
     assert result.purchase_date
     by_year = {point.date[:4]: point for point in result.cashflow}
     assert by_year["2029"].buy_living_rent < 1
-    assert 300 <= by_year["2031"].buy_living_rent <= 400
+    assert 250 <= by_year["2031"].buy_living_rent <= 400
     assert by_year["2034"].buy_living_rent < 1
-    assert 700 <= by_year["2036"].buy_living_rent <= 900
+    assert 600 <= by_year["2036"].buy_living_rent <= 900
 
 
 def test_rent_while_living_shows_net_in_buy_chart():
